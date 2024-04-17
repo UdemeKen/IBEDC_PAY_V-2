@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito&display=swap');
+
+.bg_image {
+    background-image: url('../assets/images/Main_Background-Image.png');
+    width: 100%;
+    height: 100vh;
+    object-fit: cover;
+}
+
+.main {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 1;
+}
+
+.sub-main {
+    position: relative;
+    width: 130%;
+    overflow: hidden;
+}
+
+.errmsg {
+    background-color: lightpink;
+    color: firebrick;
+    font-weight: bold;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.offscreen {
+    position: absolute;
+    left: -9999px;
+}
+
+.instructions {
+    font-size: 0.75rem;
+    border-radius: 0.5rem;
+    background: rgba(0, 44, 78, 0.79);
+    color: #fff;
+    padding: 0.25rem;
+    position: relative;
+    bottom: -10px;
+}
+
+.instructions > svg {
+    margin-right: 0.25rem;
+}
+
+.hide {
+    display: none;
+}
+
+.valid {
+    color: limegreen;
+    margin-left: 0.25rem;
+}
+
+.invalid {
+    color: red;
+    margin-left: 0.25rem;
+}
+.viewbtn {
+    background: rgba(0, 44, 78, 0.79);
+}
+
+@media (min-height: 1024px) and (max-height: 1179px) {
+    .main {
+        top: 40%;
+    }
+  }
+
+@media (min-height: 1180px) and (max-height: 1367px) {
+    .main {
+        top: 35%;
+    }
+  }
+
+@media (min-height: 1368px)  {
+    .main {
+        top: 30%;
+    }
+  }
+
+@media (min-width: 920px){
+    .main {
+        top: 70%;
+    }
+  }
+
