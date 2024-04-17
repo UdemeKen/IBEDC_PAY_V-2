@@ -49,7 +49,7 @@ export default function GuestLayout() {
       <div className='flex justify-center items-center h-full '>
         {slideData.map((slide, index) => {
             return (
-                <div className={index === currentSlide ? "h-full pageSlide currentPage hidden sm:block" : "hidden sm:block pageSlide"} key={index}>
+                <div className={index === currentSlide ? "w-full h-full pageSlide currentPage hidden sm:block" : "hidden sm:block pageSlide"} key={index}>
                 {index === currentSlide && (
                 <div className='relative'>
                     <div className='absolute inset-0 bg-gradient-to-t from-black from-0%'></div>
