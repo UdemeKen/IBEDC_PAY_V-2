@@ -19,7 +19,8 @@ import PostpaidTransactionReceipt from "./views/receipts/PostpaidTransactionRece
 const router = createBrowserRouter([
     {
         path: "/",
-        element: <GuestLayout />,
+        element: <Login />,
+        // element: <GuestLayout />,
         children: [
             {
                 path: "signup",

@@ -69,7 +69,8 @@ export default function Login() {
     }
 
   return (
-    <section className='sm:w-2/3 w-full'>
+    <section className='mt-20 w-full'>
+    {/* <section className='sm:w-2/3 w-full'> */}
         <div className='sm:block w-full h-screen sm:h-full flex flex-col justify-center items-center'>
             <div className='flex justify-center w-full'>
                 <div className='flex flex-col items-center justify-center w-full sm:w-3/4'>
