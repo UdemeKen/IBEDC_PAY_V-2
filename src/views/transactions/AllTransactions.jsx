@@ -157,9 +157,9 @@ export default function AllTransactions() {
                   <h4 className={`font-semibold text-sm text-gray-800 tracking-tighter text-left`}>
                     Date: 
                     <span className='font-normal'>
-                      {`${transaction.date_entered.slice(8,10)}-${transaction.date_entered.slice(5,7)}-${transaction.date_entered.slice(0,4)}`} | {transaction.date_entered.slice(10,16)}
+                        {`${transaction.date_entered.slice(8,10)}-${transaction.date_entered.slice(5,7)}-${transaction.date_entered.slice(0,4)}`} | {transaction.date_entered.slice(10,16)}
                     </span> 
-                    <span className={`lowercase text-emerald-900 mx-2`}>{transaction?.status}</span>
+                    <span className={`${transaction.status === 'failed' ? 'text-red-500' : transaction.status === 'processing' ? 'text-yellow-500' : 'text-green-500'} lowercase mx-2`}>{transaction?.status}</span>
                   </h4>
                 </div>
                 {/* <Link to={'/default/customerdashboard'} className={`bg-blue-950 rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out opacity-75`}>view</Link> */}

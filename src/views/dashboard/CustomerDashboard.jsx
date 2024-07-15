@@ -86,14 +86,14 @@ export default function CustomerDashboard() {
       setButtonDisabled(true);
       setLoading_01(true);
 
-      if (accountType === "Postpaid") {
-        toast.error("Visit the nearest IBEDC office for postpaid outstanding balance.", {
-          autoClose: false,
-        });
-        setButtonDisabled(false);
-        setLoading_01(false);
-        return;
-      }
+      // if (accountType === "Postpaid") {
+      //   toast.error("Visit the nearest IBEDC office for postpaid outstanding balance.", {
+      //     autoClose: false,
+      //   });
+      //   setButtonDisabled(false);
+      //   setLoading_01(false);
+      //   return;
+      // }
   
       try{
         const response = await axiosClient.post(getOutstandingBalanceUrl, requestData);
@@ -503,16 +503,27 @@ console.log(outStandingbalance);
                   <span className='font-normal'>
                     {`${transaction.date_entered.slice(8,10)}-${transaction.date_entered.slice(5,7)}-${transaction.date_entered.slice(0,4)}`} | {transaction.date_entered.slice(10,16)}
                   </span> 
-                  {blur && <span className={`lowercase text-emerald-900 ${!blur ? "opacity-90" : ""}`}>{transaction?.status}</span>}
-                  {!blur_01 && <span className={`lowercase text-emerald-900 mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction?.status}</span>}
+                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "failed" && <span className="text-red-500">{transaction.status}</span>}</span>}
+                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "processing" && <span className="text-yellow-500">{transaction.status}</span>}</span>}
+                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "success" && <span className="text-green-500">{transaction.status}</span>}</span>}
+                  {!blur_01 && <span className={`lowercase mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "failed" && <span className="text-red-500">{transaction.status}</span>}</span>}
+                  {!blur_01 && <span className={`lowercase  mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "processing" && <span className="text-yellow-500">{transaction.status}</span>}</span>}
+                  {!blur_01 && <span className={`lowercase  mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "success" && <span className="text-green-500">{transaction.status}</span>}</span>}
                 </h4>}
                 {blur && <h4 className={`font-semibold text-sm text-gray-800 ${!blur ? "opacity-75" : ""} tracking-tighter text-left`}>
                   Date: 
                   <span className='font-normal'>
                     {`${transaction.date_entered.slice(8,10)}-${transaction.date_entered.slice(5,7)}-${transaction.date_entered.slice(0,4)}`} | {transaction.date_entered.slice(10,16)}
                   </span> 
-                  {blur && <span className={`lowercase text-emerald-900 ${!blur ? "opacity-90" : ""}`}>{transaction?.status}</span>}
-                  {!blur_01 && <span className={`lowercase text-emerald-900 mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction?.status}</span>}
+                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "failed" && <span className="text-red-500">{transaction.status}</span>}</span>}
+                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "processing" && <span className="text-yellow-500">{transaction.status}</span>}</span>}
+                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "success" && <span className="text-green-500">{transaction.status}</span>}</span>}
+                  {/* {transaction.status === "fail" && <span className="text-red-500">{transaction.status}</span>}
+                  {transaction.status === "processing" && <span className="text-yellow-500">{transaction.status}</span>}
+                  {transaction.status === "success" && <span className="text-green-500">{transaction.status}</span>} */}
+                  {!blur_01 && <span className={`lowercase mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "failed" && <span className="text-red-500">{transaction.status}</span>}</span>}
+                  {!blur_01 && <span className={`lowercase mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "processing" && <span className="text-yellow-500">{transaction.status}</span>}</span>}
+                  {!blur_01 && <span className={`lowercase mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "success" && <span className="text-green-500">{transaction.status}</span>}</span>}
                 </h4>}
               </div>
               {blur &&<Link to={`/default/transactionviewdetails/${transaction.id}`} className={`bg-blue-950 ${!blur ? "opacity-75" : ""} rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out`}>view</Link>}
