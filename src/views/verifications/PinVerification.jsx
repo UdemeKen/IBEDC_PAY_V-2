@@ -9,10 +9,12 @@ const meterNoAccNoConfirmationUrl = 'https://ipay.ibedc.com:7642/api/V2_ibedc_OA
 const Accept = 'application/json';
 const appSecret = 'SK_161719MDUKDCMEU_45@MUDCaPP0921SDK_VSION11';
 const appToken = 'TK_161719MDUKDCMEU_45@MUDCaPP0921SDK_TK190MD';
+const METER_ACCT_NUMBER_REGEX = /^[0-9\-/]{11,16}$/;
 
 export default function PinVerification() {
 
     const userEmail = localStorage.getItem('USER_EMAIL');
+    // const userEmail = "apwakunyamusa@yahoo.com";
     const navigate = useNavigate();
 
     const [ pin, setPin ] = useState('');
@@ -27,7 +29,7 @@ export default function PinVerification() {
 
     const requestData = {
         "email": userEmail,
-        "pin": pin
+        "pin": pin,
     }
 
     const handleSubmit = async (e) => {
@@ -89,7 +91,12 @@ export default function PinVerification() {
 
     const requestData_03 = {
         "email": userEmail,
-        "meter_no": meterNo
+        "meter_no": meterNo,
+        "account_type": "Prepaid"
+    }
+
+    if (meterNo.length > 11 && METER_ACCT_NUMBER_REGEX.test(meterNo)) {
+        requestData_03["account_type"] = "Postpaid";
     }
 
     const handleMeterNo_AccNo_Confirmation = async (e) => {
@@ -107,7 +114,7 @@ export default function PinVerification() {
             });
             console.log(response.data?.message);
             toast.success(response?.data?.message);
-            navigate('/login');
+            navigate('/');
             setLoading_03(false);
             setButtonDisabled_03(false);
             setMeterNo('');
@@ -127,7 +134,7 @@ export default function PinVerification() {
             <div className='flex flex-col justify-center items-center space-y-4 p-8'>
                 <h1 className='text-4xl font-bold'>Verify it's you</h1>
                 <p className='w-2/3 text-center'>We've sent a verification PIN CODE to your email <span className='font-semibold'>{userEmail}</span></p>
-                <p>Enter the code from the email in the field below:</p>
+                <p>Enter the code from the email in the field below</p>
                 <form className='flex flex-col justify-center items-center space-y-4'>
                     <input 
                         id='pin'
@@ -188,7 +195,7 @@ export default function PinVerification() {
             </button>
         </div>
         {blur && <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm'></div>}
-        {!loading_03 && <div className={`flex flex-col justify-center items-center relative bottom-64 w-1/3 bg-white py-4 rounded-lg ${!blur ? "hidden" : "block"}`}>
+        {!loading_03 && <div className={`flex flex-col justify-center items-center relative bottom-64 mx-6 sm:mx-0 sm:w-1/2 bg-white py-4 rounded-lg ${!blur ? "hidden" : "block"}`}>
             <form className='flex flex-col justify-normal items-center space-y-2 w-full px-16'>
                 <label className='block text-sm font-medium text-slate-600 capitalize text-center'>
                 Enter meter/account number for confirmation:
@@ -202,14 +209,14 @@ export default function PinVerification() {
                     required
                     name="meter/account number"
                     placeholder='Enter meter/account number'
-                    className="block w-full rounded-md border-0 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-slate-600 text-sm sm:leading-6"
+                    className="block text-center w-full rounded-md border-0 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-slate-600 text-sm sm:leading-6"
                 />
-                <button onClick={handleMeterNo_AccNo_Confirmation} disabled={buttonDisabled_03} className={`w-1/2 rounded-md py-1 px-6 text-sm font-semibold leading-6 shadow-sm transition duration-300 ease-in-out ${
+                <button onClick={handleMeterNo_AccNo_Confirmation} disabled={buttonDisabled_03} className={`w-1/2 rounded-md py-1 px-2 text-sm font-semibold leading-6 shadow-sm transition duration-300 ease-in-out ${
                         (buttonDisabled_03)
                         ? 'w-1/2 bg-blue-950 opacity-30 text-white cursor-not-allowed'
                         : 'w-1/2 bg-blue-950 bg-opacity-75 text-white hover:bg-orange-500 hover:bg-opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-900'
                     }`}>
-                    <p>Sign up</p>
+                    <p className='text-base'>Sign up</p>
                 </button>
             </form>
         </div>}

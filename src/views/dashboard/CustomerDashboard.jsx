@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import '../../components/UniversalCss.css';
 import { Frame_01, Advert_01 } from '../../assets/images';
 import { VectorIcon } from '../../assets/icons';
+import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faTimes, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { CreditCardIcon, BanknotesIcon, PhoneIcon, WalletIcon } from '@heroicons/react/24/outline';
@@ -10,21 +11,25 @@ import CompletePayment from '../../components/paymentProcess/CompletePayment';
 import { Link } from 'react-router-dom';
 import axiosClient from '../../axios';
 import { toast } from 'react-toastify';
+import { heroVariants } from '../../variants';
 
 const transactionHistoryUrl = "/history/get-history";
+// const getCustomerDetailsUrl = "/dashboard/get-details";
 const getOutstandingBalanceUrl = "/outstanding/get-balance";
 const showOutstandingBalanceUrl = "/outstanding/show-balance";
-const getWalletBalance_HistoryUrl = "/wallet/wallet-balance-history";
+// const getWalletBalance_HistoryUrl = "/wallet/wallet-balance-history";
 const METER_ACCT_NUMBER_REGEX = /^[0-9\-/]{11,16}$/;
 
 
 export default function CustomerDashboard() {
 
   const userEmail = localStorage.getItem("USER_EMAIL");
-  const accountName = localStorage.getItem("ACCOUNT_NAME");
-  const accountNumber = localStorage.getItem("ACCOUNT_NUMBER");
-  const bankName = localStorage.getItem("BANK_NAME");
-
+  const username = localStorage.getItem("USER_NAME");
+  const account_type = localStorage.getItem("ACCOUNT_TYPE");
+  const meterNumber = localStorage.getItem("USER_METER_NUMBER");
+  // const phoneNumber = localStorage.getItem("PHONE_NUMBER");
+  const cleanedUsername = username ? username.replace(/\./g, '') : '';
+  
   const [ transactionHistory, setTransactionHistory ] = useState([]);
   const [ loading, setLoading ] = useState(false);
   const [ loading_01, setLoading_01 ] = useState(false);
@@ -39,12 +44,12 @@ export default function CustomerDashboard() {
   const [ user, setUser ] = useState('');
   const [ formattedUser, setFormattedUser ] = useState('');
   const [ validMeterAcctNo, setValidMeterAcctNo ] = useState(false);
-  const [ walletHistory, setWalletHistory ] = useState([]);
-  const [ walletBalance, setWalletBalance ] = useState("")
+  // const [ walletHistory, setWalletHistory ] = useState([]);
+  // const [ walletBalance, setWalletBalance ] = useState("")
   const [ pin, setPin ] = useState("")
   const [ success, setSuccess ] = useState();
   const [ outStandingbalance, setOutStandingbalance ] = useState("");
-  console.log(walletBalance);
+  console.log(accountType);
 
   useEffect(() => {
     const isValid = METER_ACCT_NUMBER_REGEX.test(user);
@@ -67,31 +72,45 @@ export default function CustomerDashboard() {
   }, [accountType, user]);
   
   const meterNo_Or_AccountNo = accountType === "Postpaid" ? formattedUser : user;
+  console.log(meterNo_Or_AccountNo);
 
   const requestData = {
     "email": userEmail,
     "account_type": accountType,
-    "account_no": meterNo_Or_AccountNo,
+    "account_no": meterNumber,
   };
 
-  const handleGetOutStandingBalance = async (e) => {
-    e.preventDefault();
-    setButtonDisabled(true);
-    setLoading_01(true);
+  // useEffect(() => {
+    const handleGetOutStandingBalance = async (e) => {
+      e.preventDefault();
+      setButtonDisabled(true);
+      setLoading_01(true);
 
-    try{
-      const response = await axiosClient.post(getOutstandingBalanceUrl, requestData);
-      toast.success(response?.data?.message);
-      setButtonDisabled(false);
-      setLoading_01(false);
-      setBlur_01(false);
-      setBlur_02(true);
-    }catch(error){
-      console.log(error);
-      setButtonDisabled(false);
-      setLoading_01(false);
-    };
-  }
+      if (accountType === "Postpaid") {
+        toast.error("Visit the nearest IBEDC office for postpaid outstanding balance.", {
+          autoClose: false,
+        });
+        setButtonDisabled(false);
+        setLoading_01(false);
+        return;
+      }
+  
+      try{
+        const response = await axiosClient.post(getOutstandingBalanceUrl, requestData);
+        console.log(response);
+        toast.success(response?.data?.message);
+        setButtonDisabled(false);
+        setLoading_01(false);
+        setBlur_01(false);
+        setBlur_02(true);
+      }catch(error){
+        console.log(error);
+        setButtonDisabled(false);
+        setLoading_01(false);
+      };
+    }
+    // handleGetOutStandingBalance();
+  // }, []);
 
   const requestData_01 = {
     "email": userEmail,
@@ -105,8 +124,16 @@ export default function CustomerDashboard() {
     setButtonDisabled(true);
     setLoading_03(true);
 
+    if (pin === "") {
+      toast.error("Please enter the PIN sent to your email");
+      setButtonDisabled(false);
+      setLoading_03(false);
+      return;
+    }
+
     try{
       const response = await axiosClient.post(showOutstandingBalanceUrl, requestData_01);
+      console.log(response);
       toast.success(response?.data?.message);
       setSuccess(response?.data?.success);
       setOutStandingbalance(response?.data?.payload?.balance?.Balance);
@@ -117,7 +144,8 @@ export default function CustomerDashboard() {
       setUser("");
       setPin("");
     }catch(error){
-      console.log(error);
+      console.log(error.response?.data?.payload);
+      toast.error(error.response?.data?.payload);
       setButtonDisabled(false);
       setLoading_03(false);
       setBlur_02(false);
@@ -127,6 +155,7 @@ export default function CustomerDashboard() {
   }
 };
 
+console.log(outStandingbalance);
 
   const handleBlur_01 = () => {
     setBlur_01(!blur_01);
@@ -139,54 +168,82 @@ export default function CustomerDashboard() {
     setAccountType("");
     setUser("");
   };
-
+  
+  // useEffect(() => {
+  //   const getCustomerDetails = async () => {
+  //     try {
+  //       const response = await axiosClient.get(getCustomerDetailsUrl);
+  //       console.log(response?.data);
+  //     }catch(error) {
+  //       console.log(error);
+  //     };
+  //   }
+  //   getCustomerDetails();
+  // }, []);
+  
   useEffect(() => {
     const getTransactionHistory = async () => {
       setLoading(true);
       try {
         const response = await axiosClient.get(transactionHistoryUrl);
+        console.log(response?.data?.payload?.data?.[0]);
         setTransactionHistory(response?.data?.payload?.data);
         localStorage.setItem('TRANSACTION_HISTORY', JSON.stringify(response?.data?.payload?.data || []));
+        localStorage.setItem('CUSTOMER_NAME', JSON.stringify(response?.data?.payload?.data?.[0]?.customer_name));
+        localStorage.setItem('ACCOUNT_TYPE', JSON.stringify(response?.data?.payload?.data?.[0]?.account_type));
+        localStorage.setItem('METER_NUMBER', JSON.stringify(response?.data?.payload?.data?.[0]?.meter_no));
+        localStorage.setItem('PHONE_NUMBER', JSON.stringify(response?.data?.payload?.data?.[0]?.phone));
+        localStorage.setItem('BUSINESS_HUB', JSON.stringify(response?.data?.payload?.data?.[0]?.udertaking));
+        localStorage.setItem('TARRIF_CODE', JSON.stringify(response?.data?.payload?.data?.[0]?.tariffcode));
         setLoading(false);
       }catch(error) {
         console.log(error);
-    };
-  }
-  getTransactionHistory();
-  }, [user]);
-
-  useEffect(() => {
-      const getWalletBalance_History = async () => {
-        setLoading_02(true);
-        try{
-          const response = await axiosClient.get(getWalletBalance_HistoryUrl);
-          setWalletHistory(response?.data?.payload?.balance_history);
-          setWalletBalance(response?.data?.payload?.user_balance?.wallet_amount);
-          localStorage.setItem('WALLET_HISTORY', JSON.stringify(response?.data?.payload?.balance_history || []));
-          localStorage.setItem('WALLET_BALANCE', response?.data?.payload?.user_balance?.wallet_amount);
-          setLoading_02(false);
-        }catch(error){
-          console.log(error);
-        };
-      }
-      getWalletBalance_History();
+      };
+    }
+    getTransactionHistory();
   }, []);
 
-  console.log(walletBalance);
+  // useEffect(() => {
+  //     const getWalletBalance_History = async () => {
+  //       setLoading_02(true);
+  //       try{
+  //         const response = await axiosClient.get(getWalletBalance_HistoryUrl);
+  //         setWalletHistory(response?.data?.payload?.balance_history);
+  //         setWalletBalance(response?.data?.payload?.user_balance?.wallet_amount);
+  //         localStorage.setItem('WALLET_HISTORY', JSON.stringify(response?.data?.payload?.balance_history || []));
+  //         localStorage.setItem('WALLET_BALANCE', response?.data?.payload?.user_balance?.wallet_amount);
+  //         setLoading_02(false);
+  //       }catch(error){
+  //         console.log(error);
+  //       };
+  //     }
+  //     getWalletBalance_History();
+  // }, []);
+
+  console.log(outStandingbalance);
+
 
   return (
-    <section className={`mx-2 mt-4 sm:mx-20 ${blur || blur_01 || blur_02 ? "fixed sm:w-4/5" : ""} w-full sm:w-4/5`} >
+    <div className='bg-white bg-cover pb-4'>
+    <motion.section 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 1 }}
+    className={`mx-2 mt-4 sm:mx-20 ${blur || blur_01 || blur_02 ? "fixed sm:w-4/5" : ""} w-full sm:w-4/5`} >
           {blur && <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm'></div>}
           {blur_01 && <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm' onClick={handleBlur_01}></div>}
           {blur_02 && <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm' onClick={handleBlur_02}></div>}
       <div className={`flex justify-center items-center top-0 relative ${!blur ? "hidden" : "block"}`}>
         <CompletePayment blur={blur} blur_01={blur_01} setBlur={setBlur} setBlur_01={setBlur_01}/>
       </div>
-      <div className={`flex justify-center items-center top-20 relative lg:mx-80 rounded-md ${!blur_01 ? "hidden" : "block"}`}>
-      <div className='bg-slate-300 rounded-md w-full'>
+      <div className={`flex justify-center items-center top-20 ml-16 sm:ml-0 right-32 sm:right-0 relative lg:mx-80 rounded-md ${!blur_01 ? "hidden" : "block"}`}>
+      <div className='bg-slate-300 rounded-md w-72 sm:w-full'>
             <div className='flex flex-col justify-center items-center space-y-4 p-8'>
                 <h1 className='text-4xl font-bold text-center'>Verify account</h1>
-                <form className='flex flex-col justify-center space-y-3 xs:w-64 w-full px-4 my-4' onSubmit={handleGetOutStandingBalance}>
+                <form className='flex flex-col justify-center space-y-3 xs:w-64 w-full px-4 my-4' 
+                onSubmit={handleGetOutStandingBalance}
+                >
                 <div>
                   <label className='block text-sm font-medium text-slate-600 capitalize mb-2 mx-2 text-center'>
                       account type
@@ -263,13 +320,15 @@ export default function CustomerDashboard() {
             </div>
         </div>
       </div>
-      <div className={`flex justify-center items-center top-20 relative lg:mx-80 rounded-md ${!blur_02 ? "hidden" : "block"}`}>
+      <div className={`flex justify-center items-center top-20 ml-16 sm:ml-0 right-32 sm:right-0 relative lg:mx-80 rounded-md ${!blur_02 ? "hidden" : "block"}`}>
       <div className='bg-slate-300 rounded-md w-full'>
       <div className='flex flex-col justify-center items-center space-y-4 p-8'>
-                <h1 className='text-4xl font-bold'>Verify it's you</h1>
-                <p className='w-2/3 text-center'>We've sent a verification PIN CODE to your email <span className='font-semibold'>{userEmail}</span></p>
+                <h1 className='text-4xl font-bold text-center'>Verify it's you</h1>
+                <p className=' text-center'>We've sent a verification PIN CODE to your email <span className='font-semibold text-center w-full'>{userEmail}</span></p>
                 <p className='text-center'>Enter the code from the email in the field below:</p>
-                <form className='flex flex-col justify-center items-center space-y-4' onSubmit={handleShowOutStandingBalance}>
+                <form className='flex flex-col justify-center items-center space-y-4'
+                onSubmit={handleShowOutStandingBalance}
+                >
                     <input 
                         id='pin'
                         type="text"
@@ -278,7 +337,7 @@ export default function CustomerDashboard() {
                         autoComplete='off'
                         required
                         placeholder="Enter PIN"
-                        className="block w-1/2 rounded-md border-0 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-slate-600 text-2xl text-center sm:leading-6"
+                        className="block w-1/2 rounded-md border-0 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-slate-600 text-sm sm:text-2xl text-center sm:leading-6"
                         />
                     <div>
                     <button disabled={buttonDisabled} className={`w-full rounded-md py-1 px-6 text-sm font-semibold leading-6 shadow-sm transition duration-300 ease-in-out ${
@@ -306,8 +365,19 @@ export default function CustomerDashboard() {
             </div>
         </div>
       </div>
-      <div className={`flex flex-col space-y-4 sm:space-y-0 sm:flex-row justify-normal sm:space-x-4 lg:px-10 sm:mt-10 ${blur || blur_01 || blur_02 ? "hidden" : ""}`}>
-        <div className='relative shadow-sm shadow-slate-500 w-full h-40 rounded-lg flex flex-col justify-center items-center'>
+      <motion.div 
+        variants={heroVariants.hero_09Variants}
+        initial="hidden"
+        animate="visible"
+      className={`flex flex-col space-y-4 sm:space-y-0 sm:flex-row justify-normal sm:space-x-4 lg:px-10 sm:mt-10 ${blur || blur_01 || blur_02 ? "hidden" : ""}`}>
+        <div className='flex flex-col justify-normal space-y-4 w-full text-xs'>
+            <h1 className='flex font-semibold text-lg'>Welcome! <span className='text-blue-950 opacity-80 font-semibold ml-1'>{cleanedUsername}</span></h1>
+            <h1 className='flex font-semibold w-full'>Meter/Acct No: <span className='font-normal ml-1'>{meterNumber === null ? "" : meterNumber === "undefined" ? "Not yet available" : meterNumber.replace(/"/g, '')}</span></h1>
+            <h1 className='flex font-semibold w-full'>Account Type: <span className='font-normal ml-1'>{meterNumber && meterNumber.length > 11 ? "Postpaid" : "Prepaid"}</span></h1>
+            {/* <h1 className='flex font-semibold w-full'>Phone Number: <span className='font-normal ml-1'>{phoneNumber === null ? "" : phoneNumber === "undefined" ? "Not yet available" : phoneNumber.replace(/"/g, '')}</span></h1> */}
+            {/* <h1 className='flex font-semibold w-full'>Address: <span className='font-normal ml-1'>{"Not found"}</span></h1> */}
+        </div>
+        <div className='relative shadow-sm shadow-slate-500 w-full h-52 rounded-lg flex flex-col justify-center items-center'>
           <img 
             src={Frame_01}
             alt={'Frame_01'}
@@ -317,14 +387,16 @@ export default function CustomerDashboard() {
           <div className='absolute flex flex-col justify-center items-center capitalize text-white'>
               <CreditCardIcon className='w-8 h-8'/>
             <p className='text-center'>outstanding balance</p>
-            {success === true ? <p className='text-4xl font-semibold'>₦{outStandingbalance}</p> : ""}
-            {/* <button onClick={handleBlur_01} className='bg-slate-300 text-slate-600 rounded-md capitalize text-sm transform duration-300 ease-in-out hover:px-2'> */}
-              {/* <p className='px-2'>click to view</p> */}
-              <p className='text-4xl font-semibold'>₦ 0.00</p>
-            {/* </button> */}
+              {outStandingbalance === undefined && <p className='text-4xl font-semibold'>₦0.00</p>}
+              {outStandingbalance === "" && <p className='text-4xl font-semibold'></p>}
+              {outStandingbalance !== undefined && outStandingbalance !== "" && <p className='text-4xl font-semibold'>{`₦ ${outStandingbalance}`}</p>}
+            {/* {success === true ? <p className='text-4xl font-semibold'>₦{outStandingbalance}</p> : ""} */}
+            <button onClick={handleBlur_01} className='bg-slate-300 text-slate-600 rounded-md capitalize text-sm transform duration-300 ease-in-out hover:px-2'>
+              <p className='px-2'>click to view</p>
+            </button>
           </div>
         </div>
-        <div className='relative flex-grow shadow-sm shadow-slate-500 w-full h-40 rounded-lg flex flex-col justify-center items-center'>
+        {accountType === "Postpaid" && <div className='relative flex-grow shadow-sm shadow-slate-500 w-full h-52 rounded-lg flex flex-col justify-center items-center'>
           <img 
             src={Frame_01}
             alt={'Frame_01'}
@@ -336,8 +408,8 @@ export default function CustomerDashboard() {
             <p>current bill</p>
             <p className='text-4xl font-semibold'>₦ 0.00</p>
           </div>
-        </div>
-        <div className='relative flex-grow shadow-sm shadow-slate-500 w-full h-40 rounded-lg flex flex-col justify-center items-center'>
+        </div>}
+        <div className='relative flex-grow shadow-sm shadow-slate-500 w-full h-52 rounded-lg flex flex-col justify-center items-center'>
         <img 
             src={Frame_01}
             alt={'Frame_01'}
@@ -350,7 +422,7 @@ export default function CustomerDashboard() {
             <p className='lg:text-2xl font-semibold text-center'>call: 07001239999</p>
           </div>
         </div>
-        <div className='relative flex-grow shadow-sm shadow-slate-500 w-full h-40 rounded-lg flex flex-col justify-center items-center'>
+        {/* <div className='relative flex-grow shadow-sm shadow-slate-500 w-full h-40 rounded-lg flex flex-col justify-center items-center'>
         <img 
             src={Frame_01}
             alt={'Frame_01'}
@@ -375,10 +447,15 @@ export default function CustomerDashboard() {
             </div>
             }
             {!loading && <p className='text-4xl font-semibold'>₦ {walletBalance}</p>}
+            <p className='normal-case'>-Not yet available-</p>
           </div>
-        </div>
-      </div>
-      <div className='flex flex-col space-y-4 sm:space-y-0 sm:flex-row justify-center sm:space-x-4 lg:px-10 my-8 sm:my-10 w-full'>
+        </div> */}
+      </motion.div>
+      <motion.div 
+        variants={heroVariants.hero_10Variants}
+        initial="hidden"
+        animate="visible"
+      className='flex flex-col space-y-4 sm:space-y-0 sm:flex-row justify-center sm:space-x-4 lg:px-10 my-8 sm:my-10 w-full'>
         <div className='shadow-sm shadow-slate-500 w-full sm:w-3/4 rounded-lg'>
           <div className='flex justify-between items-center shadow-sm shadow-slate-500 rounded-t-lg capitalize text-lg font-semibold px-4 py-2'>
             <h2 className='text-slate-600'>make payment</h2>
@@ -438,13 +515,17 @@ export default function CustomerDashboard() {
                   {!blur_01 && <span className={`lowercase text-emerald-900 mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction?.status}</span>}
                 </h4>}
               </div>
-              {blur &&<Link to={'/default/customerdashboard'} className={`bg-blue-950 ${!blur ? "opacity-75" : ""} rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out`}>view</Link>}
-              {!blur_01 &&<Link to={'/default/customerdashboard'} className={`bg-blue-950 ${!blur_01 ? "opacity-75" : ""} rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out`}>view</Link>}
+              {blur &&<Link to={`/default/transactionviewdetails/${transaction.id}`} className={`bg-blue-950 ${!blur ? "opacity-75" : ""} rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out`}>view</Link>}
+              {!blur_01 &&<Link to={`/default/transactionviewdetails/${transaction.id}`} className={`bg-blue-950 ${!blur_01 ? "opacity-75" : ""} rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out`}>view</Link>}
             </div>
           )).slice(0,5) : null}
         </div>
-      </div>
-      <div className='flex flex-col sm:flex-row justify-center sm:space-x-4 lg:px-10 sm:my-10'>
+      </motion.div>
+      <motion.div 
+        variants={heroVariants.hero_11Variants}
+        initial="hidden"
+        animate="visible"
+      className={`flex flex-col sm:flex-row justify-center sm:space-x-4 lg:px-10 sm:my-10 ${blur && 'hidden'}`}>
         <div className='relative shadow-sm shadow-slate-500 w-3/4 rounded-lg flex justify-center items-center hidden sm:block'>
           <div className='absolute inset-0 bg-gradient-to-t from-orange-500 opacity-80 rounded-lg from-0%'></div>
           <img
@@ -459,16 +540,17 @@ export default function CustomerDashboard() {
               <h2 className='font-semibold text-slate-700 opacity-75'>Account details</h2>
               <hr className='w-4/5 border-1 border-black'/>
             </div>
-            <ul className='text-xs capitalize m-2 flex flex-col justify-center items-center italic font-semibold space-y-1 mb-4'>
+            <h1 className='mt-10 font-semibold text-xl text-center'>Not yet Available</h1>
+            {/* <ul className='text-xs capitalize m-2 flex flex-col justify-center items-center italic font-semibold space-y-1 mb-4'>
               <li className='text-center'>account name:<br /> <span className='not-italic font-normal'>{accountName}</span></li>
               <li className='text-center'>account NO:<br /> <span className='not-italic font-normal'>{accountNumber}</span></li>
               <li className='text-center'>bank name:<br /> <span className='not-italic font-normal'>{bankName}</span></li>
-            </ul>
-            <div>
+            </ul> */}
+            {/* <div>
               <Link to={""} className='px-4 font-semibold text-lg bg-slate-500 text-slate-200 rounded-md capitalize hover:bg-orange-500 opacity-75 transform duration-300 ease-in-out sm:py-2'>
                 fund wallet
               </Link>
-            </div>
+            </div> */}
           </div>
           <div className='shadow-sm shadow-slate-500 w-full rounded-r-lg'>
             <ul className='flex justify-between text-sm p-1 capitalize font-semibold text-slate-600'>
@@ -492,31 +574,32 @@ export default function CustomerDashboard() {
                 </div>
             </div>
             }
-            {!loading_02 && walletHistory.length === 0 && 
+            {/* {!loading_02 && walletHistory.length === 0 &&  */}
             <div className='flex flex-row justify-center items-center rounded-lg px-4 py-2 mx-2 shadow-sm shadow-gray-500'>
-              <h4 className='text-gray-800 opacity-75 tracking-tighter'>No wallet history</h4>
+              <h4 className='text-gray-800 opacity-75 tracking-tighter text-center'>This update is not yet available </h4>
             </div>
-            }
-            {!loading_02 && walletHistory.length > 0 && 
+            {/* } */}
+            {/* {!loading_02 && walletHistory.length > 0 &&  */}
             <div>
-              {walletHistory.map((wallHistory) => (
-              <div className='shadow-sm shadow-slate-500 rounded-md m-2 flex justify-between items-center p-2'>
+              {/* {walletHistory.map((wallHistory) => ( */}
+              {/* <div className='shadow-sm shadow-slate-500 rounded-md m-2 flex justify-between items-center p-2'> */}
                 <div>
                   <>
-                    <p className='text-xs capitalize'>credited: <span>&#8358;{(Number(wallHistory.price)).toLocaleString()}</span></p>
-                    <p className='text-xs capitalize'>date: <span>{`${wallHistory.created_at.slice(8,10)}-${wallHistory.created_at.slice(5,7)}-${wallHistory.created_at.slice(0,4)}`} | {wallHistory.created_at.slice(11,16)}</span></p>
+                    {/* <p className='text-xs capitalize'>credited: <span>&#8358;{(Number(wallHistory.price)).toLocaleString()}</span></p> */}
+                    {/* <p className='text-xs capitalize'>date: <span>{`${wallHistory.created_at.slice(8,10)}-${wallHistory.created_at.slice(5,7)}-${wallHistory.created_at.slice(0,4)}`} | {wallHistory.created_at.slice(11,16)}</span></p> */}
                   </>
                 </div>
-                <div className='bg-blue-950 opacity-75 flex justify-center items-center rounded-md cursor-pointer text-xs px-2 py-1 text-white hover:bg-orange-500 transform duration-300 ease-in-out'>
+                {/* <div className='bg-blue-950 opacity-75 flex justify-center items-center rounded-md cursor-pointer text-xs px-2 py-1 text-white hover:bg-orange-500 transform duration-300 ease-in-out'>
                   <Link to={""}>view</Link>
-                </div>
-              </div>
-              )).slice(0, 3)}
+                </div> */}
+              {/* </div> */}
+              {/* )).slice(0, 3)} */}
             </div>
-            }
+            {/* } */}
           </div>
         </div>
-      </div>
-    </section>
+      </motion.div>
+    </motion.section>
+    </div>
   )
 }

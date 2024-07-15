@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { FormView, FormViewHide } from 'grommet-icons';
 import axiosClient from '../../axios';
 import { toast } from 'react-toastify';
@@ -10,6 +10,7 @@ const loginUrl = '/authenticate';
 export default function Login() {
 
     const navigate = useNavigate();
+    const location = useLocation();
 
     const { setCurrentUser, setUserToken } = useStateContext();
     const [ email, setEmail ] = useState('');
@@ -34,9 +35,12 @@ export default function Login() {
             console.log(response?.data?.payload?.user?.name);
             localStorage.setItem('USER_NAME', response?.data?.payload?.user?.name);
             localStorage.setItem('USER_EMAIL', response?.data?.payload?.user?.email);
-            localStorage.setItem('BANK_NAME', response?.data?.payload?.user?.virtual_account?.bank_name);
-            localStorage.setItem('ACCOUNT_NAME', response?.data?.payload?.user?.virtual_account?.account_name);
-            localStorage.setItem('ACCOUNT_NUMBER', response?.data?.payload?.user?.virtual_account?.account_no);
+            localStorage.setItem('USER_METER_NUMBER', response?.data?.payload?.user?.meter_no_primary);
+            localStorage.setItem('USER_PHONE', response?.data?.payload?.user?.phone);
+            localStorage.setItem('USER_ID', response?.data?.payload?.user?.id);
+            // localStorage.setItem('BANK_NAME', response?.data?.payload?.user?.virtual_account?.bank_name);
+            // localStorage.setItem('ACCOUNT_NAME', response?.data?.payload?.user?.virtual_account?.account_name);
+            // localStorage.setItem('ACCOUNT_NUMBER', response?.data?.payload?.user?.virtual_account?.account_no);
             console.log(response?.data?.payload?.token);
             setUserToken(response?.data?.payload?.token);
             setCurrentUser(response?.data?.payload?.user?.name);
@@ -48,7 +52,7 @@ export default function Login() {
             setPassword('');
         }catch(error) {
             console.log(error);
-            toast.error(error.response?.data?.message);
+            toast.error(error.response?.data?.payload);
             setLoading(false);
             setButtonDisabled(false);
             setEmail('');
@@ -69,8 +73,7 @@ export default function Login() {
     }
 
   return (
-    <section className='mt-20 w-full'>
-    {/* <section className='sm:w-2/3 w-full'> */}
+    <section className='sm:w-2/3 w-full'>
         <div className='sm:block w-full h-screen sm:h-full flex flex-col justify-center items-center'>
             <div className='flex justify-center w-full'>
                 <div className='flex flex-col items-center justify-center w-full sm:w-3/4'>
@@ -80,7 +83,8 @@ export default function Login() {
                     <form className='flex flex-col justify-center space-y-3 xs:w-64 w-4/5' 
                     onSubmit={handleSubmit}
                     >
-                        <div>
+                        <Outlet />
+                        <div className={`${location.pathname === "/meternumber" ? "hidden" : ""}`}>
                         <label className='block text-sm font-medium text-slate-600 capitalize'>
                         email address
                         </label>
@@ -98,7 +102,7 @@ export default function Login() {
                             />
                         </div>
                         </div>
-                        <div>
+                        <div className={`${location.pathname === "/meternumber" ? "hidden" : ""}`}>
                         <label className='block text-sm font-medium text-slate-600 capitalize'>
                         password
                         </label>
@@ -118,7 +122,7 @@ export default function Login() {
                             />
                         </div>
                         </div>
-                        <div className='flex flex-col justify-center items-center'>
+                        <div className={`flex flex-col justify-center items-center ${location.pathname == "/" ? "block" : "hidden"}`}>
                         <button
                         type="submit"
                         disabled={buttonDisabled}
@@ -129,7 +133,7 @@ export default function Login() {
                         }`}
                         onClick={handleSubmit}
                         >
-                        {!loading && <p>Sign up</p>}
+                        {!loading && <p>Sign in</p>}
                         {loading && 
                         <div className='flex flex-row justify-center space-x-2'>
                             <div>
@@ -145,8 +149,14 @@ export default function Login() {
                         }
                         </button>
                         </div>
-                        <div className='flex flex-col items-center space-y-12 text-slate-500'>
-                            <div className='capitalize text-sm mt-4'>
+                        <div className='flex flex-col items-center space-y-4 text-slate-500'>
+                            {location.pathname == "/" && <div className='text-sm font-semibold text-center my-5'>
+                                <p>Don't have a password? Click <span className='text-orange-500'><Link to={"/meternumber"}>here</Link></span> to login with your <span className='capitalize'>meter number</span> and <span className='capitalize'>account type</span></p>
+                            </div>}
+                            {location.pathname == "/meternumber" && <div className='text-sm font-semibold text-center my-5'>
+                                <p>Don't have a meter number? Click <span className='text-orange-500'><Link to={"/"}>here</Link></span> to login with your <span className='capitalize'>password</span></p>
+                            </div>}
+                            <div className='capitalize text-sm'>
                                 <Link to={"/forgotpassword"} className={"text-amber-600 opacity-70 hover:text-orange-500 hover:font-semibold transform duration-300 ease-in-out"}>forgot password</Link>
                             </div>
                             <div className='text-xs font-semibold text-center'>

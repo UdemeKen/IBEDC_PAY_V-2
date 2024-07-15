@@ -1,13 +1,41 @@
 import React, { useState } from 'react'
+import axiosClient from '../../axios';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
+
+const verifyPasswordUrl = '/verify-password';
 
 export default function VerifyPassword() {
 
     const [ loading, setLoading ] = useState(false);
     const [ buttonDisabled, setButtonDisabled ] = useState(false);
-    const [ userEmail, setUserEmail ] = useState("");
     const [ pin, setPin ] = useState("");
-
-    const handleSubmit = (e) => {
+    const navigate = useNavigate();
+    const userEmail = localStorage.getItem('USER_EMAIL');
+    
+    const requestData = {
+        email: userEmail,
+        pin: pin
+    }
+    
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setButtonDisabled(true);
+        
+        try {
+            const response = await axiosClient.post(verifyPasswordUrl, requestData);
+            console.log(response);
+            toast.success(response?.data?.payload?.message);
+            navigate('/resetpassword');
+            setLoading(false);
+            setButtonDisabled(false);
+        }catch (error) {
+            console.log(error);
+            toast.error("Invalid PIN CODE");
+            setLoading(false);
+            setButtonDisabled(false);
+        }
 
     };
 
@@ -24,7 +52,10 @@ export default function VerifyPassword() {
                         id='pin'
                         type="text"
                         value={pin}
-                        onChange={(e) => setPin(e.target.value)}
+                        onChange={(e) => {
+                            setPin(e.target.value)
+                            localStorage.setItem('USER_CODE', e.target.value);
+                        }}
                         autoComplete='off'
                         required
                         placeholder="Enter PIN"

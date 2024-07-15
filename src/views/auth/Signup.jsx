@@ -55,10 +55,6 @@ export default function Signup() {
             toast.error(error.response.data.payload.phone);
             setLoading(false);
             setButtonDisabled(false);
-            setFullNmae('');
-            setEmail('');
-            setPhoneNumber('');
-            setPassword('');
         }
     };
 
@@ -181,7 +177,7 @@ export default function Signup() {
                         </div>
                         <div className='flex flex-col justify-center items-center space-y-12 text-slate-500'>
                             <div className='text-xs mt-6 font-semibold text-center'>
-                                <p className=''>Already an IBEDC Customer? <span className='text-orange-500'><Link to={"/login"}>Login</Link></span></p>
+                                <p className=''>Already an IBEDC Customer? <span className='text-orange-500'><Link to={"/"}>Login</Link></span></p>
                             </div>
                         </div>
                     </form>

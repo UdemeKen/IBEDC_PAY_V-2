@@ -15,84 +15,108 @@ import ResetPassword from "./views/resetPassword/ResetPassword";
 import TransactionViewDetails from "./views/viewDetails/TransactionViewDetails";
 import PrepaidTransactionReceipt from "./views/receipts/PrepaidTransactionReceipt";
 import PostpaidTransactionReceipt from "./views/receipts/PostpaidTransactionReceipt";
+import MeterNumberLogin from "./views/auth/loginTypes/MeterNumberLogin";
+import ErrorBoundary from "./views/errorBoundary/ErrorBoundary";
+import ErrorPage from "./views/errorBoundary/ErrorPage";
 
 const router = createBrowserRouter([
     {
         path: "/",
-        element: <Login />,
-        // element: <GuestLayout />,
+        element: <ErrorBoundary><GuestLayout /></ErrorBoundary>,
         children: [
             {
                 path: "signup",
-                element: <Signup />
+                element: <ErrorBoundary><Signup /></ErrorBoundary>,
+                errorElement: <ErrorPage />
             },
             {
-                path: "login",
-                element: <Login />
+                path: "",
+                element: <ErrorBoundary><Login /></ErrorBoundary>,
+                children: [
+                    {
+                        path: "meternumber",
+                        element: <ErrorBoundary><MeterNumberLogin /></ErrorBoundary>,
+                        errorElement: <ErrorPage />
+                    }
+                ]
             }
         ]
     },
     {
         path: "/default",
-        element: <DefaultLayout />,
+        element: <ErrorBoundary><DefaultLayout /></ErrorBoundary>,
         children: [
             {
                 path: "customerdashboard",
-                element: <CustomerDashboard />
+                element: <ErrorBoundary><CustomerDashboard /></ErrorBoundary>,
+                errorElement: <ErrorPage />
             },
             {
                 path: "completepayment",
-                element: <CompletePayment />
+                element: <ErrorBoundary><CompletePayment /></ErrorBoundary>,
+                errorElement: <ErrorPage />
             },
             {
                 path: "wallet",
-                element: <WalletPage />
+                element: <ErrorBoundary><WalletPage /></ErrorBoundary>,
+                errorElement: <ErrorPage />
             },
             {
                 path: "alltransactions",
-                element: <AllTransactions />
+                element: <ErrorBoundary><AllTransactions /></ErrorBoundary>,
+                errorElement: <ErrorPage />
             },
             {
                 path: "profile",
-                element: <UserProfile />
+                element: <ErrorBoundary><UserProfile /></ErrorBoundary>,
+                errorElement: <ErrorPage />
             },
             {
                 path: "faq",
-                element: <FAQ />
+                element: <ErrorBoundary><FAQ /></ErrorBoundary>,
+                errorElement: <ErrorPage />
             },
             {
                 path: "contactus",
-                element: <ContactUs />
+                element: <ErrorBoundary><ContactUs /></ErrorBoundary>,
+                errorElement: <ErrorPage />
             },
             {
-                path: "transactionviewdetails",
-                element: <TransactionViewDetails />
+                path: "transactionviewdetails/:id",
+                element: <ErrorBoundary><TransactionViewDetails /></ErrorBoundary>,
+                errorElement: <ErrorPage />
             },
         ]
     },
     {
-        path: "prepaidtransactionreceipt",
-        element: <PrepaidTransactionReceipt />
+        path: "prepaidtransactionreceipt/:id",
+        element: <ErrorBoundary><PrepaidTransactionReceipt /></ErrorBoundary>,
+        errorElement: <ErrorPage />
     },
     {
         path: "postpaidtransactionreceipt",
-        element: <PostpaidTransactionReceipt />
+        element: <ErrorBoundary><PostpaidTransactionReceipt /></ErrorBoundary>,
+        errorElement: <ErrorPage />
     },
     {
         path: "/pinverification",
-        element: <PinVerification />
+        element: <ErrorBoundary><PinVerification /></ErrorBoundary>,
+        errorElement: <ErrorPage />
     },
     {
         path: "/forgotpassword",
-        element: <ForgotPassword />
+        element: <ErrorBoundary><ForgotPassword /></ErrorBoundary>,
+        errorElement: <ErrorPage />
     },
     {
         path: "/verifypassword",
-        element: <VerifyPassword />
+        element: <ErrorBoundary><VerifyPassword /></ErrorBoundary>,
+        errorElement: <ErrorPage />
     },
     {
         path: "/resetpassword",
-        element: <ResetPassword />
+        element: <ErrorBoundary><ResetPassword /></ErrorBoundary>,
+        errorElement: <ErrorPage />
     }
 ]);
 

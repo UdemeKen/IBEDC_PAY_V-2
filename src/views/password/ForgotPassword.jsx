@@ -31,8 +31,8 @@ export default function ForgotPassword() {
             setLoading(false);
             setButtonDisabled(false);
         }catch(error) {
-            console.log(error);
-            toast.error("Retry")
+            console.log(error?.response?.data?.payload);
+            toast.error(error?.response?.data?.payload)
             setLoading(false);
             setButtonDisabled(false);
         };
@@ -43,7 +43,7 @@ export default function ForgotPassword() {
         <div className='flex justify-center items-center h-screen'>
             <div className='bg-slate-300 flex flex-col justify-center items-center rounded-lg p-10 space-y-4'>
                 <ExclamationCircleIcon className='w-20 h-20 text-orange-500'/>
-                <div className='flex flex-col justify-center items-center space-y-4'>
+                <div className='flex flex-col justify-center items-center space-y-4 text-center'>
                     <h1 className='text-xl capitalize font-semibold font-sans'>forgot password</h1>
                     <p>Enter your email and we'll send you a code to reset your password</p>
                     <form className='flex flex-col justify-center space-y-8 xs:w-64 w-4/5' 
@@ -92,8 +92,8 @@ export default function ForgotPassword() {
                         </button>
                         </div>
                         <div className='flex justify-center items-center'>
-                            <ChevronLeftIcon className='w-5 h-5' />
-                            <Link to={"/login"} className='bg-slate-950 opacity-50 text-white px-2 hover:px-3 transform duration-300 ease-in-out rounded-md'>Back to Login</Link>
+                            {/* <ChevronLeftIcon className='w-5 h-5' /> */}
+                            <Link to={"/"} className='bg-slate-950 opacity-50 text-white px-2 hover:px-3 transform duration-300 ease-in-out rounded-md'>Back to Login</Link>
                         </div>
                         </form>
                 </div>

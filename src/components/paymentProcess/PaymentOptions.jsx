@@ -6,14 +6,14 @@ import { toast } from 'react-toastify';
 export default function PaymentOptions({ blur, setBlur }) {
 
     
-    const [ transaction_id, setTransactionId ] = useState('');
-    const [ amount, setAmount ] = useState('');
-    const [ walletBalance, setWalletBalance ] = useState(localStorage.getItem('WALLET_BALANCE'));
-    const [ email, setEmail ] = useState('');
-    const [ phone, setPhone ] = useState('');
-    const [ customer_name, setCustomerName ] = useState('');
-    const [ sub_account, setSubAccount ] = useState('');
-    const [ account_type, setAccount_type ] = useState('');
+    // const [ transaction_id, setTransactionId ] = useState('');
+    // const [ amount, setAmount ] = useState('');
+    // const [ walletBalance, setWalletBalance ] = useState(localStorage.getItem('WALLET_BALANCE'));
+    // const [ email, setEmail ] = useState('');
+    // const [ phone, setPhone ] = useState('');
+    // const [ customer_name, setCustomerName ] = useState('');
+    // const [ sub_account, setSubAccount ] = useState('');
+    // const [ account_type, setAccount_type ] = useState('');
     const [selectedOption, setSelectedOption] = useState('polaris');
     const [buttonDisabled, setButtonDisabled] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ export default function PaymentOptions({ blur, setBlur }) {
 
     const hasRunOnceRef = useRef(false);
 
-    if(!hasRunOnceRef.current) {
+    // if(!hasRunOnceRef.current) {
         const transaction_id = localStorage.getItem("TRANSACTION_ID");
         const amount = localStorage.getItem("AMOUNT");
         const email = localStorage.getItem("EMAIL");
@@ -30,19 +30,19 @@ export default function PaymentOptions({ blur, setBlur }) {
         const customer_name = localStorage.getItem("CUSTOMER_NAME");
         const sub_account = localStorage.getItem("SUB_ACCOUNT");
         const account_type = localStorage.getItem("ACCOUNT_TYPE");
-        setTransactionId(transaction_id);
-        setAmount(amount);
-        setEmail(email);
-        setPhone(phone);
-        setCustomerName(customer_name);
-        setSubAccount(sub_account);
-        setAccount_type(account_type);
-        hasRunOnceRef.current = true;
-    }
+        // setTransactionId(transaction_id);
+        // setAmount(amount);
+        // setEmail(email);
+        // setPhone(phone);
+        // setCustomerName(customer_name);
+        // setSubAccount(sub_account);
+        // setAccount_type(account_type);
+        // hasRunOnceRef.current = true;
+    // }
 
     // public_key: 'FLWPUBK-a349e9ca32655cb4a7c3c0c35ecdec70-X',
-    // public_key: 'FLWPUBK_TEST-3c82072dbfc36f267a1fa4e4bd43c5ed-X';
     const config = {
+    //   public_key: 'FLWPUBK_TEST-3c82072dbfc36f267a1fa4e4bd43c5ed-X',
       public_key: 'FLWPUBK-08ba487d23894235a61e5005f1e0d8d6-X',
       tx_ref: transaction_id,
       amount: parseInt(amount),
@@ -62,7 +62,7 @@ export default function PaymentOptions({ blur, setBlur }) {
         {
             id: sub_account || 'RS_574474F4E2F1F8869DA149F013AD46BF',
         },
-    ]
+      ]
     };
 
     console.log(config);
@@ -78,51 +78,51 @@ export default function PaymentOptions({ blur, setBlur }) {
       onClose: () => {},
     };
 
-    const payload = { 
-        merchantCode: '2437355',
+    // const payload = { 
+        // merchantCode: '2437355',
         // Test Key
         // publicKey: 'FERNKEY_PUB_TEST2437355_c05e79d3-df6f-44c7-90d2-6584870c9499',
         // Live Key
-        publicKey: 'FERNKEY_PUB_2437355_23744863-1004-4ab7-a9bf-f5cc4f8851d0',
-        amount: parseInt(amount),
-        email: email,
-        customerName: customer_name,
-        orderId: transaction_id,
-        paymentOption: {
-          card: true,
-          payWithBank: false,
-          payLater: false,
-          USSD: false,
-        },
-        onSuccess: (response) => {
-          console.log('Callback executed for FCMB', response);
-          toast.success('Payment successful');
-          localStorage.setItem('GATEWAY_RESPONSE', JSON.stringify(response));
-          setBlur(true);
-        }, 
-        onFailure: (error) => {
-          console.log('Callback error executed for FCMB', error);
-          toast.error('Payment failed');
-        },
+        // publicKey: 'FERNKEY_PUB_2437355_23744863-1004-4ab7-a9bf-f5cc4f8851d0',
+        // amount: parseInt(amount),
+        // email: email,
+        // customerName: customer_name,
+        // orderId: transaction_id,
+        // paymentOption: {
+        //   card: true,
+        //   payWithBank: true,
+        //   payLater: true,
+        //   USSD: true,
+        // },
+        // onSuccess: (response) => {
+        //   console.log('Callback executed for FCMB', response);
+        //   toast.success('Payment successful');
+        //   localStorage.setItem('GATEWAY_RESPONSE', JSON.stringify(response));
+        //   setBlur(true);
+        // }, 
+        // onFailure: (error) => {
+        //   console.log('Callback error executed for FCMB', error);
+        //   toast.error('Payment failed');
+        // },
         // subaccounts: [
         //       {
         //           id: paymentData?.sub_account || 'RS_574474F4E2F1F8869DA149F013AD46BF',
         //       },
         //   ]
-    };
+    // };
   
     //for javascript frameworks
-    const payFunction = () => { 
-     window.fernGatewayPlugin.render(payload) 
-    }
+    // const payFunction = () => { 
+    //  window.fernGatewayPlugin.render(payload) 
+    // }
 
-    const walletFunction = () => {
-        if(walletBalance < amount){
-            toast.error("Insufficient Funds")
-        } else {
-            setBlur(true);
-        }
-    }
+    // const walletFunction = () => {
+    //     if(walletBalance < amount){
+    //         toast.error("Insufficient Funds")
+    //     } else {
+    //         setBlur(true);
+    //     }
+    // }
 
     useEffect(() => {
         setSelectedOption('polaris');
@@ -137,31 +137,31 @@ export default function PaymentOptions({ blur, setBlur }) {
         <div className={`bg-blue-950 opacity-75 capitalize text-center font-semibold text-slate-200 py-1 ${blur ? "hidden" : ""}`}>
             select payment option
         </div>
-        <div className={`flex justify-between my-10 mx-2 capitalize rounded-md space-x-1 ${blur ? "hidden" : ""}`}>
-            <div className={`flex justify-center items-center w-full text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
-                selectedOption === 'polaris' ? 'bg-orange-600' : ''
+        <div className={`flex justify-center my-10 mx-2 capitalize rounded-md space-x-10 ${blur ? "hidden" : ""}`}>
+            <div className={`flex justify-center items-center w-32 text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
+                selectedOption === 'polaris' ? 'bg-orange-400' : ''
             }`} onClick={() => handleOptionChange('polaris')}>
                 <img 
                     src={Polaris_Bank_Logo} 
                     alt={'polaris bank'} 
                     className='w-20 h-20'/>
             </div>
-            <div className={`flex justify-center items-center w-full text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
+            {/* <div className={`flex justify-center items-center w-32 text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
                 selectedOption === 'fcmb' ? 'bg-orange-600' : ''
             }`} onClick={() => handleOptionChange('fcmb')}>
                 <img 
                     src={FCMB_Logo} 
                     alt={'fcmb'} 
                     className='w-20 h-20'/>
-            </div>
-            <div className={`flex justify-center items-center w-full text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
+            </div> */}
+            {/* <div className={`flex justify-center items-center w-full text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
                 selectedOption === 'wallet' ? 'bg-orange-600' : ''
             }`} onClick={() => handleOptionChange('wallet')}>
                 <img 
                     src={Wallet_Logo} 
                     alt={'wallet'} 
                     className='w-20 h-20'/>
-            </div>
+            </div> */}
         </div>
         <div className={`flex flex-col justify-center items-center ${blur ? "hidden" : ""}`}>
             <button

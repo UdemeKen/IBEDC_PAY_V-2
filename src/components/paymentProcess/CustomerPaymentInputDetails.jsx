@@ -20,34 +20,35 @@ export default function CustomerPaymentInputDetails({ handleNext, blur, blur_01 
   const [ buttonDisabled, setButtonDisabled ] = useState(false);
   const [ loading, setLoading ] = useState(false);
   localStorage.setItem('AMOUNT', amount);
-
+  localStorage.setItem('ACCOUNT_TYPE', accountType);
   
   useEffect(() => {
     const isValid = METER_ACCT_NUMBER_REGEX.test(user);
     setValidMeterAcctNo(isValid);
-  }, [user]);
-  
-  useEffect(() => {
-    const formattedAccountNumber = user.replace(/[^0-9]/g, '');
-    if (accountType === 'Postpaid') {
-      if (formattedAccountNumber.length >= 2) {
-        setFormattedUser(formattedAccountNumber.replace(/(\d{2})(\d{2})(\d{2})(\d{4})(\d{2})/, '$1/$2/$3/$4-$5'));
-      } else {
-        setFormattedUser(formattedAccountNumber);
+    }, [user]);
+    
+    useEffect(() => {
+      const formattedAccountNumber = user.replace(/[^0-9]/g, '');
+      if (accountType === 'Postpaid') {
+        if (formattedAccountNumber.length >= 2) {
+          setFormattedUser(formattedAccountNumber.replace(/(\d{2})(\d{2})(\d{2})(\d{4})(\d{2})/, '$1/$2/$3/$4-$5'));
+          } else {
+            setFormattedUser(formattedAccountNumber);
       } 
-    } else if (accountType === 'Prepaid') {
-      // Leave it as it's
-    } else {
-      setFormattedUser('');
-    }
-  }, [accountType, user]);
-  
-  const meterNo_Or_AccountNo = accountType === "Postpaid" ? formattedUser : user;
-  
+      } else if (accountType === 'Prepaid') {
+        // Leave it as it's
+        } else {
+          setFormattedUser('');
+          }
+          }, [accountType, user]);
+          
+          const meterNo_Or_AccountNo = accountType === "Postpaid" ? formattedUser : user;
+          localStorage.setItem('METER_NUMBER', meterNo_Or_AccountNo);
+
   const requestData = {
     "amount": parseInt(amount),
     "account_type": accountType,
-    "MeterNo": meterNo_Or_AccountNo,
+    [accountType === "Prepaid" ? "MeterNo" : "account_number"]: meterNo_Or_AccountNo,
     "owner": owner,
     "latitude": parseFloat(localStorage.getItem('LATITUDE')) || 0.0,
     "longitude": parseFloat(localStorage.getItem('LONGITUDE')) || 0.0,
@@ -65,13 +66,10 @@ export default function CustomerPaymentInputDetails({ handleNext, blur, blur_01 
       console.log(response);
       toast.success(response?.data?.message);
       localStorage.setItem('TRANSACTION_ID', response?.data?.payload?.transaction_id);
-      localStorage.setItem('AMOUNT', response?.data?.payload?.amount);
-      localStorage.setItem('METER_NUMBER', response?.data?.payload?.meter_no);
       localStorage.setItem('EMAIL', response?.data?.payload?.email);
       localStorage.setItem('PHONE', response?.data?.payload?.phone);
       localStorage.setItem('CUSTOMER_NAME', response?.data?.payload?.customer_name);
       localStorage.setItem('SUB_ACCOUNT', response?.data?.payload?.sub_account);
-      localStorage.setItem('ACCOUNT_TYPE', response?.data?.payload?.account_type);
       handleNext();
     }catch(error) {
       console.log(error);

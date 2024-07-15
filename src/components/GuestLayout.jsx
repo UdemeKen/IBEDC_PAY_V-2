@@ -45,7 +45,7 @@ export default function GuestLayout() {
   }
 
   return (
-    <section>
+    <section className='bg-white'>
       <div className='flex justify-center items-center h-full '>
         {slideData.map((slide, index) => {
             return (
