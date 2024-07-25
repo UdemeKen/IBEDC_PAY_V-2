@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosClient = axios.create({
-    baseURL: 'https://ipay.ibedc.com:7642/api/V2_ibedc_OAUTH_tokenReviwed'
+    baseURL: 'https://ipay.ibedc.com:7642/api'
 });
 
 axiosClient.interceptors.request.use((config) => {

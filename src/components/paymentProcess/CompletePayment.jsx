@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import axiosClient from '../../axios';
 import { SuccessIcon, ErrorIcon } from '../../assets/icons';
 
-const completePaymentUrl = '/payment/complete-payment';
+const completePaymentUrl = '/V2_ibedc_OAUTH_tokenReviwed/payment/complete-payment';
 
 export default function CompletePayment({ blur, setBlur }) {
 

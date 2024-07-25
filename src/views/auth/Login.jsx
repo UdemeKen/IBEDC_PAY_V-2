@@ -5,7 +5,7 @@ import axiosClient from '../../axios';
 import { toast } from 'react-toastify';
 import { useStateContext } from '../../context/ContextProvider';
 
-const loginUrl = '/authenticate';
+const loginUrl = '/V2_ibedc_OAUTH_tokenReviwed/authenticate';
 
 export default function Login() {
 

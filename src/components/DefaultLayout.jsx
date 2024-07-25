@@ -8,10 +8,10 @@ import { Cog8ToothIcon, BellIcon, TrashIcon, CubeTransparentIcon, UserIcon, Circ
 import axiosClient from '../axios';
 import Modal from 'react-modal';
 
-const deleteAccountUrl = '/delete/remove-account';
-const changePasswordUrl = '/change-password';
-const forgotPasswordUrl = '/forgot-password';
-const pinVerificationUrl = '/verify-pin';
+const deleteAccountUrl = '/V2_ibedc_OAUTH_tokenReviwed/delete/remove-account';
+const changePasswordUrl = '/V2_ibedc_OAUTH_tokenReviwed/change-password';
+const forgotPasswordUrl = '/V2_ibedc_OAUTH_tokenReviwed/forgot-password';
+const pinVerificationUrl = '/V2_ibedc_OAUTH_tokenReviwed/verify-pin';
 
 export default function DefaultLayout() {
 

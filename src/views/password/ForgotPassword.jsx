@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axiosClient from '../../axios';
 import { toast } from 'react-toastify';
 
-const forgotPasswordUrl = '/forgot-password';
+const forgotPasswordUrl = '/V2_ibedc_OAUTH_tokenReviwed/forgot-password';
 
 export default function ForgotPassword() {
 

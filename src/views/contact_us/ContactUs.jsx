@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const METER_ACCT_NUMBER_REGEX = /^[0-9\-/]{11,16}$/;
-const contactUsUrl = '/contact/help';
+const contactUsUrl = '/V2_ibedc_OAUTH_tokenReviwed/contact/help';
 
 export default function ContactUs() {
 

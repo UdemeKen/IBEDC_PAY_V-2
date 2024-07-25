@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 export default function AllTransactions() {
 
   const [ allTransactions, setAllTransactions ] = useState(JSON.parse(localStorage.getItem('TRANSACTION_HISTORY')) || []);
-  const [ allTransactionsPerPage, setAllTransactionsPerPage ] = useState(5);
+  const [ allTransactionsPerPage, setAllTransactionsPerPage ] = useState(3);
   const [ currentPage, setCurrentPage ] = useState(1);
   const [ activeTransaction, setActiveTransaction ] = useState(0);
   const [ selectedTransaction, setSelectedTransaction ] = useState(null);
@@ -111,7 +111,7 @@ export default function AllTransactions() {
           <div className='absolute flex flex-col justify-center items-center capitalize text-white'>
             <BanknotesIcon className='w-8 h-8'/>
             <p>monthly total transaction</p>
-            <p className='text-4xl font-semibold'>₦ {monthlyTotal.toLocaleString()}</p>
+            <p className='text-4xl font-semibold'>{`₦${(Number(monthlyTotal)).toLocaleString()}`}</p>
           </div>
         </div>
         </div>

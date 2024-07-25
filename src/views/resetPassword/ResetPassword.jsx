@@ -4,7 +4,7 @@ import axiosClient from '../../axios';
 import { FormView, FormViewHide } from 'grommet-icons';
 import { toast } from 'react-toastify';
 
-const resetPasswordUrl = '/change-password';
+const resetPasswordUrl = '/V2_ibedc_OAUTH_tokenReviwed/change-password';
 
 export default function ResetPassword() {
 
