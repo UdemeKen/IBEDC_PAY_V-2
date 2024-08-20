@@ -31,17 +31,12 @@ export default function Login() {
 
         try {
             const response = await axiosClient.post(loginUrl, requestData);
-            console.log(response?.data);
-            console.log(response?.data?.payload?.user?.name);
             localStorage.setItem('USER_NAME', response?.data?.payload?.user?.name);
             localStorage.setItem('USER_EMAIL', response?.data?.payload?.user?.email);
             localStorage.setItem('USER_METER_NUMBER', response?.data?.payload?.user?.meter_no_primary);
             localStorage.setItem('USER_PHONE', response?.data?.payload?.user?.phone);
             localStorage.setItem('USER_ID', response?.data?.payload?.user?.id);
-            // localStorage.setItem('BANK_NAME', response?.data?.payload?.user?.virtual_account?.bank_name);
-            // localStorage.setItem('ACCOUNT_NAME', response?.data?.payload?.user?.virtual_account?.account_name);
-            // localStorage.setItem('ACCOUNT_NUMBER', response?.data?.payload?.user?.virtual_account?.account_no);
-            console.log(response?.data?.payload?.token);
+            localStorage.setItem('ACCOUNT_TYPE', response?.data?.payload?.user?.account_type);
             setUserToken(response?.data?.payload?.token);
             setCurrentUser(response?.data?.payload?.user?.name);
             toast.success(response?.data?.message);

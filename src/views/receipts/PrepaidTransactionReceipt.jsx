@@ -7,7 +7,7 @@ import jsPDF from 'jspdf';
 
 export default function PrepaidTransactionReceipt() {
 
-    const account_number = localStorage.getItem('USER_METER_NUMBER');
+    // const account_number = localStorage.getItem('USER_METER_NUMBER');
 
     const [loading, setLoading] = useState(false);
 
@@ -15,7 +15,29 @@ export default function PrepaidTransactionReceipt() {
     const { id } = useParams();
     const transaction = allTransactions.find(transaction => transaction.id == id);
 
-    const { customer_name, account_type, meter_no, providerRef, transaction_id, date_entered, amount, status } = transaction;
+    const { 
+        transaction_id, 
+        date_entered,
+        amount,
+        status,
+        account_number,
+        account_type,
+        meter_no,
+        customer_name,
+        provider,
+        BUID,
+        units,
+        costOfUnits,
+        VAT,
+        tariffcode,
+        serviceBand,
+        feederName,
+        dssName,
+        udertaking,
+        providerRef,
+        Address,
+        receiptno
+         } = transaction;
 
     const pdfRef = useRef();
 
@@ -36,7 +58,7 @@ export default function PrepaidTransactionReceipt() {
             const imgX = (pdfWidth - imgWidth * ratio) / 2;
             const imgY = (pdfHeight - imgHeight * ratio) / 2 - 72;
             pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-            pdf.save('prepaid-transaction-receipt.pdf')
+            pdf.save('transaction-receipt.pdf')
         })
     }
 
@@ -48,49 +70,103 @@ export default function PrepaidTransactionReceipt() {
               <div>
                   <img 
                   src={ReceiptHeaderImage}
-                  alt='header'/>
+                  alt='header'
+                  className='w-full'
+                  />
               </div>
               <div className='w-full text-center'>
                   <h1 className='sm:text-lg uppercase mb-4 font-semibold text-blue-900'>Transaction Receipt</h1>
               </div>
-              <div className='grid sm:grid-rows-4 sm:grid-flow-col gap-y-6 gap-x-12 justify-center px-16 text-center sm:text-left'>
-                <div className='text-center'>
-                    <label className='text-md font-semibold text-gray-800'>Customer Name</label>
-                    <p className='text-sm font-semibold text-gray-500'>{customer_name}</p>
+              <div className='grid sm:grid-rows-7 sm:grid-cols-3 sm:grid-flow-col gap-y-4 sm:gap-x-1 sm:py-4 text-center w-full'>
+                <div>
+                    <label className='text-md font-bold'>Customer Name</label>
+                    <p className='text-xs'>{customer_name}</p>
                 </div>
-                <div className='text-center'>
-                    <label className='text-md font-semibold text-gray-800'>AcctNo/MeterNo</label>
-                    <p className='text-sm font-semibold text-gray-500'>{account_type === "Prepaid" ? meter_no : account_number}</p>
+                <div>
+                    <label className='text-md font-bold'>Amount Paid</label>
+                    <p>₦{amount}</p>
                 </div>
-                {/* <div className=''>
-                    <label className='text-md font-semibold text-gray-800'>Customer Address</label>
-                    <p className='text-sm font-semibold text-gray-500 sm:w-2/3'>Not found</p>
-                </div> */}
-                <div className='text-center'>
-                    <label className='text-md font-semibold text-gray-800'>Transaction Reference</label>
-                    <p className='text-sm font-semibold text-gray-500'>{providerRef}</p>
+                <div>
+                    <label className='text-md font-bold'>Address</label>
+                    <p>{Address === null ? "No Address" : Address}</p>
                 </div>
-                <div className='text-center'>
-                    <label className='text-md font-semibold text-gray-800'>Purpose of Payment</label>
-                    <p className='text-sm font-semibold text-gray-500'>Buy Electricity</p>
+                <div>
+                    <label className='text-md font-bold'>Transaction Date</label>
+                    <p>{date_entered.slice(0,10)}</p>
                 </div>
-                <div className='text-center'>
-                    <label className='text-md font-semibold text-gray-800'>Transaction Date</label>
-                    <p className='text-sm font-semibold text-gray-500'>{date_entered.slice(0,10)}</p>
+                <div>
+                    <label className='text-md font-bold'>Units</label>
+                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : units}</p>
                 </div>
-                <div className='text-center'>
-                    <label className='text-md font-semibold text-gray-800'>Transaction Status</label>
-                    <p className='text-sm font-semibold text-gray-500'>{status}</p>
+                <div>
+                    <label className='text-md font-bold'>Tarriff Code</label>
+                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : tariffcode}</p>
                 </div>
-                <div className='text-center'>
-                    <label className='text-md font-semibold text-gray-800'>Transaction Amount</label>
-                    <p className='text-sm font-semibold text-gray-500'>₦{amount}</p>
+                <div>
+                    <label className='text-md font-bold'>DSS Name</label>
+                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : dssName}</p>
                 </div>
-                {/* <div className='text-center'>
-                    <label className='text-md font-semibold text-gray-800'>Customer Token</label>
-                    <p className='text-sm font-semibold text-gray-500'>Not found</p>
-                </div> */}
-              </div>
+                {account_type === "Postpaid" && <div>
+                    <label className='text-md font-bold'>Account Number</label>
+                    <p>{account_number}</p>
+                </div>}
+                {account_type === "Prepaid" && <div>
+                    <label className='text-md font-bold'>Meter Number</label>
+                    <p>{meter_no}</p>
+                </div>}
+                <div>
+                    <label className='text-md font-bold'>BUID</label>
+                    <p>{BUID}</p>
+                </div>
+                <div>
+                    <label className='text-md font-bold'>Provider</label>
+                    <p>{provider}</p>
+                </div>
+                <div>
+                    <label className='text-md font-bold'>Cost of Units</label>
+                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : costOfUnits}</p>
+                </div>
+                <div>
+                    <label className='text-md font-bold'>Feeder Name</label>
+                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : feederName}</p>
+                </div>
+                <div>
+                    <label className='text-md font-bold'>Undertakings</label>
+                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : udertaking}</p>
+                </div>
+                <div className='text-white sm:block hidden'>
+                    <label className='text-md font-bold'>Token</label>
+                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : receiptno}</p>
+                </div>
+                <div>
+                    <label className='text-md font-bold'>Account Type</label>
+                    <p>{account_type}</p>
+                </div>
+                <div>
+                    <label className='text-md font-bold'>Transaction ID</label>
+                    <p className='flex justify-center'>{transaction_id}</p>
+                </div>
+                <div>
+                    <label className='text-md font-bold'>Payment Status</label>
+                    <p className='text-green-700 font-bold italic'>{status === "processing" ? <span className='text-yellow-500'>{status}</span> : status === "failed" ? <span className='text-red-500'>{status}</span> : <span className='text-green-500'>{status}</span>}</p>
+                </div>
+                <div>
+                    <label className='text-md font-bold'>VAT</label>
+                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : VAT}</p>
+                </div>
+                <div>
+                    <label className='text-md font-bold'>Service Band</label>
+                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : serviceBand}</p>
+                </div>
+                <div>
+                    <label className='text-md font-bold'>Provider Reference</label>
+                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : providerRef}</p>
+                </div>
+                <div>
+                    <label className='text-md font-bold'>Token</label>
+                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : receiptno}</p>
+                </div>
+            </div>
               <div className='flex flex-col justify-center items-center text-xs py-4'>
                   <img 
                   src={Black_Logo}

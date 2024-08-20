@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Frame_01 } from '../../assets/images';
 import { BanknotesIcon } from '@heroicons/react/24/outline';
-import { Link } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 export default function AllTransactions() {
 
+  const location = useLocation();
+
   const [ allTransactions, setAllTransactions ] = useState(JSON.parse(localStorage.getItem('TRANSACTION_HISTORY')) || []);
-  const [ allTransactionsPerPage, setAllTransactionsPerPage ] = useState(3);
+  const account_type = localStorage.getItem('LOGIN_ACCOUNT_TYPE');
+  const [ allTransactionsPerPage, setAllTransactionsPerPage ] = useState(5);
   const [ currentPage, setCurrentPage ] = useState(1);
   const [ activeTransaction, setActiveTransaction ] = useState(0);
   const [ selectedTransaction, setSelectedTransaction ] = useState(null);
@@ -18,6 +21,7 @@ export default function AllTransactions() {
   const indexOfFirstTransaction = indexOfLastTransaction - allTransactionsPerPage;
 
   const visibleTransactions = allTransactions.slice(indexOfFirstTransaction, indexOfLastTransaction);
+  console.log(visibleTransactions);
 
   const prevPageHandler = () => {
     if(currentPage !== 1) {
@@ -50,7 +54,9 @@ export default function AllTransactions() {
   };
 
   const calculateMonthlyTotal = (transactions) => {
-      return transactions.reduce((total, transaction) => total + parseFloat(transaction.amount), 0.0);
+    return transactions
+      .filter(transaction => transaction.status === 'success')
+      .reduce((total, transaction) => total + parseFloat(transaction.amount), 0.0);
   };
 
   const currentMonthTransactions = getCurrentMonthTransactions(allTransactions);
@@ -86,7 +92,8 @@ export default function AllTransactions() {
       },
     },
   };
-
+  
+  
   return (
     <div className='bg-white bg-cover pb-4'>
     <motion.section 
@@ -100,7 +107,7 @@ export default function AllTransactions() {
         initial='hidden'
         animate='visible'
       className='flex flex-col sm:flex-row justify-normal space-y-4 sm:space-y-0 sm:space-x-4 sm:my-10'>
-        <div className='shadow-sm shadow-slate-500 w-full h-36 rounded-lg flex justify-center items-center'>
+        <div className='shadow-sm shadow-slate-500 w-full h-36 rounded-lg flex flex-col sm:flex-row justify-center items-center'>
         <div className='relative flex-grow shadow-sm shadow-slate-500 w-full h-36 rounded-lg flex flex-col justify-center items-center'>
           <img 
             src={Frame_01}
@@ -115,8 +122,8 @@ export default function AllTransactions() {
           </div>
         </div>
         </div>
-        <div className='shadow-sm shadow-slate-500 w-full h-36 rounded-lg flex justify-center items-center'>
-            <div className='shadow-sm shadow-slate-500 w-full h-36 rounded-lg flex justify-center items-center'>
+        <div className='shadow-sm shadow-slate-500 w-full h-36 rounded-lg flex flex-col sm:flex-row justify-center items-center'>
+            <div className='shadow-sm shadow-slate-500 w-full h-36 rounded-lg flex flex-col sm:flex-row justify-center items-center'>
               <div className='relative flex-grow shadow-sm shadow-slate-500 w-full h-36 rounded-lg flex flex-col justify-center items-center'>
                 <img 
                   src={Frame_01}
@@ -126,7 +133,7 @@ export default function AllTransactions() {
                 <div className="absolute inset-0 rounded-lg bg-orange-500 opacity-70"></div>
                 <div className='absolute flex flex-col justify-center items-center capitalize text-white'>
                   <BanknotesIcon className='w-8 h-8'/>
-                  <p>monthly total income</p>
+                  <p>Wallet Balance</p>
                   <p className='text-xs italic'>Coming soon in the next update!</p>
                   {/* <p className='text-4xl font-semibold'>₦ 0.00</p> */}
                 </div>
@@ -134,23 +141,29 @@ export default function AllTransactions() {
           </div>
         </div>
       </motion.div>
+      <div className='flex flex-col sm:flex-row sm:space-x-4 w-full'>
       <motion.div 
         variants={hero_02Variants}
         initial='hidden'
         animate='visible'
-      className='flex flex-col sm:flex-row justify-normal space-y-4 sm:space-y-0 sm:space-x-4 mb-4 sm:mb-10'>
-        <div className='shadow-sm shadow-slate-500 w-full h-full rounded-lg flex flex-col justify-center items-center mt-4 sm:mt-0 space-y-4'>
-        <ul className='flex justify-between text-normal p-1 capitalize font-semibold text-slate-600 rounded-t-lg shadow-sm shadow-slate-500 w-full'>
-          <li>Transaction history</li>
+        className='space-y-4 sm:space-y-0 sm:space-x-4 mb-4 sm:mb-10 w-full'
+        >
+        <div className='shadow-sm shadow-slate-500 w-full rounded-lg flex flex-col items-center mt-4 sm:mt-0'>
+        <p className='text-center sm:my-4 text-xl text-slate-500 font-serif underline'>All Transactions</p>
+        <ul className='flex justify-normal space-x-10 p-5 text-center capitalize font-semibold text-slate-600 rounded-t-lg shadow-sm shadow-slate-500 w-full'>
+          <Link to={""} className={`${location.pathname === "/default/alltransactions" ? "bg-slate-300 px-4 py-1 rounded-md" : "px-4 py-1"}`}>Payment history</Link>
+          {account_type === "Postpaid" && <Link to={"/default/alltransactions/billhistory"} className={`${location.pathname === "/default/alltransactions/billhistory" ? "bg-slate-300 px-4 py-1 rounded-md" : "px-4 py-1"}`}>Bill history</Link>}
         </ul>
-        <div className='flex flex-col justify-normal space-y-4 w-full px-4 pb-4'>
+        <div className='w-full flex flex-col sm:flex-row justify-center sm:space-x-4 px-4'>
+        <div className='flex flex-col justify-normal sm:space-y-4 w-full py-4'>
+          <Outlet />
         {visibleTransactions.length === 0 && 
-            <div className='flex flex-row justify-center items-center rounded-lg px-4 py-2 mx-2 shadow-sm shadow-gray-500'>
+            <div className='flex flex-row justify-center items-center rounded-lg px-4 sm:py-2 mx-2 shadow-sm shadow-gray-500'>
               <h4 className='text-gray-800 opacity-75 tracking-tighter'>No transaction history</h4>
             </div>
           }
           {visibleTransactions.length > 0 ? visibleTransactions.map((transaction, index) => (
-            <div className={`hover:bg-slate-100 transform duration-300 ease-in-out opacity-90 p-2 rounded-lg ${index === activeTransaction ? 'bg-slate-200' : ''}`}>
+            <div className={`${location.pathname === "/default/alltransactions/billhistory" ? "hidden" : ""} hover:bg-slate-100 transform duration-300 ease-in-out opacity-90 w-full p-2 rounded-lg ${index === activeTransaction ? 'bg-slate-200' : ''}`}>
               <div className={`flex flex-row justify-between items-center rounded-lg p-4 w-full h-full py-2 shadow-sm shadow-gray-500 hover:cursor-pointer`} key={index} onClick={() => handleTransactionSelection(index)}>
                 <div className='text-blue-900'>
                   <h4 className='tracking-tighter text-left'>Amount paid: <span className='font-bold md:text-lg'>&#8358;{(Number(transaction.amount)).toLocaleString()}</span></h4>
@@ -166,8 +179,7 @@ export default function AllTransactions() {
               </div>
             </div>
           )).slice(0,5) : null}
-          </div>
-          <div className='flex justify-center items-center space-x-5 pb-6'>
+          <div className={`${location.pathname === "/default/alltransactions/billhistory" ? "hidden" : ""} flex justify-center items-center space-x-5 pt-6 sm:pb-6`}>
             <div className='capitalize'>
               <p onClick={prevPageHandler} className='shadow-sm shadow-slate-500 cursor-pointer bg-blue-950 opacity-75 text-white hover:bg-orange-500 duration-300 ease-in-out px-4 py-2 rounded-lg'>prev</p>
             </div>
@@ -178,37 +190,117 @@ export default function AllTransactions() {
               <p onClick={nextPageHandler} className='shadow-sm shadow-slate-500 cursor-pointer bg-blue-950 opacity-75 text-white hover:bg-orange-500 duration-300 ease-in-out px-4 py-2 rounded-lg'>next</p>
             </div>
           </div>
-        </div>
-        <div className='shadow-sm shadow-slate-500 sm:w-2/5 rounded-lg flex justify-center items-center'>
-        {selectedTransaction === null && <h4 className='text-gray-800 opacity-75 tracking-tighter text-center'>No transaction details</h4>}
+            </div>
+        <>
         {selectedTransaction &&
-          <>
-          <div className='flex flex-col justify-center items-center'>
-          <h4 className="text-gray-800 opacity-75 tracking-tighter text-center font-serif font-bold underline">Transaction Details</h4>
-            <div className='grid grid-rows-3 gap-5 text-center w-full pt-4'>
+        <div className={`${location.pathname === "/default/alltransactions/billhistory" ? "hidden" : ""} shadow-sm shadow-slate-500 sm:w-full h-full rounded-lg my-6`}>
+            <h4 className="text-gray-800 opacity-75 tracking-tighter text-center font-serif font-bold underline mt-5">Transaction Details</h4>
+            <div className='text-center my-4'>
+              <label className='text-md font-sans font-semibold'>Customer Name</label>
+              <p>{selectedTransaction?.customer_name}</p>
+            </div>
+              <div className='grid grid-cols-1 sm:grid-cols-3 gap-y-4 text-center text-sm'>
+              {selectedTransaction?.account_type === "Prepaid" && <div>
+                  <label className='text-md font-sans font-semibold'>Meter Number</label>
+                  <p>{selectedTransaction?.meter_no}</p>
+              </div>}
+              {selectedTransaction?.account_type === "Postpaid" && <div>
+                  <label className='text-md font-sans font-semibold'>Account Number</label>
+                  <p>{selectedTransaction?.account_number}</p>
+              </div>}
               <div>
-                  <label className='text-md font-sans font-semibold'>Transaction ID</label>
-                  <p>{selectedTransaction?.transaction_id}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Transaction Date</label>
-                  <p>{selectedTransaction?.date_entered.slice(0, 10)}</p>
+                  <label className='text-md font-sans font-semibold'>Account Type</label>
+                  <p>{selectedTransaction?.account_type}</p>
               </div>
               <div>
                   <label className='text-md font-sans font-semibold'>Amount Paid</label>
                   <p>₦{selectedTransaction?.amount}</p>
               </div>
               <div>
-                  <label className='text-md font-sans font-semibold'>Payment Status</label>
-                  <p className='text-green-700 font-bold italic'>{selectedTransaction?.status}</p>
+                  <label className='text-md font-sans font-semibold'>BUID</label>
+                  <p>{selectedTransaction?.BUID}</p>
               </div>
-            </div>
-            <Link to={`/prepaidtransactionreceipt/${selectedTransaction?.id}`} target='_blank' className='bg-blue-950 opacity-80 my-10 hover:bg-orange-700 traznsform duration-300 ease-in-out text-white text-center rounded-md py-2 px-2 capitalize mb-4'>view receipt</Link>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Transaction ID</label>
+                  <p>{selectedTransaction?.transaction_id}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Address</label>
+                  <p>{selectedTransaction?.Address === null ? "No Address" : selectedTransaction?.Address}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Provider</label>
+                  <p>{selectedTransaction?.provider}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Payment Status</label>
+                  <p className='text-green-700 font-bold italic'>{selectedTransaction?.status === "processing" ? <span className='text-yellow-500'>{selectedTransaction?.status}</span> : selectedTransaction?.status === "failed" ? <span className='text-red-500'>{selectedTransaction?.status}</span> : <span className='text-green-500'>{selectedTransaction?.status}</span>}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Transaction Date</label>
+                  <p>{selectedTransaction?.date_entered.slice(0, 10)}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Cost of Units</label>
+                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xxs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.costOfUnits}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>VAT</label>
+                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.VAT}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Units</label>
+                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.units}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Feeder Name</label>
+                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.feederName}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Service Band</label>
+                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.serviceBand}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Tarriff Code</label>
+                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.tariffcode}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Undertakings</label>
+                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.udertaking}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Provider Reference</label>
+                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.providerRef}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>DSS Name</label>
+                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.dssName}</p>
+              </div>
+              <div className='text-white sm:block hidden'>
+                  <label className='text-md font-sans font-semibold'>Blank</label>
+                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.dssName}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Token</label>
+                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.receiptno}</p>
+              </div>
+              <div className='text-white sm:block hidden'>
+                  <label className='text-md font-sans font-semibold'>Blank</label>
+                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.receiptno}</p>
+              </div>
           </div>
-          </>}
+            <div className='flex flex-col justify-center items-center my-4'>
+              <Link to={`/prepaidtransactionreceipt/${selectedTransaction?.id}`} target='_blank' className='bg-blue-950 opacity-80 hover:bg-orange-700 transform duration-300 ease-in-out text-white text-center rounded-md py-2 px-2 capitalize w-1/2 sm:w-1/3'>view receipt</Link>
+          </div>
         </div>
-        </motion.div>
-        </motion.section>
-        </div>
+        }
+        </>
+          </div>
+          </div>
+        {selectedTransaction === null && <h4 className='text-gray-800 opacity-75 tracking-tighter text-center'>No transaction details</h4>}
+      </motion.div>
+      </div>
+    </motion.section>
+  </div>
   )
 }

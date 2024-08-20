@@ -19,6 +19,8 @@ export default function CustomerPaymentInputDetails({ handleNext, blur, blur_01 
   const [ userFocus, setUserFocus ] = useState(false);
   const [ buttonDisabled, setButtonDisabled ] = useState(false);
   const [ loading, setLoading ] = useState(false);
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState(''); 
   localStorage.setItem('AMOUNT', amount);
   localStorage.setItem('ACCOUNT_TYPE', accountType);
   
@@ -53,6 +55,8 @@ export default function CustomerPaymentInputDetails({ handleNext, blur, blur_01 
     "latitude": parseFloat(localStorage.getItem('LATITUDE')) || 0.0,
     "longitude": parseFloat(localStorage.getItem('LONGITUDE')) || 0.0,
     "source_type": 'Web',
+    "email": email,
+    "phone": phone, 
   };
   
   
@@ -81,6 +85,8 @@ export default function CustomerPaymentInputDetails({ handleNext, blur, blur_01 
       setAccountType('');
       setUser('');
       setOwner('');
+      setEmail('');
+      setPhone(''); 
     }
   };
 
@@ -153,6 +159,36 @@ export default function CustomerPaymentInputDetails({ handleNext, blur, blur_01 
                   No spaces.
                 </p>
               </div>
+              <div>
+                <label className='block text-sm font-medium text-slate-600 capitalize my-2 mx-2'>
+                  Email
+                </label>
+                  <input
+                    type="email"
+                    id="email"
+                    autoComplete="on"
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    name="email"
+                    placeholder='Enter your email'
+                    className="block w-full rounded-md border-0 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-slate-600 text-sm sm:leading-6"
+                  />
+                </div>
+                <div>
+                  <label className='block text-sm font-medium text-slate-600 capitalize my-2 mx-2'>
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    autoComplete="on"
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    name="phone"
+                    placeholder='Enter your phone number'
+                    className="block w-full rounded-md border-0 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-slate-600 text-sm sm:leading-6"
+                  />
+                </div>
               <div>
                 <label className='block text-sm font-medium text-slate-600 capitalize mb-2 mx-2'>
                   owner

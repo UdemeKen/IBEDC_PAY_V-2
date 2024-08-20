@@ -14,10 +14,11 @@ import VerifyPassword from "./views/verifyPassword/VerifyPassword";
 import ResetPassword from "./views/resetPassword/ResetPassword";
 import TransactionViewDetails from "./views/viewDetails/TransactionViewDetails";
 import PrepaidTransactionReceipt from "./views/receipts/PrepaidTransactionReceipt";
-import PostpaidTransactionReceipt from "./views/receipts/PostpaidTransactionReceipt";
 import MeterNumberLogin from "./views/auth/loginTypes/MeterNumberLogin";
 import ErrorBoundary from "./views/errorBoundary/ErrorBoundary";
 import ErrorPage from "./views/errorBoundary/ErrorPage";
+import BillHistory from "./views/transactions/BillHistory";
+import PostpaidBillReceipt from "./views/receipts/PostpaidBillReceipt";
 
 const router = createBrowserRouter([
     {
@@ -64,7 +65,14 @@ const router = createBrowserRouter([
             {
                 path: "alltransactions",
                 element: <ErrorBoundary><AllTransactions /></ErrorBoundary>,
-                errorElement: <ErrorPage />
+                errorElement: <ErrorPage />,
+                children: [
+                    {
+                        path: "billhistory",
+                        element: <ErrorBoundary><BillHistory /></ErrorBoundary>,
+                        errorElement: <ErrorPage />
+                    }
+                ]
             },
             {
                 path: "profile",
@@ -94,8 +102,8 @@ const router = createBrowserRouter([
         errorElement: <ErrorPage />
     },
     {
-        path: "postpaidtransactionreceipt",
-        element: <ErrorBoundary><PostpaidTransactionReceipt /></ErrorBoundary>,
+        path: "postpaidbillreceipt/:id",
+        element: <ErrorBoundary><PostpaidBillReceipt /></ErrorBoundary>,
         errorElement: <ErrorPage />
     },
     {

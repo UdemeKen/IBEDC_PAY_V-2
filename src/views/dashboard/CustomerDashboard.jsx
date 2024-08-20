@@ -14,7 +14,8 @@ import { toast } from 'react-toastify';
 import { heroVariants } from '../../variants';
 
 const transactionHistoryUrl = "/V2_ibedc_OAUTH_tokenReviwed/history/get-history";
-const billHistoryOutstandingBalanceUrl = "/V2_ibedc_OAUTH_agency_sync/customerhistory/bill-history";
+const billHistoryOutstandingBalanceUrl = "/V2_ibedc_OAUTH_tokenReviwed/history/get-bill-history";
+// const billHistoryOutstandingBalanceUrl = "/V2_ibedc_OAUTH_agency_sync/customerhistory/bill-history";
 // const getCustomerDetailsUrl = "/dashboard/get-details";
 const getOutstandingBalanceUrl = "/V2_ibedc_OAUTH_tokenReviwed/outstanding/get-balance";
 const showOutstandingBalanceUrl = "/V2_ibedc_OAUTH_tokenReviwed/outstanding/show-balance";
@@ -26,10 +27,8 @@ export default function CustomerDashboard() {
 
   const userEmail = localStorage.getItem("USER_EMAIL");
   const username = localStorage.getItem("USER_NAME");
-  // const account_type = localStorage.getItem("ACCOUNT_TYPE");
+  const account_type = localStorage.getItem("LOGIN_ACCOUNT_TYPE");
   const meterNumber = localStorage.getItem("USER_METER_NUMBER");
-  // const accountType = meterNumber && meterNumber.length > 11 ? "Postpaid" : "Prepaid";
-  // const phoneNumber = localStorage.getItem("PHONE_NUMBER");
   const cleanedUsername = username ? username.replace(/\./g, '') : '';
   
   const [ transactionHistory, setTransactionHistory ] = useState([]);
@@ -44,7 +43,7 @@ export default function CustomerDashboard() {
   const [ blur_02, setBlur_02 ] = useState(false);
   const [ userFocus, setUserFocus ] = useState(false);
   const [ accountType, setAccountType ] = useState("");
-  const [ displayAccountType, setDisplayAccountType ] = useState(meterNumber && meterNumber.length === 11 ? "Prepaid" : "Postpaid");
+  // const [ displayAccountType, setDisplayAccountType ] = useState(meterNumber && meterNumber.length === 13 ? "Prepaid" : "Postpaid");
   const [ user, setUser ] = useState('');
   const [ formattedUser, setFormattedUser ] = useState('');
   const [ validMeterAcctNo, setValidMeterAcctNo ] = useState(false);
@@ -53,17 +52,20 @@ export default function CustomerDashboard() {
   const [ pin, setPin ] = useState("")
   const [ success, setSuccess ] = useState();
   const [ outStandingbalance, setOutStandingbalance ] = useState("");
-  const [currentChargeTotal, setCurrentChargeTotal] = useState(""); // State for current charge total
+  const [currentChargeTotal, setCurrentChargeTotal] = useState("");
   const [VAT, setVAT] = useState("");
   const [userOutandingBalance, setUserOutandingBalance] = useState(() => {
-    return localStorage.getItem('USER_OUTSTANDING_BALANCE') || ""; // Initialize from local storage
+    return localStorage.getItem('USER_OUTSTANDING_BALANCE') || "";
   });
   const [userCurrentBill, setUserCurrentBill] = useState(() => {
-    const currentCharge = localStorage.getItem('USER_CURRENT_CHARGE') || "0";
-    const vat = localStorage.getItem('USER_CURRENT_VAT') || "0";
-    return (Number(currentCharge) + Number(vat)).toString();
+    return localStorage.getItem('CURRENT_BILL') || "";
   });
-  console.log(userCurrentBill);
+
+  // useEffect(() => {
+  //   localStorage.setItem('DISPLAY_ACCOUNT_TYPE', account_type);
+  // }, [account_type]);
+
+  console.log(transactionHistory);
 
   useEffect(() => {
     const isValid = METER_ACCT_NUMBER_REGEX.test(user);
@@ -98,22 +100,28 @@ export default function CustomerDashboard() {
             "customer_number": meterNumber
         };
 
-        if (displayAccountType !== "Postpaid") {
+        if (account_type !== "Postpaid") {
           setLoading_04(false);
           return;
         }
 
         try {
-            const response = await axiosClient.post(billHistoryOutstandingBalanceUrl, payload);
-            const totalDue = response?.data?.payload?.payload?.data?.[0]?.TotalDue;
-            const currentCharge = response?.data?.payload?.payload?.data?.[0]?.CurrentChgTotal;
-            const vat = response?.data?.payload?.payload?.data?.[0]?.VAT;
+            const response = await axiosClient.get(billHistoryOutstandingBalanceUrl, payload);
+            const totalDue = response?.data?.data?.[0]?.TotalDue;
+            const currentCharge = response?.data?.data?.[0]?.CurrentChgTotal;
+            const vat = response?.data?.data?.[0]?.VAT;
+            const billHistory = response?.data?.data;
             setUserOutandingBalance(totalDue);
             setCurrentChargeTotal(currentCharge);
             setVAT(vat);
+
+            console.log(billHistory);
+            setUserCurrentBill((Number(currentCharge) + Number(vat)).toString());
+            localStorage.setItem('BILL_HISTORY', JSON.stringify(billHistory));
             localStorage.setItem('USER_OUTSTANDING_BALANCE', totalDue);
             localStorage.setItem('USER_CURRENT_CHARGE', currentCharge);
             localStorage.setItem('USER_CURRENT_VAT', vat);
+            localStorage.setItem('CURRENT_BILL', (Number(currentCharge) + Number(vat)).toString());
         } catch (error) {
             console.log(error);
         } finally {
@@ -122,7 +130,7 @@ export default function CustomerDashboard() {
     };
 
     fetchBillHistoryOutstandingBalance();
-    }, [displayAccountType]);
+    }, [account_type]);
 
     const requestData = {
       "email": userEmail,
@@ -133,15 +141,6 @@ export default function CustomerDashboard() {
       e.preventDefault();
       setButtonDisabled(true);
       setLoading_01(true);
-
-      // if (accountType === "Postpaid") {
-      //   toast.error("Visit the nearest IBEDC office for postpaid outstanding balance.", {
-      //     autoClose: false,
-      //   });
-      //   setButtonDisabled(false);
-      //   setLoading_01(false);
-      //   return;
-      // }
   
       try{
         const response = await axiosClient.post(getOutstandingBalanceUrl, requestData);
@@ -159,8 +158,7 @@ export default function CustomerDashboard() {
     }
 
   const requestData_01 = {
-    "email": "apwakunyamusa@yahoo.com",
-    // "email": userEmail,
+    "email": userEmail,
     "account_no": meterNo_Or_AccountNo,
     "account_type": accountType,
     "pin": pin,
@@ -180,10 +178,10 @@ export default function CustomerDashboard() {
 
     try{
       const response = await axiosClient.post(showOutstandingBalanceUrl, requestData_01);
-      console.log(response);
+      console.log(response?.data?.payload);
       toast.success(response?.data?.message);
       setSuccess(response?.data?.success);
-      setOutStandingbalance(response?.data?.payload?.balance);
+      setOutStandingbalance(response?.data?.payload?.balance?.Balance);
       setButtonDisabled(false);
       setLoading_03(false);
       setBlur_02(false);
@@ -215,37 +213,46 @@ console.log(outStandingbalance);
     setAccountType("");
     setUser("");
   };
-  
-  // useEffect(() => {
-  //   const getCustomerDetails = async () => {
-  //     try {
-  //       const response = await axiosClient.get(getCustomerDetailsUrl);
-  //       console.log(response?.data);
-  //     }catch(error) {
-  //       console.log(error);
-  //     };
-  //   }
-  //   getCustomerDetails();
-  // }, []);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+        localStorage.removeItem('TRANSACTION_HISTORY');  
+        localStorage.removeItem('BILL_HISTORY');  
+        localStorage.removeItem('USER_OUTSTANDING_BALANCE'); 
+        localStorage.removeItem('CURRENT_BILL'); 
+    };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
   
   useEffect(() => {
     const getTransactionHistory = async () => {
       setLoading(true);
       try {
-        const response = await axiosClient.get(transactionHistoryUrl);
-        console.log(response?.data?.payload?.data?.[0]);
-        setTransactionHistory(response?.data?.payload?.data);
-        localStorage.setItem('TRANSACTION_HISTORY', JSON.stringify(response?.data?.payload?.data || []));
-        localStorage.setItem('CUSTOMER_NAME', JSON.stringify(response?.data?.payload?.data?.[0]?.customer_name));
-        localStorage.setItem('ACCOUNT_TYPE', JSON.stringify(response?.data?.payload?.data?.[0]?.account_type));
-        localStorage.setItem('METER_NUMBER', JSON.stringify(response?.data?.payload?.data?.[0]?.meter_no));
-        localStorage.setItem('PHONE_NUMBER', JSON.stringify(response?.data?.payload?.data?.[0]?.phone));
-        localStorage.setItem('BUSINESS_HUB', JSON.stringify(response?.data?.payload?.data?.[0]?.udertaking));
-        localStorage.setItem('TARRIF_CODE', JSON.stringify(response?.data?.payload?.data?.[0]?.tariffcode));
-        setLoading(false);
+        const localHistory = JSON.parse(localStorage.getItem('TRANSACTION_HISTORY')) || [];
+        if (localHistory.length > 0) {
+          setTransactionHistory(localHistory)
+          console.log(localHistory);
+        } else {
+          const response = await axiosClient.get(transactionHistoryUrl);
+          console.log(response?.data?.payload?.data?.[0]);
+          setTransactionHistory(response?.data?.payload?.data);
+          localStorage.setItem('TRANSACTION_HISTORY', JSON.stringify(response?.data?.payload?.data || []));
+          localStorage.setItem('CUSTOMER_NAME', JSON.stringify(response?.data?.payload?.data?.[0]?.customer_name));
+          localStorage.setItem('ACCOUNT_TYPE', JSON.stringify(response?.data?.payload?.data?.[0]?.account_type));
+          localStorage.setItem('METER_NUMBER', JSON.stringify(response?.data?.payload?.data?.[0]?.meter_no));
+          localStorage.setItem('PHONE_NUMBER', JSON.stringify(response?.data?.payload?.data?.[0]?.phone));
+          localStorage.setItem('BUSINESS_HUB', JSON.stringify(response?.data?.payload?.data?.[0]?.udertaking));
+          localStorage.setItem('TARRIF_CODE', JSON.stringify(response?.data?.payload?.data?.[0]?.tariffcode));
+        }
       }catch(error) {
         console.log(error);
-      };
+      } finally {
+        setLoading(false);
+      }
     }
     getTransactionHistory();
   }, []);
@@ -267,17 +274,18 @@ console.log(outStandingbalance);
   //     getWalletBalance_History();
   // }, []);
 
-  console.log(outStandingbalance);
+  // console.log(  displayAccountType  );
+
 
 
   return (
-    <div className='bg-white bg-cover pb-4'>
+    <div className='bg-white bg-cover h-full'>
     <motion.section 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 1 }}
-    className={`mx-2 mt-4 sm:mx-20 ${blur || blur_01 || blur_02 ? "fixed sm:w-4/5" : ""} w-full sm:w-4/5`} >
+    className={`mt-4 px-2 sm:px-20 ${blur || blur_01 || blur_02 ? "fixed sm:w-4/5" : ""} w-full`} >
           {blur && <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm'></div>}
           {blur_01 && <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm' onClick={handleBlur_01}></div>}
           {blur_02 && <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm' onClick={handleBlur_02}></div>}
@@ -420,7 +428,7 @@ console.log(outStandingbalance);
         <div className='flex flex-col justify-normal space-y-4 w-full text-xs'>
             <h1 className='flex font-semibold text-lg'>Welcome! <span className='text-blue-950 opacity-80 font-semibold ml-1'>{cleanedUsername}</span></h1>
             <h1 className='flex font-semibold w-full'>Meter/Acct No: <span className='font-normal ml-1'>{meterNumber === null ? "" : meterNumber === "undefined" ? "Not yet available" : meterNumber.replace(/"/g, '')}</span></h1>
-            <h1 className='flex font-semibold w-full'>Account Type: <span className='font-normal ml-1'>{displayAccountType}</span></h1>
+            <h1 className='flex font-semibold w-full'>Account Type: <span className='font-normal ml-1'>{account_type}</span></h1>
             {/* <h1 className='flex font-semibold w-full'>Phone Number: <span className='font-normal ml-1'>{phoneNumber === null ? "" : phoneNumber === "undefined" ? "Not yet available" : phoneNumber.replace(/"/g, '')}</span></h1> */}
             {/* <h1 className='flex font-semibold w-full'>Address: <span className='font-normal ml-1'>{"Not found"}</span></h1> */}
         </div>
@@ -434,15 +442,15 @@ console.log(outStandingbalance);
           <div className='absolute flex flex-col justify-center items-center capitalize text-white'>
               <CreditCardIcon className='w-8 h-8'/>
             <p className='text-center'>outstanding balance</p>
-              {displayAccountType === "Postpaid" && <p className='sm:text-3xl font-semibold'>{`₦${(Number(userOutandingBalance)).toLocaleString()}`}</p>}
+              {account_type === "Postpaid" && <p className='sm:text-3xl font-semibold'>{userOutandingBalance === "" ? <span className='text-base'>Loading...</span> : `₦${(Number(userOutandingBalance)).toLocaleString()}`}</p>}
               {outStandingbalance === undefined || outStandingbalance === "" && <p className='text-3xl font-semibold'></p>}
               {outStandingbalance !== undefined && outStandingbalance !== "" && <p className='text-3xl font-semibold'>{`₦${(Number(outStandingbalance)).toLocaleString()}`}</p>}
-            <button onClick={handleBlur_01} className='bg-slate-300 text-slate-600 rounded-md capitalize text-sm transform duration-300 ease-in-out hover:px-2'>
+              {account_type === "Prepaid" && <button onClick={handleBlur_01} className='bg-slate-300 text-slate-600 rounded-md capitalize text-sm transform duration-300 ease-in-out hover:px-2'>
               <p className='px-2'>click to view</p>
-            </button>
+            </button>}
           </div>
         </div>
-        {displayAccountType === "Postpaid" && <div className='relative flex-grow shadow-sm shadow-slate-500 w-full h-52 rounded-lg flex flex-col justify-center items-center'>
+        {account_type === "Postpaid" && <div className='relative flex-grow shadow-sm shadow-slate-500 w-full h-52 rounded-lg flex flex-col justify-center items-center'>
           <img 
             src={Frame_01}
             alt={'Frame_01'}
@@ -452,7 +460,7 @@ console.log(outStandingbalance);
           <div className='absolute flex flex-col justify-center items-center capitalize text-white'>
             <BanknotesIcon className='w-8 h-8'/>
             <p>current bill</p>
-            <p className='sm:text-3xl font-semibold'>{`₦${(Number(userCurrentBill)).toLocaleString()}`}</p>
+            <p className='sm:text-3xl font-semibold'>{userCurrentBill === "" ? <span className='text-base'>Loading...</span> : `₦${(Number(userCurrentBill)).toLocaleString()}`}</p>
           </div>
         </div>}
         <div className='relative flex-grow shadow-sm shadow-slate-500 w-full h-52 rounded-lg flex flex-col justify-center items-center'>
@@ -575,7 +583,7 @@ console.log(outStandingbalance);
               {blur &&<Link to={`/default/transactionviewdetails/${transaction.id}`} className={`bg-blue-950 ${!blur ? "opacity-75" : ""} rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out`}>view</Link>}
               {!blur_01 &&<Link to={`/default/transactionviewdetails/${transaction.id}`} className={`bg-blue-950 ${!blur_01 ? "opacity-75" : ""} rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out`}>view</Link>}
             </div>
-          )).slice(0,5) : null}
+          )).slice(0,7) : null}
         </div>
       </motion.div>
       <motion.div 

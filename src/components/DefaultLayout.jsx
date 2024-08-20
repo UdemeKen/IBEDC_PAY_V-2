@@ -158,7 +158,7 @@ export default function DefaultLayout() {
   };
 
   return (
-    <section className='bg-white bg-cover'>
+    <section className='bg-white bg-cover w-full'>
       <Modal
         isOpen={isVerifyModalOpen}
         onRequestClose={() => setIsVerifyModalOpen(false)}
@@ -267,7 +267,7 @@ export default function DefaultLayout() {
             <div className='flex justify-normal items-center space-x-4'>
               {/* <div>
                 <p className='font-semibold text-slate-600 text-sm italic'>User Name: <span className='opacity-75 '>{userName}</span></p>
-                <p className='font-semibold text-slate-600 text-xs italic'>Account Number: <span className='opacity-75 '>{account_number}</span></p>
+                <p className='font-semibold text-slate-600 tex=t-xs italic'>Account Number: <span className='opacity-75 '>{account_number}</span></p>
               </div> */}
               <div className='flex justify-normal items-center'>
                 <UserIcon className='w-8 h-8 border-2 border-black rounded-full'/>

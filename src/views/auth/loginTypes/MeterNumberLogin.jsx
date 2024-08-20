@@ -72,6 +72,7 @@ export default function MeterNumberLogin() {
       localStorage.setItem('USER_NAME', response?.data?.payload?.user?.name);
       localStorage.setItem('USER_PHONE', response?.data?.payload?.user?.phone);
       localStorage.setItem('USER_ID', response?.data?.payload?.user?.id);
+      localStorage.setItem('LOGIN_ACCOUNT_TYPE', response?.data?.payload?.user?.account_type);
       setUserToken(response?.data?.payload?.token);
       setCurrentUser(response?.data?.payload?.user?.name);
       navigateTo('/default/customerdashboard');
