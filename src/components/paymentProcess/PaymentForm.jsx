@@ -5,7 +5,7 @@ import { ChevronLeftIcon } from '@heroicons/react/24/outline';
 
 export default function PaymentForm({ blur, setBlur, blur_01, setBlur_01 }) {
 
-    const formList = ["First Form", "Second Form", "Third Form"];
+    const formList = [ "First Form", "Second Form", "Third Form", "Fourth Form" ];
     const [ page, setPage ] = useState(0);
     const formLength = formList.length;
 

@@ -83,7 +83,7 @@ export default function Signup() {
                             id="fullName"
                             autoComplete="text"
                             value={fullName}
-                            onChange={(e) => setFullNmae(e.target.value)}
+                            onChange={(e) => setFullNmae(e.target.value)} 
                             required
                             name="fullName"
                             placeholder='Enter your your full name'

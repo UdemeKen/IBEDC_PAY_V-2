@@ -9,37 +9,40 @@ export default function PostpaidBillReceipt() {
 
     const [loading, setLoading] = useState(false);
 
+    const allTransactions = JSON.parse(localStorage.getItem('TRANSACTION_HISTORY')) || [];
+    const { postId } = useParams();
+    const transaction = allTransactions.find((transaction) => transaction.PaymentID === postId);
+    console.log(transaction);
+    
     const allBills = JSON.parse(localStorage.getItem('BILL_HISTORY')) || [];
     const { id } = useParams();
-    console.log("ID from URL:", id);
-    console.log("All Bills:", allBills);
     const bill = allBills.find((bill) => bill.BillID === id);
     console.log("Found Bill:", bill);
 
-    if(!bill) {
-        return <h1>Bill not found</h1>
-    }
+    // if(!bill) {
+    //     return <h1>Bill not found</h1>
+    // }
 
-    const { 
-        CustomerName,
-        AccountNo,
-        AcctTye,
-        CurrentChgTotal,
-        VAT,
-        BillID,
-        ServiceAddress1,
-        NetArrears,
-        BUID,
-        BUName1,
-        LastPayAmount, 
-        CurrentKWH,
-        ConsumptionKWH, 
-        Rate,
-        Billdate,
-        ServiceID,
-        TariffCode,
-        TotalDue
-         } = bill;
+    // const { 
+    //     CustomerName,
+    //     AccountNo,
+    //     AcctTye,
+    //     CurrentChgTotal,
+    //     VAT,
+    //     BillID,
+    //     ServiceAddress1,
+    //     NetArrears,
+    //     BUID,
+    //     BUName1,
+    //     LastPayAmount, 
+    //     CurrentKWH,
+    //     ConsumptionKWH, 
+    //     Rate,
+    //     Billdate,
+    //     ServiceID,
+    //     TariffCode,
+    //     TotalDue
+    //      } = bill;
 
          const pdfRef = useRef();
 
@@ -80,75 +83,75 @@ export default function PostpaidBillReceipt() {
               <div className='grid sm:grid-cols-3 gap-y-4 justify-center px-16 text-center sm:text-left'>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Customer Name</label>
-                    <p className='text-sm font-semibold text-gray-500'>{CustomerName}</p>
+                    <p className='text-sm font-semibold text-gray-500'>{bill?.CustomerName}</p>
                 </div>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Account Number</label>
-                    <p className='text-sm font-semibold text-gray-500'>{AccountNo}</p>
+                    <p className='text-sm font-semibold text-gray-500'>{bill?.AccountNo}</p>
                 </div>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Account Type</label>
-                    <p className='text-sm font-semibold text-gray-500'>{AcctTye}</p>
+                    <p className='text-sm font-semibold text-gray-500'>{bill?.AcctTye}</p>
                 </div>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Amount Billed</label>
-                    <p className='text-sm font-semibold text-gray-500'>₦{((Number(CurrentChgTotal) || 0) + (Number(VAT) || 0)).toLocaleString('en-NG', { style: 'decimal', minimumFractionDigits: 2 })}</p>
+                    <p className='text-sm font-semibold text-gray-500'>₦{((Number(bill?.CurrentChgTotal) || 0) + (Number(bill?.VAT) || 0)).toLocaleString('en-NG', { style: 'decimal', minimumFractionDigits: 2 })}</p>
                 </div>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Bill ID</label>
-                    <p className='text-sm font-semibold text-gray-500'>{BillID}</p>
+                    <p className='text-sm font-semibold text-gray-500'>{bill?.BillID}</p>
                 </div>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Service Address</label>
-                    <p className='text-sm font-semibold text-gray-500'>{ServiceAddress1}</p>
+                    <p className='text-sm font-semibold text-gray-500'>{bill?.ServiceAddress1}</p>
                 </div>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>NetArrears</label>
-                    <p className='text-sm font-semibold text-gray-500'>₦{(Number(NetArrears) || 0).toLocaleString()}</p>
+                    <p className='text-sm font-semibold text-gray-500'>₦{(Number(bill?.NetArrears) || 0).toLocaleString()}</p>
                 </div>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Business Hub ID</label>
-                    <p className='text-sm font-semibold text-gray-500'>{BUID}</p>
+                    <p className='text-sm font-semibold text-gray-500'>{bill?.BUID}</p>
                 </div>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Business Hub</label>
-                    <p className='text-sm font-semibold text-gray-500'>{BUName1}</p>
+                    <p className='text-sm font-semibold text-gray-500'>{bill?.BUName1}</p>
                 </div>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Last Payment Amount</label>
-                    <p className='text-sm font-semibold text-gray-500' >₦{LastPayAmount === ".00" ? "0.00" : (Number(LastPayAmount)).toLocaleString()}</p>
+                    <p className='text-sm font-semibold text-gray-500' >₦{bill?.LastPayAmount === ".00" ? "0.00" : (Number(bill?.LastPayAmount)).toLocaleString()}</p>
                 </div>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>CurrentKWH</label>
-                    <p className='text-sm font-semibold text-gray-500'>{CurrentKWH}</p>
+                    <p className='text-sm font-semibold text-gray-500'>{bill?.CurrentKWH}</p>
                 </div>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>ConsumptionKWH</label>
-                    <p className='text-sm font-semibold text-gray-500'>{ConsumptionKWH}</p>
+                    <p className='text-sm font-semibold text-gray-500'>{bill?.ConsumptionKWH}</p>
                 </div>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Rate</label>
-                    <p className='text-sm font-semibold text-gray-500'>{Rate}</p>
+                    <p className='text-sm font-semibold text-gray-500'>{bill?.Rate}</p>
                 </div>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Billed Date</label>
-                    <p className='text-sm font-semibold text-gray-500'>{Billdate?.slice(0, 10)}</p>
+                    <p className='text-sm font-semibold text-gray-500'>{bill?.Billdate?.slice(0, 10)}</p>
                 </div>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Service Band</label>
-                    <p className='text-sm font-semibold text-gray-500'>{ServiceID}</p>
+                    <p className='text-sm font-semibold text-gray-500'>{bill?.ServiceID}</p>
                 </div>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Tarriff Code</label>
-                    <p className='text-sm font-semibold text-gray-500'>{TariffCode}</p>
+                    <p className='text-sm font-semibold text-gray-500'>{bill?.TariffCode}</p>
                 </div>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Tarriff Code</label>
-                    <p className='text-sm font-semibold text-gray-500'>{TariffCode}</p>
+                    <p className='text-sm font-semibold text-gray-500'>{bill?.TariffCode}</p>
                 </div>
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Total Due</label>
-                    <p className='text-sm font-semibold text-gray-500'>{TotalDue}</p>
+                    <p className='text-sm font-semibold text-gray-500'>{bill?.TotalDue}</p>
                 </div>
               </div>
               <div className='flex flex-col justify-center items-center text-xs my-4'>

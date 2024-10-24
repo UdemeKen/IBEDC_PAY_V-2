@@ -50,8 +50,8 @@ export default function FAQ() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 1 }}
-    className='flex flex-col sm:flex-row sm:justify-center mx-2 my-4'>
-      <div className='shadow-sm shadow-slate-500 sm:my-10 sm:w-1/2 flex flex-col sm:justify-center sm:items-center py-5 rounded-lg'>
+    className='flex justify-center mx-2 sm:mx-0'>
+      <div className='shadow-sm shadow-slate-500 flex flex-col justify-center items-center sm:w-1/2 my-10 py-5 rounded-lg'>
         <div className='sm:w-3/4 px-2'>
           <motion.div 
             variants={heroVariants.hero_01Variants}

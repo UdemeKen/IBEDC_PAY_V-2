@@ -12,14 +12,16 @@ import { Link } from 'react-router-dom';
 import axiosClient from '../../axios';
 import { toast } from 'react-toastify';
 import { heroVariants } from '../../variants';
+import VirtualAccountModal from '../virtualAccountModal/VirtualAccountModal';
 
-const transactionHistoryUrl = "/V2_ibedc_OAUTH_tokenReviwed/history/get-history";
+const transactionHistoryUrl = "/V2_ibedc_OAUTH_tokenReviwed/history/other-history";
+// const transactionHistoryUrl = "/V2_ibedc_OAUTH_tokenReviwed/history/get-history";
 const billHistoryOutstandingBalanceUrl = "/V2_ibedc_OAUTH_tokenReviwed/history/get-bill-history";
 // const billHistoryOutstandingBalanceUrl = "/V2_ibedc_OAUTH_agency_sync/customerhistory/bill-history";
 // const getCustomerDetailsUrl = "/dashboard/get-details";
 const getOutstandingBalanceUrl = "/V2_ibedc_OAUTH_tokenReviwed/outstanding/get-balance";
 const showOutstandingBalanceUrl = "/V2_ibedc_OAUTH_tokenReviwed/outstanding/show-balance";
-// const getWalletBalance_HistoryUrl = "/wallet/wallet-balance-history";
+const getWalletBalance_HistoryUrl = "/V2_ibedc_OAUTH_tokenReviwed/wallet/wallet-balance-history";
 const METER_ACCT_NUMBER_REGEX = /^[0-9\-/]{11,16}$/;
 
 
@@ -29,6 +31,7 @@ export default function CustomerDashboard() {
   const username = localStorage.getItem("USER_NAME");
   const account_type = localStorage.getItem("LOGIN_ACCOUNT_TYPE");
   const meterNumber = localStorage.getItem("USER_METER_NUMBER");
+  const wallet_amount = localStorage.getItem("WALLET_BALANCE");
   const cleanedUsername = username ? username.replace(/\./g, '') : '';
   
   const [ transactionHistory, setTransactionHistory ] = useState([]);
@@ -43,12 +46,19 @@ export default function CustomerDashboard() {
   const [ blur_02, setBlur_02 ] = useState(false);
   const [ userFocus, setUserFocus ] = useState(false);
   const [ accountType, setAccountType ] = useState("");
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handleCreateAccountClick = () => {
+        setIsModalOpen(true);
+    };
+
   // const [ displayAccountType, setDisplayAccountType ] = useState(meterNumber && meterNumber.length === 13 ? "Prepaid" : "Postpaid");
   const [ user, setUser ] = useState('');
   const [ formattedUser, setFormattedUser ] = useState('');
   const [ validMeterAcctNo, setValidMeterAcctNo ] = useState(false);
-  // const [ walletHistory, setWalletHistory ] = useState([]);
-  // const [ walletBalance, setWalletBalance ] = useState("")
+  const [ walletHistory, setWalletHistory ] = useState([]);
+  const [ walletBalance, setWalletBalance ] = useState("")
   const [ pin, setPin ] = useState("")
   const [ success, setSuccess ] = useState();
   const [ outStandingbalance, setOutStandingbalance ] = useState("");
@@ -60,12 +70,6 @@ export default function CustomerDashboard() {
   const [userCurrentBill, setUserCurrentBill] = useState(() => {
     return localStorage.getItem('CURRENT_BILL') || "";
   });
-
-  // useEffect(() => {
-  //   localStorage.setItem('DISPLAY_ACCOUNT_TYPE', account_type);
-  // }, [account_type]);
-
-  console.log(transactionHistory);
 
   useEffect(() => {
     const isValid = METER_ACCT_NUMBER_REGEX.test(user);
@@ -200,8 +204,6 @@ export default function CustomerDashboard() {
   }
 };
 
-console.log(outStandingbalance);
-
   const handleBlur_01 = () => {
     setBlur_01(!blur_01);
     setAccountType("");
@@ -233,20 +235,22 @@ console.log(outStandingbalance);
       setLoading(true);
       try {
         const localHistory = JSON.parse(localStorage.getItem('TRANSACTION_HISTORY')) || [];
-        if (localHistory.length > 0) {
+        if (Array.isArray(localHistory) && localHistory.length > 0) {
           setTransactionHistory(localHistory)
           console.log(localHistory);
         } else {
           const response = await axiosClient.get(transactionHistoryUrl);
-          console.log(response?.data?.payload?.data?.[0]);
-          setTransactionHistory(response?.data?.payload?.data);
-          localStorage.setItem('TRANSACTION_HISTORY', JSON.stringify(response?.data?.payload?.data || []));
-          localStorage.setItem('CUSTOMER_NAME', JSON.stringify(response?.data?.payload?.data?.[0]?.customer_name));
-          localStorage.setItem('ACCOUNT_TYPE', JSON.stringify(response?.data?.payload?.data?.[0]?.account_type));
-          localStorage.setItem('METER_NUMBER', JSON.stringify(response?.data?.payload?.data?.[0]?.meter_no));
-          localStorage.setItem('PHONE_NUMBER', JSON.stringify(response?.data?.payload?.data?.[0]?.phone));
-          localStorage.setItem('BUSINESS_HUB', JSON.stringify(response?.data?.payload?.data?.[0]?.udertaking));
-          localStorage.setItem('TARRIF_CODE', JSON.stringify(response?.data?.payload?.data?.[0]?.tariffcode));
+          const fetchedData = response?.data?.data || []; // Ensure fetchedData is an array
+          setTransactionHistory(fetchedData);
+          console.log(fetchedData);
+          // setTransactionHistory(response?.data?.payload?.data);
+          localStorage.setItem('TRANSACTION_HISTORY', JSON.stringify(fetchedData || []));
+          // localStorage.setItem('CUSTOMER_NAME', JSON.stringify(response?.data?.payload?.data?.[0]?.customer_name));
+          // localStorage.setItem('ACCOUNT_TYPE', JSON.stringify(response?.data?.payload?.data?.[0]?.account_type));
+          // localStorage.setItem('METER_NUMBER', JSON.stringify(response?.data?.payload?.data?.[0]?.meter_no));
+          // localStorage.setItem('PHONE_NUMBER', JSON.stringify(response?.data?.payload?.data?.[0]?.phone));
+          // localStorage.setItem('BUSINESS_HUB', JSON.stringify(response?.data?.payload?.data?.[0]?.udertaking));
+          // localStorage.setItem('TARRIF_CODE', JSON.stringify(response?.data?.payload?.data?.[0]?.tariffcode));
         }
       }catch(error) {
         console.log(error);
@@ -257,22 +261,33 @@ console.log(outStandingbalance);
     getTransactionHistory();
   }, []);
 
-  // useEffect(() => {
-  //     const getWalletBalance_History = async () => {
-  //       setLoading_02(true);
-  //       try{
-  //         const response = await axiosClient.get(getWalletBalance_HistoryUrl);
-  //         setWalletHistory(response?.data?.payload?.balance_history);
-  //         setWalletBalance(response?.data?.payload?.user_balance?.wallet_amount);
-  //         localStorage.setItem('WALLET_HISTORY', JSON.stringify(response?.data?.payload?.balance_history || []));
-  //         localStorage.setItem('WALLET_BALANCE', response?.data?.payload?.user_balance?.wallet_amount);
-  //         setLoading_02(false);
-  //       }catch(error){
-  //         console.log(error);
-  //       };
-  //     }
-  //     getWalletBalance_History();
-  // }, []);
+  console.log('transactionHistory:', transactionHistory);
+  // console.log('current transaction:', transaction);
+
+  useEffect(() => {
+      const getWalletBalance_History = async () => {
+        setLoading_02(true);
+        try{
+          const response = await axiosClient.get(getWalletBalance_HistoryUrl);
+          console.log("WalletAmount:", response?.data);
+          setWalletHistory(response?.data?.payload?.balance_history);
+          setWalletBalance(response?.data?.payload?.user_balance?.wallet_amount);
+          localStorage.setItem('WALLET_HISTORY', JSON.stringify(response?.data?.payload?.balance_history || []));
+          localStorage.setItem('WALLET_BALANCE', response?.data?.payload?.user_balance?.wallet_amount);
+          setLoading_02(false);
+        }catch(error){
+          console.log(error);
+        };
+      }
+      getWalletBalance_History();
+  }, []);
+
+    const accountName = localStorage.getItem('account_name');
+    const accountNo = localStorage.getItem('account_no');
+    const bankName = localStorage.getItem('bank_name');
+    const customerEmail = localStorage.getItem('customer_email');
+    const userId = localStorage.getItem('user_id');
+    const status = localStorage.getItem('STATUS');
 
   // console.log(  displayAccountType  );
 
@@ -292,10 +307,10 @@ console.log(outStandingbalance);
       <div className={`flex justify-center items-center top-0 relative ${!blur ? "hidden" : "block"}`}>
         <CompletePayment blur={blur} blur_01={blur_01} setBlur={setBlur} setBlur_01={setBlur_01}/>
       </div>
-      <div className={`flex justify-center items-center top-20 ml-16 sm:ml-0 right-32 sm:right-0 relative lg:mx-80 rounded-md ${!blur_01 ? "hidden" : "block"}`}>
-      <div className='bg-slate-300 rounded-md w-72 sm:w-full'>
+      <div className={`flex justify-center items-center top-20 ml-16 sm:ml-0 right-32 sm:-right-[150px] relative lg:mx-[120px] rounded-md ${!blur_01 ? "hidden" : "block"}`}>
+      <div className='bg-slate-300 rounded-md w-72 sm:w-[30rem]'>
             <div className='flex flex-col justify-center items-center space-y-4 p-8'>
-                <h1 className='text-4xl font-bold text-center'>Verify account</h1>
+                <h1 className='text-4xl font-bold text-center'>Verify Account</h1>
                 <form className='flex flex-col justify-center space-y-3 xs:w-64 w-full px-4 my-4' 
                 onSubmit={handleGetOutStandingBalance}
                 >
@@ -375,7 +390,7 @@ console.log(outStandingbalance);
             </div>
         </div>
       </div>
-      <div className={`flex justify-center items-center top-20 ml-16 sm:ml-0 right-32 sm:right-0 relative lg:mx-80 rounded-md ${!blur_02 ? "hidden" : "block"}`}>
+      <div className={`flex justify-center items-center top-20 ml-16 sm:ml-0 right-32 sm:right-0 relative lg:mx-[120px] rounded-md ${!blur_02 ? "hidden" : "block"}`}>
       <div className='bg-slate-300 rounded-md w-full'>
       <div className='flex flex-col justify-center items-center space-y-4 p-8'>
                 <h1 className='text-4xl font-bold text-center'>Verify it's you</h1>
@@ -424,13 +439,12 @@ console.log(outStandingbalance);
         variants={heroVariants.hero_09Variants}
         initial="hidden"
         animate="visible"
-      className={`flex flex-col space-y-4 sm:space-y-0 sm:flex-row justify-normal sm:space-x-4 lg:px-10 sm:mt-10 ${blur || blur_01 || blur_02 ? "hidden" : ""}`}>
+      className={`flex flex-col space-y-4 sm:space-y-0 sm:flex-row justify-normal sm:space-x-4 lg:px-10 -mt-[12px] sm:mt-10 ${blur || blur_01 || blur_02 ? "hidden" : ""}`}>
         <div className='flex flex-col justify-normal space-y-4 w-full text-xs'>
             <h1 className='flex font-semibold text-lg'>Welcome! <span className='text-blue-950 opacity-80 font-semibold ml-1'>{cleanedUsername}</span></h1>
             <h1 className='flex font-semibold w-full'>Meter/Acct No: <span className='font-normal ml-1'>{meterNumber === null ? "" : meterNumber === "undefined" ? "Not yet available" : meterNumber.replace(/"/g, '')}</span></h1>
             <h1 className='flex font-semibold w-full'>Account Type: <span className='font-normal ml-1'>{account_type}</span></h1>
-            {/* <h1 className='flex font-semibold w-full'>Phone Number: <span className='font-normal ml-1'>{phoneNumber === null ? "" : phoneNumber === "undefined" ? "Not yet available" : phoneNumber.replace(/"/g, '')}</span></h1> */}
-            {/* <h1 className='flex font-semibold w-full'>Address: <span className='font-normal ml-1'>{"Not found"}</span></h1> */}
+            <h1 className='flex font-semibold w-full'>Email: <span className='font-normal text-center ml-1'>{userEmail}</span></h1>
         </div>
         <div className='relative shadow-sm shadow-slate-500 w-full h-52 rounded-lg flex flex-col justify-center items-center'>
           <img 
@@ -471,23 +485,46 @@ console.log(outStandingbalance);
           />
           <div className="absolute inset-0 rounded-lg bg-orange-500 opacity-70"></div>
           <div className='absolute flex flex-col justify-center items-center capitalize text-white'>
-            <PhoneIcon className='w-8 h-8'/>
+          <div>
+            <div className='flex flex-col justify-center items-center w-full h-6 mt-2'>
+              <h2 className='font-semibold text-slate-700 opacity-75'>Account details</h2>
+              <hr className='w-4/5 border-1 border-black'/>
+            </div>
+            {/* <h1 className='mt-10 font-semibold text-xl text-center'>Not yet Available</h1> */}
+            {/* <div className='flex justify-center'>
+              <Link to={""} className='px-4 font-semibold text-lg mt-2 bg-slate-500 text-slate-200 rounded-md capitalize hover:bg-orange-500 opacity-75 transform duration-300 ease-in-out sm:py-2'>
+                fund wallet
+              </Link>
+            </div> */}
+            <ul className='text-sm capitalize mt-4 flex justify-center items-center italic font-semibold mb-2'>
+              <li className='text-center'>account NO:<br /> <span className='text-4xl not-italic font-normal'>{accountNo === "undefined" ? " " : accountNo}</span></li>
+            </ul>
+            <ul className='text-sm capitalize m-2 flex justify-between items-center italic font-semibold mb-2 px-4 gap-4'>
+              <li className='text-center'>account name:<br /> <span className='not-italic font-normal'>{accountName === "undefined" ? " " : accountName}</span></li>
+              <li className='text-center'>bank name:<br /> <span className='not-italic font-normal'>{bankName === "undefined" ? " " : bankName}</span></li>
+            </ul>
+            {/* <ul className='text-sm capitalize flex justify-center items-center italic font-semibold mb-2'>
+              <li className='text-center'>email:<br /> <span className='not-italic font-normal'>{customerEmail === "undefined" ? " " : customerEmail}</span></li>
+            </ul> */}
+          </div>
+            {/* <PhoneIcon className='w-8 h-8'/>
             <p>need help:</p>
-            <p className='lg:text-2xl font-semibold text-center'>call: 07001239999</p>
+            <p className='lg:text-2xl font-semibold text-center'>call: 07001239999</p> */}
           </div>
         </div>
-        {/* <div className='relative flex-grow shadow-sm shadow-slate-500 w-full h-40 rounded-lg flex flex-col justify-center items-center'>
+        <div className='relative flex-grow shadow-sm shadow-slate-500 w-full h-52 rounded-lg flex flex-col justify-center items-center'>
         <img 
             src={Frame_01}
             alt={'Frame_01'}
             className='w-full h-full object-cover rounded-lg'
           />
           <div className="absolute inset-0 rounded-lg bg-blue-950 opacity-70"></div>
-          <div className='absolute flex flex-col justify-center items-center capitalize text-white'>
-            <WalletIcon className='w-8 h-8'/>
-            <p>wallet balance</p>
-            {loading && 
-            <div className={`flex flex-row justify-center space-x-2 ${blur ? "hidden" : ""}`}>
+          <div className='absolute flex flex-col justify-center items-center gap-4 capitalize text-white'>
+            {status === "active" && <WalletIcon className='w-8 h-8'/>}
+            {status === "active" && <p>wallet balance</p>}
+            {status === "undefined" && <p className='text-center'>Click on the button below to create a new virtual account</p>}
+            {status === "active" && loading && 
+            <div className={`flex flex-col justify-center items-center ${blur ? "hidden" : ""}`}>
                 <div>
                     <svg className={`w-5 h-5 animate-spin  text-white ${blur_01 ? "hidden" : ""}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         {!blur_01 && <circle className={`${!blur_01 ? "opacity-25" : ""}`} cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>}
@@ -500,10 +537,14 @@ console.log(outStandingbalance);
                 </div>
             </div>
             }
-            {!loading && <p className='text-4xl font-semibold'>₦ {walletBalance}</p>}
-            <p className='normal-case'>-Not yet available-</p>
+            {!loading && status === "active" && <p className='font-semibold text-3xl -mt-4'>{`₦${(Number(wallet_amount)).toLocaleString()}`}</p>}
+            {status === "undefined" && <button onClick={handleCreateAccountClick} className='bg-slate-300 text-slate-600 font-bold rounded-md capitalize text-sm transform duration-300 ease-in-out w-2/3 p-4'>
+              <p className='px-2'>Create a new virtual account</p>
+            </button>}
+            <VirtualAccountModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+            {/* {!loading && <p className='text-4xl font-semibold'>₦ {walletBalance}</p>} */}
           </div>
-        </div> */}
+        </div>
       </motion.div>
       <motion.div 
         variants={heroVariants.hero_10Variants}
@@ -551,11 +592,32 @@ console.log(outStandingbalance);
           {!loading && transactionHistory.length > 0 ? transactionHistory.map((transaction) => (
             <div className={`flex flex-row justify-between items-center rounded-lg px-4 py-2 mx-2 shadow-sm shadow-gray-500 ${blur || blur_02 ? "hidden" : ""}`}>
               <div className='text-blue-900'>
-                <h4 className='tracking-tighter text-left'>Amount paid: <span className='font-bold md:text-lg'>&#8358;{(Number(transaction.amount)).toLocaleString()}</span></h4>
-                {!blur_01 && <h4 className={`font-semibold text-sm text-gray-800 ${!blur_01 ? "opacity-75" : ""} tracking-tighter text-left`}>
+                {account_type === "Prepaid" && <h4 className='tracking-tighter text-left'>Amount paid: <span className='font-bold md:text-lg'>&#8358;{(Number(transaction.Amount)).toLocaleString()}</span></h4>}
+                {account_type === "Postpaid" && <h4 className='tracking-tighter text-left'>Amount paid: <span className='font-bold md:text-lg'>&#8358;{(Number(transaction.Payments)).toLocaleString()}</span></h4>}
+                {account_type === "Prepaid" && !blur_01 && !isModalOpen && <h4 className={`font-semibold text-sm text-gray-800 ${!blur_01 ? "opacity-75" : ""} tracking-tighter text-left`}>
                   Date: 
                   <span className='font-normal'>
-                    {`${transaction.date_entered.slice(8,10)}-${transaction.date_entered.slice(5,7)}-${transaction.date_entered.slice(0,4)}`} | {transaction.date_entered.slice(10,16)}
+                  {transaction.TransactionDateTime ? 
+                            `${transaction.TransactionDateTime.slice(8,10)}-${transaction.TransactionDateTime.slice(5,7)}-${transaction.TransactionDateTime.slice(0,4)} | ${transaction.TransactionDateTime.slice(10,16)}` : 
+                            "N/A" // Fallback if date_entered is undefined
+                        }
+                    {/* {`${transaction.date_entered.slice(8,10)}-${transaction.date_entered.slice(5,7)}-${transaction.date_entered.slice(0,4)}`} | {transaction.date_entered.slice(10,16)} */}
+                  </span> 
+                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "failed" && <span className="text-red-500">{transaction.status}</span>}</span>}
+                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "processing" && <span className="text-yellow-500">{transaction.status}</span>}</span>}
+                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "success" && <span className="text-green-500">{transaction.status}</span>}</span>}
+                  {!blur_01 && <span className={`lowercase mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "failed" && <span className="text-red-500">{transaction.status}</span>}</span>}
+                  {!blur_01 && <span className={`lowercase  mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "processing" && <span className="text-yellow-500">{transaction.status}</span>}</span>}
+                  {!blur_01 && <span className={`lowercase  mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "success" && <span className="text-green-500">{transaction.status}</span>}</span>}
+                </h4>}
+                {account_type === "Postpaid" && !blur_01 && !isModalOpen && <h4 className={`font-semibold text-sm text-gray-800 ${!blur_01 ? "opacity-75" : ""} tracking-tighter text-left`}>
+                  Date: 
+                  <span className='font-normal'>
+                  {transaction.PayDate ? 
+                            `${transaction.PayDate.slice(8,10)}-${transaction.PayDate.slice(5,7)}-${transaction.PayDate.slice(0,4)} | ${transaction.PayDate.slice(10,16)}` : 
+                            "N/A" // Fallback if date_entered is undefined
+                        }
+                    {/* {`${transaction.date_entered.slice(8,10)}-${transaction.date_entered.slice(5,7)}-${transaction.date_entered.slice(0,4)}`} | {transaction.date_entered.slice(10,16)} */}
                   </span> 
                   {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "failed" && <span className="text-red-500">{transaction.status}</span>}</span>}
                   {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "processing" && <span className="text-yellow-500">{transaction.status}</span>}</span>}
@@ -580,8 +642,9 @@ console.log(outStandingbalance);
                   {!blur_01 && <span className={`lowercase mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "success" && <span className="text-green-500">{transaction.status}</span>}</span>}
                 </h4>}
               </div>
-              {blur &&<Link to={`/default/transactionviewdetails/${transaction.id}`} className={`bg-blue-950 ${!blur ? "opacity-75" : ""} rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out`}>view</Link>}
-              {!blur_01 &&<Link to={`/default/transactionviewdetails/${transaction.id}`} className={`bg-blue-950 ${!blur_01 ? "opacity-75" : ""} rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out`}>view</Link>}
+              {blur &&<Link to={`/default/transactionviewdetails/${transaction.TransactionNo}`} className={`bg-blue-950 ${!blur ? "opacity-75" : ""} rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out`}>view</Link>}
+              {!blur_01 && account_type === "Prepaid" && <Link to={`/default/transactionviewdetails/${transaction.TransactionNo}`} className={`bg-blue-950 ${!blur_01 ? "opacity-75" : ""} rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out`}>view</Link>}
+              {!blur_01 && account_type === "Postpaid" && <Link to={`/default/transactionviewdetails/${transaction.PaymentID}`} className={`bg-blue-950 ${!blur_01 ? "opacity-75" : ""} rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out`}>view</Link>}
             </div>
           )).slice(0,7) : null}
         </div>
@@ -599,23 +662,28 @@ console.log(outStandingbalance);
             className={"h-52 w-full rounded-lg"}
            />
         </div>
-        <div className='shadow-sm shadow-slate-500 w-full rounded-lg flex flex-col-reverse sm:flex-row justify-center sm:space-x-2 mb-4 sm:mb-0'>
-          <div className='shadow-sm shadow-slate-500 sm:w-3/4 rounded-l-lg flex flex-col justify-normal items-center mt-2 sm:mt-0 pb-2 sm:pb-0'>
+        <div className='shadow-sm shadow-slate-500 w-full rounded-lg flex flex-col-reverse sm:flex-row sm:space-x-2 mb-4 sm:mb-0'>
+          <div className='shadow-sm shadow-slate-500 sm:w-3/4 rounded-l-lg flex flex-col  mt-2 sm:mt-0 pb-2 sm:pb-0'>
             <div className='flex flex-col justify-center items-center w-full h-6 mt-2'>
               <h2 className='font-semibold text-slate-700 opacity-75'>Account details</h2>
               <hr className='w-4/5 border-1 border-black'/>
             </div>
-            <h1 className='mt-10 font-semibold text-xl text-center'>Not yet Available</h1>
-            {/* <ul className='text-xs capitalize m-2 flex flex-col justify-center items-center italic font-semibold space-y-1 mb-4'>
-              <li className='text-center'>account name:<br /> <span className='not-italic font-normal'>{accountName}</span></li>
-              <li className='text-center'>account NO:<br /> <span className='not-italic font-normal'>{accountNumber}</span></li>
-              <li className='text-center'>bank name:<br /> <span className='not-italic font-normal'>{bankName}</span></li>
-            </ul> */}
-            {/* <div>
-              <Link to={""} className='px-4 font-semibold text-lg bg-slate-500 text-slate-200 rounded-md capitalize hover:bg-orange-500 opacity-75 transform duration-300 ease-in-out sm:py-2'>
+            {/* <h1 className='mt-10 font-semibold text-xl text-center'>Not yet Available</h1> */}
+            {/* <div className='flex justify-center'>
+              <Link to={""} className='px-4 font-semibold text-lg mt-2 bg-slate-500 text-slate-200 rounded-md capitalize hover:bg-orange-500 opacity-75 transform duration-300 ease-in-out sm:py-2'>
                 fund wallet
               </Link>
             </div> */}
+            <ul className='text-sm capitalize mt-4 flex justify-center items-center italic font-semibold mb-2'>
+              <li className='text-center'>account name:<br /> <span className='not-italic font-normal'>{accountName === "undefined" ? " " : accountName}</span></li>
+            </ul>
+            <ul className='text-sm capitalize m-2 flex justify-between items-center italic font-semibold mb-2 px-4'>
+              <li className='text-center'>account NO:<br /> <span className='not-italic font-normal'>{accountNo === "undefined" ? " " : accountNo}</span></li>
+              <li className='text-center'>bank name:<br /> <span className='not-italic font-normal'>{bankName === "undefined" ? " " : bankName}</span></li>
+            </ul>
+            <ul className='text-sm capitalize flex justify-center items-center italic font-semibold mb-2'>
+              <li className='text-center'>email:<br /> <span className='not-italic font-normal'>{customerEmail === "undefined" ? " " : customerEmail}</span></li>
+            </ul>
           </div>
           <div className='shadow-sm shadow-slate-500 w-full rounded-r-lg'>
             <ul className='flex justify-between text-sm p-1 capitalize font-semibold text-slate-600'>
@@ -639,28 +707,31 @@ console.log(outStandingbalance);
                 </div>
             </div>
             }
-            {/* {!loading_02 && walletHistory.length === 0 &&  */}
+            {/* {!loading_02 && walletHistory.length === 0 &&
             <div className='flex flex-row justify-center items-center rounded-lg px-4 py-2 mx-2 shadow-sm shadow-gray-500'>
               <h4 className='text-gray-800 opacity-75 tracking-tighter text-center'>This update is not yet available </h4>
             </div>
-            {/* } */}
-            {/* {!loading_02 && walletHistory.length > 0 &&  */}
+             } */}
+            {!loading_02 && walletHistory.length > 0 &&
             <div>
-              {/* {walletHistory.map((wallHistory) => ( */}
-              {/* <div className='shadow-sm shadow-slate-500 rounded-md m-2 flex justify-between items-center p-2'> */}
+              {walletHistory.map((wallHistory) => ( 
+              <div className='shadow-sm shadow-slate-500 rounded-md m-2 flex justify-between items-center p-2'>
                 <div>
                   <>
-                    {/* <p className='text-xs capitalize'>credited: <span>&#8358;{(Number(wallHistory.price)).toLocaleString()}</span></p> */}
-                    {/* <p className='text-xs capitalize'>date: <span>{`${wallHistory.created_at.slice(8,10)}-${wallHistory.created_at.slice(5,7)}-${wallHistory.created_at.slice(0,4)}`} | {wallHistory.created_at.slice(11,16)}</span></p> */}
+                    <p className='text-xs capitalize'>amount paid: <span>&#8358;{(Number(wallHistory.price)).toLocaleString()}</span></p>
+                    <p className='text-xs capitalize'>date: <span>{`${wallHistory.created_at.slice(8,10)}-${wallHistory.created_at.slice(5,7)}-${wallHistory.created_at.slice(0,4)}`} | {wallHistory.created_at.slice(11,16)}</span></p>
                   </>
                 </div>
-                {/* <div className='bg-blue-950 opacity-75 flex justify-center items-center rounded-md cursor-pointer text-xs px-2 py-1 text-white hover:bg-orange-500 transform duration-300 ease-in-out'>
+                <div className='bg-blue-950 opacity-75 flex justify-center items-center rounded-md cursor-pointer text-xs px-2 py-1 text-white hover:bg-orange-500 transform duration-300 ease-in-out'>
                   <Link to={""}>view</Link>
-                </div> */}
-              {/* </div> */}
-              {/* )).slice(0, 3)} */}
+                </div>
+              </div>
+              )).slice(0, 3)}
             </div>
-            {/* } */}
+            }
+            {!loading_02 && walletHistory.length <= 0 && 
+              <p className='text-center my-5'>No Wallet History Yet!</p>
+            }
           </div>
         </div>
       </motion.div>

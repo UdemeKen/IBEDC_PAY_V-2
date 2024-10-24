@@ -13,30 +13,29 @@ export default function PrepaidTransactionReceipt() {
 
     const allTransactions = JSON.parse(localStorage.getItem('TRANSACTION_HISTORY')) || [];
     const { id } = useParams();
-    const transaction = allTransactions.find(transaction => transaction.id == id);
+    const transaction = allTransactions.find(transaction => transaction.TransactionNo == id);
+
+    if(!transaction) {
+        return <h1>Transaction not found</h1>
+    }
 
     const { 
-        transaction_id, 
-        date_entered,
-        amount,
+        TransactionNo, 
+        TransactionDateTime,
+        Amount,
+        MeterNo,
         status,
         account_number,
         account_type,
         meter_no,
-        customer_name,
-        provider,
+        transref,
+        Reasons,
         BUID,
-        units,
-        costOfUnits,
+        Units,
+        CostOfUnits,
         VAT,
-        tariffcode,
-        serviceBand,
-        feederName,
-        dssName,
-        udertaking,
-        providerRef,
         Address,
-        receiptno
+        Token
          } = transaction;
 
     const pdfRef = useRef();
@@ -77,14 +76,15 @@ export default function PrepaidTransactionReceipt() {
               <div className='w-full text-center'>
                   <h1 className='sm:text-lg uppercase mb-4 font-semibold text-blue-900'>Transaction Receipt</h1>
               </div>
-              <div className='grid sm:grid-rows-7 sm:grid-cols-3 sm:grid-flow-col gap-y-4 sm:gap-x-1 sm:py-4 text-center w-full'>
-                <div>
-                    <label className='text-md font-bold'>Customer Name</label>
-                    <p className='text-xs'>{customer_name}</p>
+              <div className='grid sm:grid-rows-4 sm:grid-cols-3 sm:grid-flow-col gap-y-4 sm:gap-x-1 sm:py-4 text-center w-full'>
+                
+              <div>
+                    <label className='text-md font-bold'>Transaction Reference</label>
+                    <p className='w-full text-xs'>{transref}</p>
                 </div>
                 <div>
                     <label className='text-md font-bold'>Amount Paid</label>
-                    <p>₦{amount}</p>
+                    <p>₦{Amount}</p>
                 </div>
                 <div>
                     <label className='text-md font-bold'>Address</label>
@@ -92,19 +92,7 @@ export default function PrepaidTransactionReceipt() {
                 </div>
                 <div>
                     <label className='text-md font-bold'>Transaction Date</label>
-                    <p>{date_entered.slice(0,10)}</p>
-                </div>
-                <div>
-                    <label className='text-md font-bold'>Units</label>
-                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : units}</p>
-                </div>
-                <div>
-                    <label className='text-md font-bold'>Tarriff Code</label>
-                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : tariffcode}</p>
-                </div>
-                <div>
-                    <label className='text-md font-bold'>DSS Name</label>
-                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : dssName}</p>
+                    <p>{TransactionDateTime.slice(0,10)}</p>
                 </div>
                 {account_type === "Postpaid" && <div>
                     <label className='text-md font-bold'>Account Number</label>
@@ -115,56 +103,36 @@ export default function PrepaidTransactionReceipt() {
                     <p>{meter_no}</p>
                 </div>}
                 <div>
+                    <label className='text-md font-bold'>Reasons</label>
+                    <p>{Reasons}</p>
+                </div>
+                <div>
+                    <label className='text-md font-bold'>Cost of Units</label>
+                    <p>₦{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : CostOfUnits}</p>
+                </div>
+                <div>
                     <label className='text-md font-bold'>BUID</label>
                     <p>{BUID}</p>
                 </div>
                 <div>
-                    <label className='text-md font-bold'>Provider</label>
-                    <p>{provider}</p>
+                    <label className='text-md font-bold'>Units</label>
+                    <p>₦{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : Units}</p>
                 </div>
                 <div>
-                    <label className='text-md font-bold'>Cost of Units</label>
-                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : costOfUnits}</p>
+                    <label className='text-md font-bold'>Transaction Number</label>
+                    <p className='flex justify-center'>{TransactionNo}</p>
                 </div>
                 <div>
-                    <label className='text-md font-bold'>Feeder Name</label>
-                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : feederName}</p>
-                </div>
-                <div>
-                    <label className='text-md font-bold'>Undertakings</label>
-                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : udertaking}</p>
-                </div>
-                <div className='text-white sm:block hidden'>
-                    <label className='text-md font-bold'>Token</label>
-                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : receiptno}</p>
-                </div>
-                <div>
-                    <label className='text-md font-bold'>Account Type</label>
-                    <p>{account_type}</p>
-                </div>
-                <div>
-                    <label className='text-md font-bold'>Transaction ID</label>
-                    <p className='flex justify-center'>{transaction_id}</p>
-                </div>
-                <div>
-                    <label className='text-md font-bold'>Payment Status</label>
-                    <p className='text-green-700 font-bold italic'>{status === "processing" ? <span className='text-yellow-500'>{status}</span> : status === "failed" ? <span className='text-red-500'>{status}</span> : <span className='text-green-500'>{status}</span>}</p>
+                    <label className='text-md font-bold'>MeterNo/Account No</label>
+                    <p className=''>{MeterNo}</p>
                 </div>
                 <div>
                     <label className='text-md font-bold'>VAT</label>
-                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : VAT}</p>
-                </div>
-                <div>
-                    <label className='text-md font-bold'>Service Band</label>
-                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : serviceBand}</p>
-                </div>
-                <div>
-                    <label className='text-md font-bold'>Provider Reference</label>
-                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : providerRef}</p>
+                    <p>₦{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : VAT}</p>
                 </div>
                 <div>
                     <label className='text-md font-bold'>Token</label>
-                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : receiptno}</p>
+                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : Token}</p>
                 </div>
             </div>
               <div className='flex flex-col justify-center items-center text-xs py-4'>

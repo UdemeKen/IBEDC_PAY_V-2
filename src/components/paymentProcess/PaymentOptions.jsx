@@ -1,14 +1,25 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { FlutterWaveButton, closePaymentModal } from 'flutterwave-react-v3';
 import { Polaris_Bank_Logo, FCMB_Logo, Wallet_Logo } from '../../assets/images';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import axiosClient from '../../axios';
 
-export default function PaymentOptions({ blur, setBlur }) {
+const completePaymentUrl = '/V2_ibedc_OAUTH_tokenReviwed/payment/complete-payment';
+const walletCompletePaymentUrl = '/V2_ibedc_OAUTH_tokenReviwed/payment/wallet-payment';
 
+export default function PaymentOptions({ handleCompletePayment, blur, setBlur }) {
+
+const navigate = useNavigate();
+
+    const continuePaymentUrl = "/V2_ibedc_OAUTH_tokenReviwed/payment/continue-payment";
+    const meterNumber = (localStorage.getItem('METER_NUMBER')) || '';
+    const accountType = (localStorage.getItem('ACCOUNT_TYPE')) || '';
+    const uniqueInteger = Math.floor(Date.now() + Math.random() * 1000000000000).toString().substring(0, 12);
     
     // const [ transaction_id, setTransactionId ] = useState('');
     // const [ amount, setAmount ] = useState('');
-    // const [ walletBalance, setWalletBalance ] = useState(localStorage.getItem('WALLET_BALANCE'));
+    const [ walletBalance, setWalletBalance ] = useState(localStorage.getItem('WALLET_BALANCE'));
     // const [ email, setEmail ] = useState('');
     // const [ phone, setPhone ] = useState('');
     // const [ customer_name, setCustomerName ] = useState('');
@@ -17,10 +28,13 @@ export default function PaymentOptions({ blur, setBlur }) {
     const [selectedOption, setSelectedOption] = useState('polaris');
     const [buttonDisabled, setButtonDisabled] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [loading_01, setLoading_01] = useState(false);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [modalMessage, setModalMessage] = useState('');
 
     localStorage.setItem('SELECTED_OPTION', selectedOption);
 
-    const hasRunOnceRef = useRef(false);
+    // const hasRunOnceRef = useRef(false);
 
     // if(!hasRunOnceRef.current) {
         const transaction_id = localStorage.getItem("TRANSACTION_ID");
@@ -30,6 +44,7 @@ export default function PaymentOptions({ blur, setBlur }) {
         const customer_name = localStorage.getItem("CUSTOMER_NAME");
         const sub_account = localStorage.getItem("SUB_ACCOUNT");
         const account_type = localStorage.getItem("ACCOUNT_TYPE");
+        const meter_number = localStorage.getItem("USER_METER_NUMBER");
         // setTransactionId(transaction_id);
         // setAmount(amount);
         // setEmail(email);
@@ -110,19 +125,82 @@ export default function PaymentOptions({ blur, setBlur }) {
         //       },
         //   ]
     // };
+   const payload = {
+        "tx_ref": transaction_id,
+        "amount": parseInt(amount),
+        "currency": "NGN",
+        // "redirect_url": "https://apiengine.ibedc.com:7443/api/v3ibedc_AUTH_token/authenticate/complete_payment",
+        "redirect_url": "https://ibedcpay-extension.vercel.app/",
+          "customer": {
+            "name": customer_name,
+            "phonenumber": phone,
+             "account_type" : account_type,
+            "MeterNo" : meter_number,
+            "email" : email,
+            "phone" : phone
+          },
+          "customizations": {
+            "title": "IBEDC"
+          },
+          subaccounts: [
+            {
+                id: sub_account || 'RS_574474F4E2F1F8869DA149F013AD46BF',
+            },
+          ]
+        //"payment_source" : "currenct_charge"  // This is for agency alone | current_charge or oustanding_balance
+    }
+
+    const fcmbpayloadRequest = async () => {
+        setLoading_01(true);
+        try {
+            const response = await axiosClient.post(continuePaymentUrl, payload);
+            console.log(response);
+            // Redirect to the link from the response
+            window.location.href = response?.data?.payload?.data?.link;
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading_01(false);
+        }
+    }
   
     //for javascript frameworks
     // const payFunction = () => { 
     //  window.fernGatewayPlugin.render(payload) 
     // }
 
-    // const walletFunction = () => {
-    //     if(walletBalance < amount){
-    //         toast.error("Insufficient Funds")
-    //     } else {
-    //         setBlur(true);
-    //     }
-    // }
+    const Wallet_RequestData = {
+        "transacion_id": localStorage.getItem("TRANSACTION_ID"),
+        "account_type": localStorage.getItem('ACCOUNT_TYPE'),
+        "amount": parseInt(amount),
+        "provider": "Wallet",
+        "phone": localStorage.getItem("PHONE"),
+        "account_id": localStorage.getItem('METER_NUMBER'),
+        "payRef": uniqueInteger // Use the generated uniqueInteger here
+    };
+
+    const walletFunction = async () => {
+        if (walletBalance < amount) {
+            toast.error("Insufficient Funds");
+        } else {
+            setIsModalVisible(true); // Show the modal
+            setModalMessage("Processing your wallet payment..."); // Set the message
+            try {
+                const response = await axiosClient.post(walletCompletePaymentUrl, Wallet_RequestData);
+                console.log(response);
+                if (response.status === 200) {
+                    toast.success(response?.data?.message);
+                }
+            } catch (error) {
+                console.log(error);
+                toast.error("Transaction failed. Please try again.");
+            } finally {
+                setIsModalVisible(false); // Hide the modal
+                setBlur(false);
+                setLoading_01(false);
+            }
+        }
+    };
 
     useEffect(() => {
         setSelectedOption('polaris');
@@ -146,50 +224,70 @@ export default function PaymentOptions({ blur, setBlur }) {
                     alt={'polaris bank'} 
                     className='w-20 h-20'/>
             </div>
-            {/* <div className={`flex justify-center items-center w-32 text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
+            <div className={`flex justify-center items-center w-32 text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
                 selectedOption === 'fcmb' ? 'bg-orange-600' : ''
             }`} onClick={() => handleOptionChange('fcmb')}>
                 <img 
                     src={FCMB_Logo} 
                     alt={'fcmb'} 
                     className='w-20 h-20'/>
-            </div> */}
-            {/* <div className={`flex justify-center items-center w-full text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
+            </div>
+            <div className={`flex justify-center items-center w-32 text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
                 selectedOption === 'wallet' ? 'bg-orange-600' : ''
             }`} onClick={() => handleOptionChange('wallet')}>
                 <img 
                     src={Wallet_Logo} 
                     alt={'wallet'} 
                     className='w-20 h-20'/>
-            </div> */}
+            </div>
         </div>
         <div className={`flex flex-col justify-center items-center ${blur ? "hidden" : ""}`}>
             <button
             type="submit"
-            disabled={buttonDisabled}
-            onClick={!loading && selectedOption === "fcmb" ? payFunction : !loading && selectedOption === "wallet" ? walletFunction : null}
+            disabled={buttonDisabled || loading_01}
+            onClick={!loading && selectedOption === "fcmb" ? fcmbpayloadRequest : !loading && selectedOption === "wallet" ? walletFunction : null}
             className={`w-1/2 rounded-md py-1 text-sm font-semibold leading-6 shadow-sm transition duration-300 ease-in-out ${
-                (buttonDisabled)
+                (buttonDisabled || loading_01)
                 ? 'w-1/2 bg-blue-950 opacity-30 text-white cursor-not-allowed '
                 : 'w-1/2 bg-blue-950 opacity-75 text-white hover:bg-orange-500 hover:bg-opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-900'
             }`}
             >
-            {!loading && selectedOption === "polaris" ? <FlutterWaveButton {...fwConfig}/> : "Authorize Payment"}
-            {loading && 
-            <div className='flex flex-row justify-center space-x-2'>
-                <div>
-                    <svg className="w-5 h-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                        </div>
-                    <div>
-                    <span className="font-medium"> Processing... </span>
-                </div>
+            {loading_01 ? ( // Show spinning icon when loading
+        <div className='flex flex-row justify-center space-x-2'>
+            <div>
+                <svg className="w-5 h-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
             </div>
-            }
+            <div>
+                <span className="font-medium"> Processing... </span>
+            </div>
+        </div>
+    ) : (
+        selectedOption === "polaris" ? <FlutterWaveButton {...fwConfig}/> : "Authorize Payment"
+    )}
             </button>
         </div>
+
+        {/* Modal for loading state */}
+        {isModalVisible && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                <div className="bg-white p-5 rounded shadow-lg">
+                    <div className='flex flex-row justify-center items-center space-x-2'>
+                        <div>
+                            <svg className="w-10 h-10 animate-spin text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <span className="font-medium">{modalMessage}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
     </section>
   )
 }

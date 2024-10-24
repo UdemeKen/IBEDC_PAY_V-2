@@ -19,6 +19,8 @@ import ErrorBoundary from "./views/errorBoundary/ErrorBoundary";
 import ErrorPage from "./views/errorBoundary/ErrorPage";
 import BillHistory from "./views/transactions/BillHistory";
 import PostpaidBillReceipt from "./views/receipts/PostpaidBillReceipt";
+import WalletHistory from "./views/transactions/WalletHistory";
+import CancelPayment from "./views/errorBoundary/CancelPayment";
 
 const router = createBrowserRouter([
     {
@@ -71,6 +73,11 @@ const router = createBrowserRouter([
                         path: "billhistory",
                         element: <ErrorBoundary><BillHistory /></ErrorBoundary>,
                         errorElement: <ErrorPage />
+                    },
+                    {
+                        path: "wallethistory",
+                        element: <ErrorBoundary><WalletHistory /></ErrorBoundary>,
+                        errorElement: <ErrorPage />
                     }
                 ]
             },
@@ -94,11 +101,21 @@ const router = createBrowserRouter([
                 element: <ErrorBoundary><TransactionViewDetails /></ErrorBoundary>,
                 errorElement: <ErrorPage />
             },
+            {
+                path: "cancelpayment",
+                element: <ErrorBoundary><CancelPayment /></ErrorBoundary>,
+                errorElement: <ErrorPage />
+            }
         ]
     },
     {
         path: "prepaidtransactionreceipt/:id",
         element: <ErrorBoundary><PrepaidTransactionReceipt /></ErrorBoundary>,
+        errorElement: <ErrorPage />
+    },
+    {
+        path: "postpaidtransactionreceipt/:postId",
+        element: <ErrorBoundary><PostpaidBillReceipt /></ErrorBoundary>,
         errorElement: <ErrorPage />
     },
     {

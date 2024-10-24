@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import axiosClient from '../../axios';
 import { SuccessIcon, ErrorIcon } from '../../assets/icons';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const completePaymentUrl = '/V2_ibedc_OAUTH_tokenReviwed/payment/complete-payment';
 
@@ -14,31 +15,30 @@ export default function CompletePayment({ blur, setBlur }) {
   const phone = (localStorage.getItem('USER_PHONE')) || '';
   const selectedOption = (localStorage.getItem('SELECTED_OPTION')) || '';
   const [loading, setLoading] = useState(false);
-  console.log(amount);
 
     const uniqueInteger = Math.floor(Date.now() + Math.random() * 1000000000000).toString().substring(0, 12);
     const [ error, setError ] = useState('');
     const [ e, setE ] = useState(false);
 
-    const polarisRequestDatas = {
-        "payment_status": {
-          "url": "http://localhost",
-          "txnref": gateway_response?.tx_ref,
-          "resp": "00",
-          "desc": "Approved by Financial Institution",
-          "retRef": uniqueInteger,
-          "apprAmt": parseInt(gateway_response?.charged_amount),
-          "amount": parseInt(gateway_response?.amount),
-          "payRef": `${gateway_response?.flw_ref}`,
-          // "payRef": `FBN|WEB|MX19329|${currentDateTime}|${flutter_Response?.flw_ref}|${flutter_Response?.transaction_id}`,
-          "cardNum": "",
-          "mac": "",
-          "provider": "Polaris Bank",
-          "MeterNo" : meterNumber,
-          "account_type": accountType,
-          "phone": phone
-        }
-      };
+    // const polarisRequestDatas = {
+    //     "payment_status": {
+    //       "url": "http://localhost",
+    //       "txnref": gateway_response?.tx_ref,
+    //       "resp": "00",
+    //       "desc": "Approved by Financial Institution",
+    //       "retRef": uniqueInteger,
+    //       "apprAmt": parseInt(gateway_response?.charged_amount),
+    //       "amount": parseInt(gateway_response?.amount),
+    //       "payRef": `${gateway_response?.flw_ref}`,
+    //       // "payRef": `FBN|WEB|MX19329|${currentDateTime}|${flutter_Response?.flw_ref}|${flutter_Response?.transaction_id}`,
+    //       "cardNum": "",
+    //       "mac": "",
+    //       "provider": "Polaris Bank",
+    //       "MeterNo" : meterNumber,
+    //       "account_type": accountType,
+    //       "phone": phone
+    //     }
+    //   };
 
       
       const polarisRequestData = {
@@ -85,17 +85,14 @@ export default function CompletePayment({ blur, setBlur }) {
         if (blur) {
           handleCompletePayment();
         }
-      // }, [blur]);
-
-      // handleCompletePayment();
     }, [blur]);
 
     const handleCompletePayment = async () => {
         setLoading(true);
         try {
-            const response = await axiosClient.post(completePaymentUrl, selectedOption === 'polaris' ? polarisRequestData : selectedOption === 'fcmb' ? FCMB_RequestData : selectedOption === 'wallet' ? Wallet_RequestData : {});
-            console.log(response);
-            setLoading(false);
+          const response = await axiosClient.post(completePaymentUrl, selectedOption === 'polaris' ? polarisRequestData : selectedOption === 'fcmb' ? FCMB_RequestData : selectedOption === 'wallet' ? Wallet_RequestData : {});
+          console.log(response);
+          setLoading(false);
         }catch(error) {
             console.log();
             setError(error?.response?.data?.payload);

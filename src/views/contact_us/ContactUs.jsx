@@ -6,6 +6,7 @@ import axiosClient from '../../axios';
 import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { PhoneIcon } from '@heroicons/react/24/outline';
 
 const METER_ACCT_NUMBER_REGEX = /^[0-9\-/]{11,16}$/;
 const contactUsUrl = '/V2_ibedc_OAUTH_tokenReviwed/contact/help';
@@ -88,7 +89,7 @@ export default function ContactUs() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 1 }}
-    className='flex justify-center w-full h-full mx-2 sm:mx-0'>
+    className='flex justify-center mx-2 sm:mx-0'>
       <div className='shadow-sm shadow-slate-500 flex flex-col justify-center items-center sm:w-1/2 my-10 py-5 rounded-lg'>
         <h1 className='text-2xl font-semibold text-slate-700 opacity-75 underline'>Feedback Form</h1>
         <form 
@@ -199,8 +200,16 @@ export default function ContactUs() {
               <Link to={"https://www.twitter.com/ibedc_ng"} target='_blank'><li><Twitter /></li></Link>
               <Link to={"https://www.youtube.com/@IBEDC"} target='_blank'><li><Youtube /></li></Link>
             </ul>
-            <Mail />
-            <span className='text-slate-600'>customercare@ibedc.com</span>
+            <div className='flex flex-row justify-center items-center gap-4'>
+              <div className='flex flex-col justify-center items-center'>
+                <Mail />
+                <span className='text-slate-600'>customercare@ibedc.com</span>
+              </div>
+              <div className='flex flex-col justify-center items-center'>
+                <PhoneIcon className='w-5 h-5'/>
+                <p className='text-slate-600'>call: 07001239999</p>
+              </div>
+            </div>
           </div>
       </div>
     </motion.section>

@@ -72,7 +72,13 @@ export default function MeterNumberLogin() {
       localStorage.setItem('USER_NAME', response?.data?.payload?.user?.name);
       localStorage.setItem('USER_PHONE', response?.data?.payload?.user?.phone);
       localStorage.setItem('USER_ID', response?.data?.payload?.user?.id);
+      localStorage.setItem('STATUS', response?.data?.payload?.user?.virtual_account?.status);
+      localStorage.setItem('account_name', response?.data?.payload?.user?.virtual_account?.account_name);
+      localStorage.setItem('account_no', response?.data?.payload?.user?.virtual_account?.account_no);
+      localStorage.setItem('bank_name', response?.data?.payload?.user?.virtual_account?.bank_name);
+      localStorage.setItem('customer_email', response?.data?.payload?.user?.virtual_account?.customer_email);
       localStorage.setItem('LOGIN_ACCOUNT_TYPE', response?.data?.payload?.user?.account_type);
+      // localStorage.setItem('WALLET_AMOUNT', response?.data?.payload?.wallet?.wallet_amount);
       setUserToken(response?.data?.payload?.token);
       setCurrentUser(response?.data?.payload?.user?.name);
       navigateTo('/default/customerdashboard');
