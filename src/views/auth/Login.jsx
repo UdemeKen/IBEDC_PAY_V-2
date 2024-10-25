@@ -146,10 +146,10 @@ export default function Login() {
                         </div>
                         <div className='flex flex-col items-center space-y-4 text-slate-500'>
                             {location.pathname == "/" && <div className='text-sm font-semibold text-center my-5'>
-                                <p>Don't have a password? Click <span className='text-orange-500'><Link to={"/meternumber"}>here</Link></span> to login with your <span className='capitalize'>meter number</span> and <span className='capitalize'>account type</span></p>
+                                <p>Don't have a password? Click <span className='text-orange-500'><Link to={"/meternumber"} className='text-2xl'>(Here)</Link></span> to login with your <span className='capitalize'>meter number</span> and <span className='capitalize'>account type</span></p>
                             </div>}
                             {location.pathname == "/meternumber" && <div className='text-sm font-semibold text-center my-5'>
-                                <p>Don't have a meter number? Click <span className='text-orange-500'><Link to={"/"}>here</Link></span> to login with your <span className='capitalize'>password</span></p>
+                                <p>Don't have a meter number? Click <span className='text-orange-500'><Link to={"/"} className='text-2xl'>(Here)</Link></span> to login with your <span className='capitalize'>password</span></p>
                             </div>}
                             <div className='capitalize text-sm'>
                                 <Link to={"/forgotpassword"} className={"text-amber-600 opacity-70 hover:text-orange-500 hover:font-semibold transform duration-300 ease-in-out"}>forgot password</Link>

@@ -5,7 +5,7 @@ export default function TransactionViewDetails() {
 
     const allTransactions = JSON.parse(localStorage.getItem('TRANSACTION_HISTORY')) || [];
     const accountTypeRaw = localStorage.getItem('LOGIN_ACCOUNT_TYPE');
-    const accountType = accountTypeRaw ? accountTypeRaw : ""; // Directly assign the raw value
+    const accountType = accountTypeRaw ? accountTypeRaw : "";
     const { id } = useParams();
     let transaction;
     if (accountType === "Prepaid") {
@@ -49,7 +49,7 @@ export default function TransactionViewDetails() {
                     <label className='text-md font-bold'>Business Unit</label>
                     <p>{transaction?.BusinessUnit === null ? "No Business Unit" : transaction?.BusinessUnit}</p>
                 </div>}
-                {accountType === "Postpaid" && <div className="sm:text-white lg:text-white">
+                {accountType === "Postpaid" && <div>
                     <label className='text-md font-bold'>Operator ID</label>
                     <p>{transaction?.OperatorID}</p>
                 </div>}
@@ -65,18 +65,18 @@ export default function TransactionViewDetails() {
                     <label className='text-md font-bold'>Account Number</label>
                     <p>{transaction?.AccountNo}</p>
                 </div>}
-                {accountType === "Prepaid" && <div>
+                {/* {accountType === "Prepaid" && <div>
                     <label className='text-md font-bold'>Meter Number</label>
                     <p>{transaction?.meter_no}</p>
-                </div>}
+                </div>} */}
                 {accountType === "Prepaid" && <div>
                     <label className='text-md font-bold'>Reasons</label>
                     <p>{transaction?.Reasons}</p>
                 </div>}
-                {accountType === "Postpaid" && <div>
+                {/* {accountType === "Postpaid" && <div>
                     <label className='text-md font-bold'>Customer ID</label>
                     <p>{transaction?.CustomerID}</p>
-                </div>}
+                </div>} */}
                 {accountType === "Prepaid" && <div>
                     <label className='text-md font-bold'>Cost of Units</label>
                     <p>₦{transaction?.CostOfUnits}</p>
@@ -121,10 +121,10 @@ export default function TransactionViewDetails() {
                     <label className='text-md font-bold'>Rowguid</label>
                     <p>{transaction?.rowguid}</p>
                 </div>}
-                {accountType === "Postpaid" && <div className='hidden'>
+                {/* {accountType === "Postpaid" && <div className='hidden'>
                     <label className='text-md font-bold'>Token</label>
                     <p>{transaction?.rowguid}</p>
-                </div>}
+                </div>} */}
             </div>
             {accountType === "Prepaid" && <Link to={`/prepaidtransactionreceipt/${id}`} target='_blank' className='bg-blue-950 opacity-80 my-10 hover:bg-orange-700 traznsform duration-300 ease-in-out text-white sm:w-1/3 text-center rounded-md py-2 px-2 capitalize mb-4'>view receipt</Link>}
             {accountType === "Postpaid" && <Link to={`/postpaidtransactionreceipt/${id}`} target='_blank' className='bg-blue-950 opacity-80 my-10 hover:bg-orange-700 traznsform duration-300 ease-in-out text-white sm:w-1/3 text-center rounded-md py-2 px-2 capitalize mb-4'>view receipt</Link>}

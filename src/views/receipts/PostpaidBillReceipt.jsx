@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 import { ReceiptHeaderImage, Black_Logo} from '../../assets/images'
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -8,7 +8,10 @@ import jsPDF from 'jspdf';
 export default function PostpaidBillReceipt() {
 
     const [loading, setLoading] = useState(false);
+    const location = useLocation();
 
+    const accountTypeRaw = localStorage.getItem('LOGIN_ACCOUNT_TYPE');
+    const accountType = accountTypeRaw ? accountTypeRaw : "";
     const allTransactions = JSON.parse(localStorage.getItem('TRANSACTION_HISTORY')) || [];
     const { postId } = useParams();
     const transaction = allTransactions.find((transaction) => transaction.PaymentID === postId);
@@ -44,7 +47,7 @@ export default function PostpaidBillReceipt() {
     //     TotalDue
     //      } = bill;
 
-         const pdfRef = useRef();
+    const pdfRef = useRef();
 
     const downloadPDF = () => {
         setLoading(true);
@@ -81,79 +84,116 @@ export default function PostpaidBillReceipt() {
                   <h1 className='sm:text-lg uppercase mb-4 font-semibold text-blue-900'>Bill Receipt</h1>
               </div>
               <div className='grid sm:grid-cols-3 gap-y-4 justify-center px-16 text-center sm:text-left'>
-                <div className='text-center'>
+                {accountType === "Postpaid" && <div className='text-center'>
+                    <label className='text-md font-semibold text-gray-800'>Bill ID</label>
+                    <p className='text-sm font-semibold text-gray-500'>{transaction?.BillID}</p>
+                </div>}
+                {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Customer Name</label>
                     <p className='text-sm font-semibold text-gray-500'>{bill?.CustomerName}</p>
-                </div>
-                <div className='text-center'>
+                </div>}
+                
+                {accountType === "Postpaid" && <div className='text-center'>
+                    <label className='text-md font-semibold text-gray-800'>Account Number</label>
+                    <p className='text-sm font-semibold text-gray-500'>{transaction?.AccountNo}</p>
+                </div>}
+                {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Account Number</label>
                     <p className='text-sm font-semibold text-gray-500'>{bill?.AccountNo}</p>
-                </div>
-                <div className='text-center'>
+                </div>}
+                {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Account Type</label>
                     <p className='text-sm font-semibold text-gray-500'>{bill?.AcctTye}</p>
-                </div>
-                <div className='text-center'>
+                </div>}
+                {accountType === "Postpaid" && <div className='text-center'>
+                    <label className='text-md font-semibold text-gray-800'>Amount Paid</label>
+                    <p className='text-sm font-semibold text-gray-500'>₦{transaction?.Payments}</p>
+                </div>}
+                {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Amount Billed</label>
                     <p className='text-sm font-semibold text-gray-500'>₦{((Number(bill?.CurrentChgTotal) || 0) + (Number(bill?.VAT) || 0)).toLocaleString('en-NG', { style: 'decimal', minimumFractionDigits: 2 })}</p>
-                </div>
-                <div className='text-center'>
+                </div>}
+                {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Bill ID</label>
                     <p className='text-sm font-semibold text-gray-500'>{bill?.BillID}</p>
-                </div>
-                <div className='text-center'>
+                </div>}
+                {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Service Address</label>
                     <p className='text-sm font-semibold text-gray-500'>{bill?.ServiceAddress1}</p>
-                </div>
+                </div>}
                 <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>NetArrears</label>
                     <p className='text-sm font-semibold text-gray-500'>₦{(Number(bill?.NetArrears) || 0).toLocaleString()}</p>
                 </div>
-                <div className='text-center'>
+                {accountType === "Postpaid" && <div className='text-center'>
+                    <label className='text-md font-semibold text-gray-800'>Payment ID</label>
+                    <p className='text-sm font-semibold text-gray-500'>{transaction?.PaymentID}</p>
+                </div>}
+                {accountType === "Postpaid" && <div className='text-center'>
+                    <label className='text-md font-semibold text-gray-800'>Payment Transaction Id</label>
+                    <p className='text-sm font-semibold text-gray-500'>{transaction?.PaymentTransactionId}</p>
+                </div>}
+                {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Business Hub ID</label>
                     <p className='text-sm font-semibold text-gray-500'>{bill?.BUID}</p>
-                </div>
-                <div className='text-center'>
+                </div>}
+                {accountType === "Postpaid" && <div className='text-center'>
+                    <label className='text-md font-semibold text-gray-800'>Business Unit</label>
+                    <p className='text-sm font-semibold text-gray-500'>{transaction?.BusinessUnit === null ? "No Business Unit" : transaction?.BusinessUnit}</p>
+                </div>}
+                {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Business Hub</label>
                     <p className='text-sm font-semibold text-gray-500'>{bill?.BUName1}</p>
-                </div>
-                <div className='text-center'>
+                </div>}
+                {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Last Payment Amount</label>
                     <p className='text-sm font-semibold text-gray-500' >₦{bill?.LastPayAmount === ".00" ? "0.00" : (Number(bill?.LastPayAmount)).toLocaleString()}</p>
-                </div>
-                <div className='text-center'>
+                </div>}
+                {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>CurrentKWH</label>
                     <p className='text-sm font-semibold text-gray-500'>{bill?.CurrentKWH}</p>
-                </div>
-                <div className='text-center'>
+                </div>}
+                {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>ConsumptionKWH</label>
                     <p className='text-sm font-semibold text-gray-500'>{bill?.ConsumptionKWH}</p>
-                </div>
-                <div className='text-center'>
+                </div>}
+                {accountType === "Postpaid" && <div className="text-center">
+                    <label className='text-md font-semibold text-gray-800'>Operator ID</label>
+                    <p className='text-sm font-semibold text-gray-500'>{transaction?.OperatorID}</p>
+                </div>}
+                {accountType === "Postpaid" && <div className='text-center'>
+                    <label className='text-md font-semibold text-gray-800'>Receipt Number</label>
+                    <p className='text-sm font-semibold text-gray-500'>{transaction?.receiptnumber}</p>
+                </div>}
+                {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Rate</label>
                     <p className='text-sm font-semibold text-gray-500'>{bill?.Rate}</p>
-                </div>
-                <div className='text-center'>
+                </div>}
+                {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Billed Date</label>
                     <p className='text-sm font-semibold text-gray-500'>{bill?.Billdate?.slice(0, 10)}</p>
-                </div>
-                <div className='text-center'>
+                </div>}
+                {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Service Band</label>
                     <p className='text-sm font-semibold text-gray-500'>{bill?.ServiceID}</p>
-                </div>
-                <div className='text-center'>
+                </div>}
+                {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Tarriff Code</label>
                     <p className='text-sm font-semibold text-gray-500'>{bill?.TariffCode}</p>
-                </div>
-                <div className='text-center'>
+                </div>}
+                {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Tarriff Code</label>
                     <p className='text-sm font-semibold text-gray-500'>{bill?.TariffCode}</p>
-                </div>
-                <div className='text-center'>
+                </div>}
+                {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Total Due</label>
                     <p className='text-sm font-semibold text-gray-500'>{bill?.TotalDue}</p>
-                </div>
+                </div>}
               </div>
+            {accountType === "Postpaid" && <div className='text-center my-4'>
+                <label className='text-md font-semibold text-gray-800'>Rowguid</label>
+                <p className='text-sm font-semibold text-gray-500'>{transaction?.rowguid}</p>
+            </div>}
               <div className='flex flex-col justify-center items-center text-xs my-4'>
                   <img 
                   src={Black_Logo}
