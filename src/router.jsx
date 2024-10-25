@@ -21,6 +21,8 @@ import BillHistory from "./views/transactions/BillHistory";
 import PostpaidBillReceipt from "./views/receipts/PostpaidBillReceipt";
 import WalletHistory from "./views/transactions/WalletHistory";
 import CancelPayment from "./views/errorBoundary/CancelPayment";
+import CancelPay from "./views/errorBoundary/CancelPay";
+import SuccessfulPay from "./views/errorBoundary/SuccessPay";
 
 const router = createBrowserRouter([
     {
@@ -104,6 +106,16 @@ const router = createBrowserRouter([
             {
                 path: "cancelpayment",
                 element: <ErrorBoundary><CancelPayment /></ErrorBoundary>,
+                errorElement: <ErrorPage />
+            },
+            {
+                path: "cancelpay",
+                element: <ErrorBoundary><CancelPay /></ErrorBoundary>,
+                errorElement: <ErrorPage />
+            },
+            {
+                path: "successpay",
+                element: <ErrorBoundary><SuccessfulPay /></ErrorBoundary>,
                 errorElement: <ErrorPage />
             }
         ]
