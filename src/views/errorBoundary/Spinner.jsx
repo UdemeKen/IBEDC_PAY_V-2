@@ -20,11 +20,11 @@ export default function Spinner() {
     useEffect(() => {
         if (paymentStatus === "cancelled") {
             toast.success(paymentStatus);
-            const timer = setTimeout(() => {navigate("/cancel");}, 5000);
+            const timer = setTimeout(() => {navigate("/default/cancelpay");}, 5000);
             return () => clearTimeout(timer)
         } else {
             toast.success(paymentStatus);
-            const timer = setTimeout(() => {navigate("/success");}, 5000);
+            const timer = setTimeout(() => {navigate("/default/successpay");}, 5000);
             return () => clearTimeout(timer)
         }
     }, [paymentStatus]);

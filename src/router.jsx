@@ -23,6 +23,7 @@ import WalletHistory from "./views/transactions/WalletHistory";
 import CancelPayment from "./views/errorBoundary/CancelPayment";
 import CancelPay from "./views/errorBoundary/CancelPay";
 import SuccessfulPay from "./views/errorBoundary/SuccessPay";
+import Spinner from "./views/errorBoundary/Spinner";
 
 const router = createBrowserRouter([
     {
@@ -106,6 +107,11 @@ const router = createBrowserRouter([
             {
                 path: "cancelpayment",
                 element: <ErrorBoundary><CancelPayment /></ErrorBoundary>,
+                errorElement: <ErrorPage />
+            },
+            {
+                path: "spinner",
+                element: <ErrorBoundary><Spinner /></ErrorBoundary>,
                 errorElement: <ErrorPage />
             },
             {
