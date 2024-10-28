@@ -156,8 +156,8 @@ const navigate = useNavigate();
         try {
             const response = await axiosClient.post(continuePaymentUrl, payload);
             console.log(response);
-            // Redirect to the link from the response
             window.location.href = response?.data?.payload?.data?.link;
+            setBlur(true);
         } catch (error) {
             console.log(error);
         } finally {

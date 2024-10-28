@@ -300,17 +300,16 @@ export default function CustomerDashboard() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 1 }}
-    className={`mt-4 px-2 sm:px-20 ${blur || blur_01 || blur_02 ? "fixed sm:w-4/5" : ""} w-full`} >
+    className={`flex flex-col justify-center items-center mt-4 px-2 sm:px-20 ${blur || blur_01 || blur_02 ? "fixed sm:w-full" : ""}`} >
           {blur && <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm'></div>}
           {blur_01 && <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm' onClick={handleBlur_01}></div>}
           {blur_02 && <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm' onClick={handleBlur_02}></div>}
       <div className={`flex justify-center items-center top-0 relative ${!blur ? "hidden" : "block"}`}>
         <CompletePayment blur={blur} blur_01={blur_01} setBlur={setBlur} setBlur_01={setBlur_01}/>
       </div>
-      <div className={`flex justify-center items-center top-20 ml-16 sm:ml-0 right-32 sm:-right-[150px] relative lg:mx-[120px] rounded-md ${!blur_01 ? "hidden" : "block"}`}>
-      <div className='bg-slate-300 rounded-md w-72 sm:w-[30rem]'>
-            <div className='flex flex-col justify-center items-center space-y-4 p-8'>
-                <h1 className='text-4xl font-bold text-center'>Verify Account</h1>
+      <div className={`bg-slate-300 rounded-md sm:w-1/3 right-12 sm:right-0 relative ${!blur_01 ? "hidden" : "block"}`}>
+      <div className='flex flex-col justify-center items-center space-y-4 p-4 sm:p-8'>
+                <h1 className='text-xl sm:text-4xl font-bold text-center'>Verify Account</h1>
                 <form className='flex flex-col justify-center space-y-3 xs:w-64 w-full px-4 my-4' 
                 onSubmit={handleGetOutStandingBalance}
                 >
@@ -388,12 +387,10 @@ export default function CustomerDashboard() {
                     </div>
                 </form>
             </div>
-        </div>
       </div>
-      <div className={`flex justify-center items-center top-20 ml-16 sm:ml-0 right-32 sm:right-0 relative lg:mx-[120px] rounded-md ${!blur_02 ? "hidden" : "block"}`}>
-      <div className='bg-slate-300 rounded-md w-full'>
-      <div className='flex flex-col justify-center items-center space-y-4 p-8'>
-                <h1 className='text-4xl font-bold text-center'>Verify it's you</h1>
+      <div className={`bg-slate-300 rounded-md sm:w-1/3 right-12 sm:right-0 relative ${!blur_02 ? "hidden" : "block"}`}>
+      <div className='flex flex-col justify-center items-center space-y-4 p-4 sm:p-8'>
+                <h1 className='text-xl sm:text-4xl font-bold text-center'>Verify it's you</h1>
                 <p className=' text-center'>We've sent a verification PIN CODE to your email <span className='font-semibold text-center w-full'>{userEmail}</span></p>
                 <p className='text-center'>Enter the code from the email in the field below:</p>
                 <form className='flex flex-col justify-center items-center space-y-4'
@@ -433,7 +430,6 @@ export default function CustomerDashboard() {
                     </div>
                 </form>
             </div>
-        </div>
       </div>
       <motion.div 
         variants={heroVariants.hero_09Variants}
