@@ -95,6 +95,11 @@ export default function AllTransactions() {
       },
     },
   };
+
+  function formatToken(token) {
+    if (!token) return '';
+    return token.replace(/(\d{4})(?=\d)/g, '$1-');
+}
   
   
   return (
@@ -297,7 +302,7 @@ export default function AllTransactions() {
               </div>
               <div>
                   <label className='text-md font-sans font-semibold'>Token</label>
-                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.Token}</p>
+                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : formatToken(selectedTransaction?.Token)}</p>
               </div>
               {/* <div className='text-white sm:block hidden'>
                   <label className='text-md font-sans font-semibold'>Blank</label>

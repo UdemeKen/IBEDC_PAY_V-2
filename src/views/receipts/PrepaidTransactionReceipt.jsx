@@ -61,6 +61,11 @@ export default function PrepaidTransactionReceipt() {
         })
     }
 
+    function formatToken(token) {
+        if (!token) return '';
+        return token.replace(/(\d{4})(?=\d)/g, '$1-');
+    }
+
   return (
     <section>
       <div className="sm:mx-auto w-full sm:w-3/4 md:w-1/2">
@@ -132,7 +137,7 @@ export default function PrepaidTransactionReceipt() {
                 </div>
                 <div>
                     <label className='text-md font-bold'>Token</label>
-                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : Token}</p>
+                    <p>{status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : status === "failed" ? "no unit" : formatToken(Token)}</p>
                 </div>
             </div>
               <div className='flex flex-col justify-center items-center text-xs py-4'>

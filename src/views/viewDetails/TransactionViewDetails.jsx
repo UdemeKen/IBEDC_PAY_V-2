@@ -20,6 +20,11 @@ export default function TransactionViewDetails() {
         return <h1>Transaction not found</h1>
     }
 
+    function formatToken(token) {
+        if (!token) return '';
+        return token.replace(/(\d{4})(?=\d)/g, '$1-');
+    }
+
   return (
     <section className='flex flex-col items-center w-full px-4 py-10'>
         <div className='shadow-sm shadow-slate-500 rounded-lg flex flex-col justify-center w-full sm:w-1/2 items-center py-4'>
@@ -115,7 +120,7 @@ export default function TransactionViewDetails() {
                 </div>}
                 {accountType === "Prepaid" && <div>
                     <label className='text-md font-bold'>Token</label>
-                    <p>{transaction?.Token}</p>
+                    <p>{formatToken(transaction?.Token)}</p>
                 </div>}
                 {accountType === "Postpaid" && <div>
                     <label className='text-md font-bold'>Rowguid</label>

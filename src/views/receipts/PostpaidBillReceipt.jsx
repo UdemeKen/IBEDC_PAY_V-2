@@ -86,7 +86,7 @@ export default function PostpaidBillReceipt() {
               <div className='grid sm:grid-cols-3 gap-y-4 justify-center px-16 text-center sm:text-left'>
                 {accountType === "Postpaid" && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Bill ID</label>
-                    <p className='text-sm font-semibold text-gray-500'>{transaction?.BillID}</p>
+                    <p className='text-sm font-semibold text-gray-500'>{transaction?.BillID}m</p>
                 </div>}
                 {location.pathname !== `/postpaidtransactionreceipt/${postId}` && <div className='text-center'>
                     <label className='text-md font-semibold text-gray-800'>Customer Name</label>
