@@ -355,7 +355,7 @@ export default function DefaultLayout() {
                 </div>
             </div>
           </div>
-        <div className='flex ml-1'>
+        <div className='flex ml-2'>
         <div className='sm:shadow-sm sm:shadow-slate-500 w-1/4 py-4 flex sm:flex-col sm:justify-between'>
           <ul className='flex flex-col justify-normal items-center space-y-8'>
             <li><Link to={"/default/customerdashboard"} className={`${location.pathname === "/default/customerdashboard" ? "bg-blue-950 opacity-75 rounded-md px-3 py-2" : " "}`}><Home /></Link></li>

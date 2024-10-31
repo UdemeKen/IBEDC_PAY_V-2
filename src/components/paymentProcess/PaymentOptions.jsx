@@ -217,29 +217,29 @@ const navigate = useNavigate();
             select payment option
         </div>
         <div className={`flex justify-center my-10 mx-2 capitalize rounded-md space-x-10 ${blur ? "hidden" : ""}`}>
-            <div className={`flex justify-center items-center w-32 text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
+            <div className={`flex justify-center items-center w-16 sm:w-32 text-center cursor-pointer sm:py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
                 selectedOption === 'polaris' ? 'bg-orange-400' : ''
             }`} onClick={() => handleOptionChange('polaris')}>
                 <img 
                     src={Polaris_Bank_Logo} 
                     alt={'polaris bank'} 
-                    className='w-20 h-20'/>
+                    className='w-10 sm:w-20 h-10 sm:h-20'/>
             </div>
-            <div className={`flex justify-center items-center w-32 text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
+            {/* <div className={`flex justify-center items-center w-16 sm:w-32 text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
                 selectedOption === 'fcmb' ? 'bg-orange-600' : ''
             }`} onClick={() => handleOptionChange('fcmb')}>
                 <img 
                     src={FCMB_Logo} 
                     alt={'fcmb'} 
-                    className='w-20 h-20'/>
-            </div>
-            <div className={`flex justify-center items-center w-32 text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
+                    className='w-10 sm:w-20 h-10 sm:h-20'/>
+            </div> */}
+            <div className={`flex justify-center items-center w-16 sm:w-32 text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
                 selectedOption === 'wallet' ? 'bg-orange-600' : ''
             }`} onClick={() => handleOptionChange('wallet')}>
                 <img 
                     src={Wallet_Logo} 
                     alt={'wallet'} 
-                    className='w-20 h-20'/>
+                    className='w-10 sm:w-20 h-10 sm:h-20'/>
             </div>
         </div>
         <div className={`flex flex-col justify-center items-center ${blur ? "hidden" : ""}`}>

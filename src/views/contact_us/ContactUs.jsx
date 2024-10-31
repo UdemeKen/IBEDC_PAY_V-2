@@ -200,14 +200,14 @@ export default function ContactUs() {
               <Link to={"https://www.twitter.com/ibedc_ng"} target='_blank'><li><Twitter /></li></Link>
               <Link to={"https://www.youtube.com/@IBEDC"} target='_blank'><li><Youtube /></li></Link>
             </ul>
-            <div className='flex flex-row justify-center items-center gap-4'>
+            <div className='flex flex-row justify-center items-center gap-4 px-2'>
               <div className='flex flex-col justify-center items-center'>
                 <Mail />
                 <span className='text-slate-600'>customercare@ibedc.com</span>
               </div>
-              <div className='flex flex-col justify-center items-center'>
+              <div className='flex flex-col justify-center items-center gap-[5px]'>
                 <PhoneIcon className='w-5 h-5'/>
-                <p className='text-slate-600'>call: 07001239999</p>
+                <p className='flex gap-2 text-slate-600 text-center'><span className='hidden sm:block'>call:</span> 07001239999</p>
               </div>
             </div>
           </div>

@@ -649,7 +649,7 @@ export default function CustomerDashboard() {
         variants={heroVariants.hero_11Variants}
         initial="hidden"
         animate="visible"
-      className={`flex flex-col sm:flex-row justify-center sm:space-x-4 lg:px-10 sm:my-10 ${blur && 'hidden'}`}>
+      className={`flex flex-col sm:flex-row justify-center sm:space-x-4 lg:px-10 sm:my-10 w-full ${blur && 'hidden'}`}>
         <div className='relative shadow-sm shadow-slate-500 w-3/4 rounded-lg flex justify-center items-center hidden sm:block'>
           <div className='absolute inset-0 bg-gradient-to-t from-orange-500 opacity-80 rounded-lg from-0%'></div>
           <img
