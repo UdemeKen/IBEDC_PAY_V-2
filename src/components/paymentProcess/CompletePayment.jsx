@@ -115,9 +115,12 @@ export default function CompletePayment({ blur, setBlur }) {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <div className='my-6'>
-                <span class="font-semibold text-2xl">Generating token. Please hold on...</span>
-            </div>
+            {accountType === "Prepaid" && <div className='my-6'>
+                <span class="font-semibold text-2xl">Generating token. Please hold on...!</span>
+            </div>}
+            {accountType === "Postpaid" && <div className='my-6'>
+                <span class="font-semibold text-2xl">Hold on...!</span>
+            </div>}
         </div>
       </div>}
       {!loading && !e && <div className='flex flex-col justify-center items-center shadow-md shadow-slate-500 bg-white px-12 pt-10 rounded-md w-1/2'>
@@ -127,8 +130,9 @@ export default function CompletePayment({ blur, setBlur }) {
                   alt={'success'}
                   className='w-32 h-32 mx-auto'
               />
-              <p className='text-center capitalize font-semibold text-lg'>electricity token successfully generated</p>
-              <p className='text-center'>Electricity Token has been sent to your email and phone number</p>
+              {accountType === "Prepaid" && <p className='text-center capitalize font-semibold text-lg'>electricity token successfully generated</p>}
+              {accountType === "Prepaid" && <p className='text-center'>Electricity Token has been sent to your email and phone number</p>}
+              {accountType === "Postpaid" && <p className='text-center capitalize font-semibold text-lg'>payment successful!</p>}
           </div>
           <div className='my-5'>
               <button
@@ -145,8 +149,9 @@ export default function CompletePayment({ blur, setBlur }) {
                   alt={'success'}
                   className='w-32 h-32 mx-auto'
               />
-              <p className='text-center capitalize font-semibold text-lg'>electricity token not successfully generated</p>
-              <p className='text-center'>{error}</p>
+              {accountType === "Postpaid" && <p className='text-center capitalize font-semibold text-lg'>payment in progress</p>}
+              {accountType === "Prepaid" && <p className='text-center capitalize font-semibold text-lg'>electricity token not successfully generated</p>}
+              {accountType === "Prepaid" && <p className='text-center'>{error}</p>}
           </div>
           <div className='my-5'>
               <button

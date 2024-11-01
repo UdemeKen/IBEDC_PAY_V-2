@@ -129,8 +129,6 @@ const navigate = useNavigate();
         "tx_ref": transaction_id,
         "amount": parseInt(amount),
         "currency": "NGN",
-        // "redirect_url": "https://apiengine.ibedc.com:7443/api/v3ibedc_AUTH_token/authenticate/complete_payment",
-        // "redirect_url": "https://ibedcpay-extension.vercel.app/",
         "redirect_url": "https://ibedcnew.ibedc.com/default/customerdashboard",
           "customer": {
             "name": customer_name,

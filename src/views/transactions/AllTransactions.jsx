@@ -300,10 +300,12 @@ export default function AllTransactions() {
                   <label className='text-md font-sans font-semibold'>Blank</label>
                   <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.dssName}</p>
               </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Token</label>
-                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : formatToken(selectedTransaction?.Token)}</p>
-              </div>
+              {selectedTransaction?.accountType === "Prepaid" && (
+                  <div>
+                      <label className='text-md font-sans font-semibold'>Token</label>
+                      <p>{formatToken(selectedTransaction?.Token)}</p>
+                  </div>
+              )}
               {/* <div className='text-white sm:block hidden'>
                   <label className='text-md font-sans font-semibold'>Blank</label>
                   <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.receiptno}</p>

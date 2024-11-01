@@ -118,10 +118,12 @@ export default function TransactionViewDetails() {
                     <label className='text-md font-bold'>VAT</label>
                     <p>₦{transaction?.VAT}</p>
                 </div>}
-                {accountType === "Prepaid" && <div>
-                    <label className='text-md font-bold'>Token</label>
-                    <p>{formatToken(transaction?.Token)}</p>
-                </div>}
+                {accountType === "Prepaid" && (
+                    <div>
+                        <label className='text-md font-bold'>Token</label>
+                        <p>{transaction?.Token ? formatToken(transaction.Token) : 'N/A'}</p>
+                    </div>
+                )}
                 {accountType === "Postpaid" && <div>
                     <label className='text-md font-bold'>Rowguid</label>
                     <p>{transaction?.rowguid}</p>
