@@ -189,6 +189,7 @@ const navigate = useNavigate();
                 console.log(response);
                 if (response.status === 200) {
                     toast.success(response?.data?.message);
+                    window.location.reload();
                 }
             } catch (error) {
                 console.log(error);
