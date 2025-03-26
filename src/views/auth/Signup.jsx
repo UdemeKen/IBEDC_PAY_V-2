@@ -63,7 +63,7 @@ export default function Signup() {
     };
     
   return (
-    <section className='sm:w-2/3 w-full'>
+    <section className='w-full'>
         <div className='sm:block w-full h-screen sm:h-full flex flex-col justify-center items-center'>
             <div className='flex justify-center w-full'>
                 <div className='flex flex-col items-center justify-center w-3/4'>
@@ -151,7 +151,7 @@ export default function Signup() {
                         <button
                         type="submit"
                         disabled={buttonDisabled}
-                        className={`w-full rounded-md py-1 text-sm font-semibold leading-6 shadow-sm transition duration-300 ease-in-out ${
+                        className={`w-full rounded-md mb-4 py-1 text-sm font-semibold leading-6 shadow-sm transition duration-300 ease-in-out ${
                             (buttonDisabled)
                             ? 'w-full bg-blue-950 opacity-30 text-white cursor-not-allowed '
                             : 'w-full bg-blue-950 opacity-75 text-white hover:bg-orange-500 hover:bg-opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-900'
@@ -175,15 +175,7 @@ export default function Signup() {
     
                         </button>
                         </div>
-                        <div className='flex flex-col justify-center items-center space-y-12 text-slate-500'>
-                            <div className='text-xs mt-6 font-semibold text-center'>
-                                <p className=''>Already an IBEDC Customer? <span className='text-orange-500'><Link to={"/"}>Login</Link></span></p>
-                            </div>
-                        </div>
                     </form>
-                    <div className='text-xs font-semibold text-slate-500 my-5 text-center'>
-                        <p>By clicking on Sign up, you agree to our <span className='text-orange-500'><Link to={"https://www.ibedc.com/terms-of-service"} target='_blank'>terms & conditions</Link></span> and <span className='text-orange-500'><Link to={"https://www.ibedc.com/privacy"} target='_blank'>privacy policy</Link></span></p>
-                    </div>
                 </div>
             </div>
         </div>

@@ -24,6 +24,7 @@ import CancelPayment from "./views/errorBoundary/CancelPayment";
 import CancelPay from "./views/errorBoundary/CancelPay";
 import SuccessfulPay from "./views/errorBoundary/SuccessPay";
 import Spinner from "./views/errorBoundary/Spinner";
+import PrivacyPolicy from "./views/policies/Privacy-Policy";
 
 const router = createBrowserRouter([
     {
@@ -47,6 +48,7 @@ const router = createBrowserRouter([
                 ]
             }
         ]
+        
     },
     {
         path: "/default",
@@ -159,6 +161,11 @@ const router = createBrowserRouter([
     {
         path: "/resetpassword",
         element: <ErrorBoundary><ResetPassword /></ErrorBoundary>,
+        errorElement: <ErrorPage />
+    },
+    {
+        path: "/privacypolicy",
+        element: <ErrorBoundary><PrivacyPolicy /></ErrorBoundary>,
         errorElement: <ErrorPage />
     }
 ]);

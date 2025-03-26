@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Link, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { slideData } from '../views/slider/Slider_Data';
 import { AiOutlineArrowRight, AiOutlineArrowLeft } from 'react-icons/ai';
 import { useStateContext } from '../context/ContextProvider';
+import GoogleStore from '../assets/images/googleStore.png';
+import AppleStore from '../assets/images/appleStore.png';
 
 export default function GuestLayout() {
 
+  const location = useLocation();
   const { userToken } = useStateContext();
   const [ currentSlide, setCurrentSlide ] = useState(0);
 
@@ -45,8 +48,8 @@ export default function GuestLayout() {
   }
 
   return (
-    <section className='bg-white'>
-      <div className='flex justify-center items-center h-full '>
+    <section className='bg-white border border-black h-screen sm:h-full'>
+      <div className='flex justify-center items-center h-full'>
         {slideData.map((slide, index) => {
             return (
                 <div className={index === currentSlide ? "w-full h-full pageSlide currentPage hidden sm:block" : "hidden sm:block pageSlide"} key={index}>
@@ -71,7 +74,47 @@ export default function GuestLayout() {
             </div>
           )
         })}
-        <Outlet/>
+        <div className='flex flex-col justify-center items-center px-4 w-full sm:w-1/2'>
+            <Outlet/>
+            <div className='flex flex-col items-center space-y-4 text-slate-500'>
+                {location.pathname == "/" && <div className='text-sm font-semibold text-center my-5'>
+                    <p>Don't have a password? Click <span className='text-orange-500'><Link to={"/meternumber"} className='text-2xl'>(Here)</Link></span> to login with your <span className='capitalize'>meter number</span> and <span className='capitalize'>account type</span></p>
+                </div>}
+                {location.pathname == "/meternumber" && <div className='text-sm font-semibold text-center my-5'>
+                    <p>Don't have a meter number? Click <span className='text-orange-500'><Link to={"/"}className='text-2xl'>(Here)</Link></span> to login with your <span className='capitalize'>password</span></p>
+                </div>}
+                <div className='capitalize text-sm'>
+                    <Link to={"/forgotpassword"} className={"text-amber-600 opacity-70 hover:text-orange-500 hover:font-semibold transform duration-300 ease-in-out"}>forgot password</Link>
+                </div>
+                <div className='text-xs font-semibold text-center'>
+                    {location.pathname == "/" && <p className=''>Not yet an IBEDC Customer? <span className='text-orange-500'><Link to={"/signup"}>Signup</Link></span></p>}
+                    {location.pathname == "/meternumber" && <p className=''>Not yet an IBEDC Customer? <span className='text-orange-500'><Link to={"/signup"}>Signup</Link></span></p>}
+                    {location.pathname == "/signup" && <p className=''>Already an IBEDC Customer? <span className='text-orange-500'><Link to={"/"}>Login</Link></span></p>}
+                </div>
+                <div className='text-xs font-semibold text-slate-500 my-5 text-center'>
+                    <p>By clicking on Sign up, you agree to our <span className='text-orange-500'><Link to={"https://www.ibedc.com/terms-of-service"} target='_blank'>terms & conditions</Link></span> and <span className='text-orange-500'><Link to={"/privacypolicy"} target='_blank'>privacy policy</Link></span></p>
+                </div>
+            </div>
+            <div className='flex flex-row justify-center items-center space-x-10 my-5'>
+                <Link to={"https://play.google.com/store/apps/details?id=com.ibedc.ibedcpay"} target='_blank'>
+                    <img 
+                        src={GoogleStore}
+                        alt="google_playstore-link"
+                        width={150}
+                        height={150}
+                    />
+                </Link>
+                <Link to={"https://apps.apple.com/ng/app/ibedcpay/id6478964557"} target='_blank'>
+                    <img 
+                        src={AppleStore}
+                        alt="google_playstore-link"
+                        width={150}
+                        height={150}
+                        className='h-[75px]'
+                    />
+                </Link>
+            </div>  
+        </div>
       </div>
     </section>
   )

@@ -95,7 +95,7 @@ export default function MeterNumberLogin() {
   }
   
   return (
-    <div className='flex flex-col space-y-2'>
+    <div className='flex flex-col w-full space-y-2'>
         <div>
           <label className='block text-sm font-medium text-slate-600 capitalize'>
               account type

@@ -69,14 +69,14 @@ export default function Login() {
     }
 
   return (
-    <section className='sm:w-2/3 w-full'>
-        <div className='sm:block w-full h-screen sm:h-full flex flex-col justify-center items-center'>
+    <section className='w-full'>
+        <div className='sm:block w-full h-full sm:h-full flex flex-col justify-center items-center'>
             <div className='flex justify-center w-full'>
                 <div className='flex flex-col items-center justify-center w-full sm:w-3/4'>
                     <div className='mb-5 text-center'>
                         <h1 className='font-bold capitalize text-3xl text-blue-900'>customer login</h1>
                     </div>
-                    <form className='flex flex-col justify-center space-y-3 xs:w-64 w-4/5' 
+                    <form className='flex flex-col justify-center space-y-3 xs:w-64 w-full' 
                     onSubmit={handleSubmit}
                     >
                         <Outlet />
@@ -145,24 +145,7 @@ export default function Login() {
                         }
                         </button>
                         </div>
-                        <div className='flex flex-col items-center space-y-4 text-slate-500'>
-                            {location.pathname == "/" && <div className='text-sm font-semibold text-center my-5'>
-                                <p>Don't have a password? Click <span className='text-orange-500'><Link to={"/meternumber"} className='text-2xl'>(Here)</Link></span> to login with your <span className='capitalize'>meter number</span> and <span className='capitalize'>account type</span></p>
-                            </div>}
-                            {location.pathname == "/meternumber" && <div className='text-sm font-semibold text-center my-5'>
-                                <p>Don't have a meter number? Click <span className='text-orange-500'><Link to={"/"}className='text-2xl'>(Here)</Link></span> to login with your <span className='capitalize'>password</span></p>
-                            </div>}
-                            <div className='capitalize text-sm'>
-                                <Link to={"/forgotpassword"} className={"text-amber-600 opacity-70 hover:text-orange-500 hover:font-semibold transform duration-300 ease-in-out"}>forgot password</Link>
-                            </div>
-                            <div className='text-xs font-semibold text-center'>
-                                <p className=''>Not yet an IBEDC Customer? <span className='text-orange-500'><Link to={"/signup"}>Signup</Link></span></p>
-                            </div>
-                        </div>
                         </form>
-                        <div className='text-xs font-semibold text-slate-500 my-5 text-center'>
-                            <p>By clicking on Sign up, you agree to our <span className='text-orange-500'><Link to={"https://www.ibedc.com/terms-of-service"} target='_blank'>terms & conditions</Link></span> and <span className='text-orange-500'><Link to={"https://www.ibedc.com/privacy"} target='_blank'>privacy policy</Link></span></p>
-                        </div>
                 </div>
             </div>
         </div>
