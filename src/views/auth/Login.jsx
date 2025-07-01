@@ -38,6 +38,10 @@ export default function Login() {
             localStorage.setItem('USER_PHONE', response?.data?.payload?.user?.phone);
             localStorage.setItem('USER_ID', response?.data?.payload?.user?.id);
             localStorage.setItem('ACCOUNT_TYPE', response?.data?.payload?.user?.account_type);
+            localStorage.setItem('AUTHORITY', response?.data?.payload?.user?.authority);
+            localStorage.setItem('REGION', response?.data?.payload?.user?.region);
+            localStorage.setItem('BUSINESS_HUB', response?.data?.payload?.user?.business_hub);
+            localStorage.setItem('SERVICE_CENTER', response?.data?.payload?.user?.sc);
             setUserToken(response?.data?.payload?.token);
             setCurrentUser(response?.data?.payload?.user?.name);
             toast.success(response?.data?.message);

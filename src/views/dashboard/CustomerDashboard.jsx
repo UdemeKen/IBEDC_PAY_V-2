@@ -8,11 +8,12 @@ import { faCheck, faTimes, faInfoCircle } from '@fortawesome/free-solid-svg-icon
 import { CreditCardIcon, BanknotesIcon, PhoneIcon, WalletIcon } from '@heroicons/react/24/outline';
 import PaymentForm from '../../components/paymentProcess/PaymentForm';
 import CompletePayment from '../../components/paymentProcess/CompletePayment';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axiosClient from '../../axios';
 import { toast } from 'react-toastify';
 import { heroVariants } from '../../variants';
 import VirtualAccountModal from '../virtualAccountModal/VirtualAccountModal';
+import Webcam from 'react-webcam';
 
 const transactionHistoryUrl = "/V2_ibedc_OAUTH_tokenReviwed/history/other-history";
 // const transactionHistoryUrl = "/V2_ibedc_OAUTH_tokenReviwed/history/get-history";
@@ -70,6 +71,25 @@ export default function CustomerDashboard() {
   const [userCurrentBill, setUserCurrentBill] = useState(() => {
     return localStorage.getItem('CURRENT_BILL') || "";
   });
+
+  const authority = localStorage.getItem('AUTHORITY');
+  const region = localStorage.getItem('REGION');
+  const businessHub = localStorage.getItem('BUSINESS_HUB');
+  const serviceCenter = localStorage.getItem('SERVICE_CENTER');
+  const [dtmPendingAccounts, setDtmPendingAccounts] = useState([]);
+  const [dtmStats, setDtmStats] = useState({pending: 0, validated: 0, rejected: 0, photos: 0});
+  const [dtmLoading, setDtmLoading] = useState(false);
+  const [dtmRecentActivity, setDtmRecentActivity] = useState([]);
+  const [dtmPage, setDtmPage] = useState(1);
+  const dtmPerPage = 3;
+  const navigate = useNavigate();
+
+  const [validateModalOpen, setValidateModalOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [dtmRejectingId, setDtmRejectingId] = useState(null);
+
+  const [serviceCenters, setServiceCenters] = useState([]);
+  const [selectedServiceCenter, setSelectedServiceCenter] = useState('');
 
   useEffect(() => {
     const isValid = METER_ACCT_NUMBER_REGEX.test(user);
@@ -291,7 +311,212 @@ export default function CustomerDashboard() {
 
   // console.log(  displayAccountType  );
 
+  useEffect(() => {
+    if (authority === 'dtm') {
+      const fetchPendingAccounts = async () => {
+        setDtmLoading(true);
+        try {
+          const response = await axiosClient.get('/V4IBEDC_new_account_setup_sync/initiate/get_pending_account');
+          const accounts = response?.data?.payload?.accounts?.data || [];
+          setDtmPendingAccounts(accounts);
+          // Calculate stats
+          let pending = 0, validated = 0, photos = 0;
+          let recent = [];
+          accounts.forEach(acc => {
+            if (isPending(acc)) pending++;
+            if (isValidated(acc)) validated++;
+            if (acc.picture && acc.picture !== "0") photos++;
+            // Build recent activity (example)
+            if (acc.account && acc.account.status_name) {
+              recent.push({
+                type: acc.account.status_name,
+                tracking_id: acc.tracking_id,
+                time: acc.updated_at
+              });
+            }
+          });
+          setDtmStats({pending, validated, rejected: 0, photos});
+          setDtmRecentActivity(recent.slice(0, 5));
+        } catch (e) {
+          setDtmPendingAccounts([]);
+        } finally {
+          setDtmLoading(false);
+        }
+      };
+      fetchPendingAccounts();
+    }
+  }, [authority]);
 
+  // DTM action handlers
+  const handleReject = async (id) => {
+    setDtmRejectingId(id);
+    try {
+      await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/rejectform', { id: String(id) });
+      setDtmPendingAccounts(prev => prev.filter(acc => acc.id !== id));
+      toast.success("Application rejected and removed.");
+    } catch (e) {
+      toast.error("Failed to reject application.");
+    } finally {
+      setDtmRejectingId(null);
+    }
+  };
+
+  const handleValidate = (id) => {
+    // Placeholder for validation logic
+    toast.info("Validate action coming soon.");
+  };
+
+  // DTM Dashboard rendering
+  if (authority === 'dtm') {
+    const dtmTotalPages = Math.ceil(dtmPendingAccounts.length / dtmPerPage);
+    const dtmPaginatedAccounts = dtmPendingAccounts.slice((dtmPage - 1) * dtmPerPage, dtmPage * dtmPerPage);
+    return (
+      <div className="bg-[#f5f7fa] min-h-screen p-4">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+          <div>
+            <h2 className="text-2xl font-bold mb-1">Welcome, {cleanedUsername}</h2>
+            <p className="text-sm text-gray-600">DTM Validation & Management Dashboard</p>
+          </div>
+          <div className="text-right">
+            <div className="text-blue-900 font-bold">{region ? `${region} Region` : ''}</div>
+            <div className="text-sm text-blue-700">{businessHub ? `Business Hub: ${businessHub}` : ''}</div>
+            <div className="text-sm text-blue-700">{serviceCenter ? `Service Center: ${serviceCenter}` : ''}</div>
+          </div>
+        </div>
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
+            <span className="text-2xl font-bold text-pink-500">{dtmStats.pending}</span>
+            <span className="text-xs text-gray-500 mt-1">PENDING APPLICATIONS</span>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
+            <span className="text-2xl font-bold text-purple-500">{dtmStats.validated}</span>
+            <span className="text-xs text-gray-500 mt-1">VALIDATED THIS MONTH</span>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
+            <span className="text-2xl font-bold text-orange-500">{dtmStats.rejected}</span>
+            <span className="text-xs text-gray-500 mt-1">REJECTED APPLICATIONS</span>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
+            <span className="text-2xl font-bold text-indigo-500">{dtmStats.photos}</span>
+            <span className="text-xs text-gray-500 mt-1">PHOTOS CAPTURED</span>
+          </div>
+        </div>
+        {/* Main Content */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Account Applications */}
+          <div className="flex-1 bg-white rounded-lg shadow p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-lg">Account Applications</h3>
+              {/* Filter buttons can be added here */}
+            </div>
+            {dtmLoading ? (
+              <div className="text-center py-8">Loading...</div>
+            ) : (
+              <div className="space-y-4">
+                {dtmPaginatedAccounts.map((acc, idx) => (
+                  <div key={acc.id} className={`border-l-4 ${isPending(acc) ? 'border-blue-500' : isValidated(acc) ? 'border-green-500' : 'border-red-500'} bg-gray-50 rounded p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2`}>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold text-blue-900">{acc.tracking_id}</span>
+                        <span className={`text-xs font-semibold ml-2 ${isPending(acc) ? 'text-yellow-600' : isValidated(acc) ? 'text-green-600' : 'text-red-600'}`}>{isPending(acc) ? 'PENDING' : isValidated(acc) ? 'VALIDATED' : ''}</span>
+                      </div>
+                      <div className="text-xs text-gray-700 mb-1">Customer: {acc.account?.surname} {acc.account?.firstname} {acc.account?.other_name}</div>
+                      <div className="text-xs text-gray-700 mb-1">Phone: {acc.account?.phone}</div>
+                      <div className="text-xs text-gray-700 mb-1">Address: {acc.full_address}</div>
+                      <div className="text-xs text-gray-700 mb-1">LGA: {acc.lga}</div>
+                      <div className="text-xs text-gray-700 mb-1">Premise: {acc.type_of_premise} {acc.use_of_premise}</div>
+                      <div className="text-xs text-gray-700 mb-1">Submitted: {acc.created_at?.slice(0,10)}</div>
+                    </div>
+                    <div className="flex flex-col md:flex-row gap-2 mt-2 md:mt-0">
+                      {isPending(acc) && <button className="bg-green-500 text-white px-3 py-1 rounded font-semibold text-xs" onClick={() => { setSelectedAccount(acc); setValidateModalOpen(true); }}>Validate</button>}
+                      {isPending(acc) && (
+                        <button
+                          className="bg-red-500 text-white px-3 py-1 rounded font-semibold text-xs flex items-center justify-center min-w-[70px]"
+                          onClick={() => handleReject(acc.id)}
+                          disabled={dtmRejectingId === acc.id}
+                        >
+                          {dtmRejectingId === acc.id ? (
+                            <>
+                              <svg className="animate-spin h-4 w-4 mr-1 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Pending...
+                            </>
+                          ) : (
+                            'Reject'
+                          )}
+                        </button>
+                      )}
+                      {isValidated(acc) && <span className="text-green-600 font-semibold">Validated</span>}
+                      <button className="bg-blue-500 text-white px-3 py-1 rounded font-semibold text-xs">View</button>
+                    </div>
+                  </div>
+                ))}
+                {/* Pagination Controls */}
+                {dtmTotalPages > 1 && (
+                  <div className="flex justify-center items-center gap-2 mt-4">
+                    <button
+                      onClick={() => setDtmPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={dtmPage === 1}
+                      className="px-3 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+                    >
+                      Prev
+                    </button>
+                    <span className="font-semibold">{dtmPage} / {dtmTotalPages}</span>
+                    <button
+                      onClick={() => setDtmPage((prev) => Math.min(prev + 1, dtmTotalPages))}
+                      disabled={dtmPage === dtmTotalPages}
+                      className="px-3 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          {/* Sidebar */}
+          {/* <div className="w-full lg:w-1/3 flex flex-col gap-6"> */}
+            {/* Quick Actions */}
+            {/* <div className="bg-white rounded-lg shadow p-4">
+              <h4 className="font-bold mb-2">Quick Actions</h4>
+              <div className="flex flex-col gap-2">
+                <button className="bg-purple-500 text-white px-3 py-2 rounded font-semibold text-left">Search Applications</button>
+                <button className="bg-yellow-400 text-white px-3 py-2 rounded font-semibold text-left">Bulk Validation</button>
+                <button className="bg-blue-500 text-white px-3 py-2 rounded font-semibold text-left">Generate Report</button>
+                <button className="bg-orange-300 text-white px-3 py-2 rounded font-semibold text-left">Settings</button>
+              </div>
+            </div> */}
+            {/* Recent Activity */}
+            {/* <div className="bg-white rounded-lg shadow p-4">
+              <h4 className="font-bold mb-2">Recent Activity</h4>
+              <ul className="text-xs text-gray-700 space-y-2">
+                {dtmRecentActivity.length === 0 && <li>No recent activity</li>}
+                {dtmRecentActivity.map((act, idx) => (
+                  <li key={idx} className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${act.type.includes('Validated') ? 'bg-purple-500' : act.type.includes('Rejected') ? 'bg-orange-500' : 'bg-pink-500'}`}></span>
+                    <span>{act.type} {act.tracking_id}</span>
+                    <span className="ml-auto text-gray-400 text-[10px]">{act.time?.slice(11,16)} {act.time?.slice(0,10)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div> */}
+          {/* </div> */}
+        </div>
+        {validateModalOpen && selectedAccount && (
+          <ValidateAccountModal
+            account={selectedAccount}
+            onClose={() => setValidateModalOpen(false)}
+            onValidated={() => {
+              setDtmPendingAccounts((prev) => prev.filter(acc => acc.id !== selectedAccount.id));
+            }}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className='bg-white bg-cover h-full'>
@@ -622,21 +847,6 @@ export default function CustomerDashboard() {
                   {!blur_01 && <span className={`lowercase  mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "processing" && <span className="text-yellow-500">{transaction.status}</span>}</span>}
                   {!blur_01 && <span className={`lowercase  mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "success" && <span className="text-green-500">{transaction.status}</span>}</span>}
                 </h4>}
-                {blur && <h4 className={`font-semibold text-sm text-gray-800 ${!blur ? "opacity-75" : ""} tracking-tighter text-left`}>
-                  Date: 
-                  <span className='font-normal'>
-                    {`${transaction.date_entered.slice(8,10)}-${transaction.date_entered.slice(5,7)}-${transaction.date_entered.slice(0,4)}`} | {transaction.date_entered.slice(10,16)}
-                  </span> 
-                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "failed" && <span className="text-red-500">{transaction.status}</span>}</span>}
-                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "processing" && <span className="text-yellow-500">{transaction.status}</span>}</span>}
-                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "success" && <span className="text-green-500">{transaction.status}</span>}</span>}
-                  {/* {transaction.status === "fail" && <span className="text-red-500">{transaction.status}</span>}
-                  {transaction.status === "processing" && <span className="text-yellow-500">{transaction.status}</span>}
-                  {transaction.status === "success" && <span className="text-green-500">{transaction.status}</span>} */}
-                  {!blur_01 && <span className={`lowercase mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "failed" && <span className="text-red-500">{transaction.status}</span>}</span>}
-                  {!blur_01 && <span className={`lowercase mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "processing" && <span className="text-yellow-500">{transaction.status}</span>}</span>}
-                  {!blur_01 && <span className={`lowercase mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "success" && <span className="text-green-500">{transaction.status}</span>}</span>}
-                </h4>}
               </div>
               {blur &&<Link to={`/default/transactionviewdetails/${transaction.TransactionNo}`} className={`bg-blue-950 ${!blur ? "opacity-75" : ""} rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out`}>view</Link>}
               {!blur_01 && account_type === "Prepaid" && <Link to={`/default/transactionviewdetails/${transaction.TransactionNo}`} className={`bg-blue-950 ${!blur_01 ? "opacity-75" : ""} rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out`}>view</Link>}
@@ -734,4 +944,270 @@ export default function CustomerDashboard() {
     </motion.section>
     </div>
   )
+}
+
+// Helper functions for DTM status
+const isPending = (acc) => acc.picture === "0" || acc.latitude === "0" || acc.longitude === "0";
+const isValidated = (acc) => acc.picture !== "0" && acc.latitude !== "0" && acc.longitude !== "0";
+
+function ValidateAccountModal({ account, onClose, onValidated }) {
+  const [picture, setPicture] = useState(null);
+  const [latitude, setLatitude] = useState(account.latitude);
+  const [longitude, setLongitude] = useState(account.longitude);
+  const [submitting, setSubmitting] = useState(false);
+  const [captured, setCaptured] = useState(false);
+  const [dssList, setDssList] = useState([]);
+  const [selectedDss, setSelectedDss] = useState('');
+  const [tariffList, setTariffList] = useState([]);
+  const [selectedTariff, setSelectedTariff] = useState('');
+  const [allBusinessHubs, setAllBusinessHubs] = useState([]);
+  const [regionForHub, setRegionForHub] = useState(account.region);
+  const [serviceCenters, setServiceCenters] = useState([]);
+  const [selectedServiceCenter, setSelectedServiceCenter] = useState('');
+  const webcamRef = React.useRef(null);
+
+  // Fetch all business hubs on mount
+  useEffect(() => {
+    const fetchAllBusinessHubs = async () => {
+      try {
+        const res = await axiosClient.get('/V4IBEDC_new_account_setup_sync/initiate/all_business_hub');
+        setAllBusinessHubs(res.data.payload.business_hubs || []);
+      } catch (e) {
+        setAllBusinessHubs([]);
+      }
+    };
+    fetchAllBusinessHubs();
+  }, []);
+
+  // Set region for selected business hub
+  useEffect(() => {
+    if (allBusinessHubs.length > 0 && account.business_hub) {
+      const found = allBusinessHubs.find(
+        hub => hub.Business_Hub.trim().toLowerCase() === account.business_hub.trim().toLowerCase()
+      );
+      if (found) {
+        // Remove 'REGION' (case-insensitive) and trim whitespace
+        const cleanRegion = (found.Region || account.region || '').replace(/region/i, '').trim();
+        setRegionForHub(cleanRegion);
+      }
+    }
+  }, [allBusinessHubs, account.business_hub, account.region]);
+
+  // Fetch DSS and Tariff only after regionForHub is set
+  useEffect(() => {
+    if (!regionForHub || !account.business_hub || !account.service_center) return;
+    // Fetch DSS
+    const fetchDss = async () => {
+      try {
+        const url = `/V4IBEDC_new_account_setup_sync/initiate/get_dss?region=${encodeURIComponent(regionForHub)}&hub=${encodeURIComponent(account.business_hub)}&service_center=${encodeURIComponent(account.service_center)}`;
+        const res = await axiosClient.get(url);
+        setDssList(res.data.payload.dss || []);
+      } catch (e) {
+        setDssList([]);
+      }
+    };
+    // Fetch Tariff
+    const fetchTariff = async () => {
+      try {
+        const res = await axiosClient.get('/V4IBEDC_new_account_setup_sync/initiate/get_tarriff');
+        setTariffList(res.data.payload.tarriff || []);
+      } catch (e) {
+        setTariffList([]);
+      }
+    };
+    fetchDss();
+    fetchTariff();
+  }, [regionForHub, account.business_hub, account.service_center]);
+
+  // Fetch service centers when business hub changes
+  useEffect(() => {
+    if (!account.business_hub) return;
+    const fetchServiceCenters = async () => {
+      try {
+        const url = `/V4IBEDC_new_account_setup_sync/initiate/service_centers/${encodeURIComponent(account.business_hub)}`;
+        const res = await axiosClient.get(url);
+        setServiceCenters(res.data.payload.service_center || []);
+      } catch (e) {
+        setServiceCenters([]);
+      }
+    };
+    fetchServiceCenters();
+  }, [account.business_hub, regionForHub]);
+
+  // Handler for capturing photo and location
+  const handleCapturePhoto = () => {
+    if (webcamRef.current) {
+      const imageSrc = webcamRef.current.getScreenshot();
+      setPicture(imageSrc);
+      setCaptured(true);
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            setLatitude(pos.coords.latitude);
+            setLongitude(pos.coords.longitude);
+          },
+          (err) => alert('Location error: ' + err.message)
+        );
+      }
+    }
+  };
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    const authority = localStorage.getItem('AUTHORITY');
+    const code = authority === 'dtm'
+      ? localStorage.getItem('TOKEN')
+      : account.email;
+    const formData = new FormData();
+    formData.append('tracking_id', account.tracking_id);
+    // Convert base64 image to blob for upload
+    if (picture) {
+      const res = await fetch(picture);
+      const blob = await res.blob();
+      formData.append('picture', blob, 'capture.jpg');
+    }
+    formData.append('latitude', latitude);
+    formData.append('longitude', longitude);
+    formData.append('region', regionForHub);
+    formData.append('business_hub', account.business_hub);
+    formData.append('service_center', selectedServiceCenter);
+    formData.append('dss', selectedDss);
+    formData.append('id', account.id);
+    formData.append('tarrif', selectedTariff);
+    formData.append('code', code);
+    formData.append('email', account.account.email);
+    try {
+      await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/process_account', formData);
+      toast.success('Account validated!');
+      if (typeof onValidated === 'function') onValidated();
+      if (typeof onClose === 'function') onClose();
+    } catch (e) {
+      toast.error('Validation failed');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded shadow-lg w-full max-w-2xl">
+        <h2 className="font-bold mb-4">Validate Account</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Column 1 */}
+          <div>
+            <div className="mb-2">Tracking ID: <span className="font-mono">{account.tracking_id}</span></div>
+            <div className="mb-2">Region: {regionForHub}</div>
+            <div className="mb-2">Business Hub: {account.business_hub}</div>
+            <div className="mb-2">
+              <label>Service Center:</label>
+              <select
+                value={selectedServiceCenter}
+                onChange={e => setSelectedServiceCenter(e.target.value)}
+                className="block w-full border rounded p-1"
+                required
+                disabled={serviceCenters.length === 0}
+              >
+                <option value="">Select Service Center</option>
+                {serviceCenters.map(sc => (
+                  <option key={sc.DSS_11KV_415V_Owner} value={sc.DSS_11KV_415V_Owner}>{sc.DSS_11KV_415V_Owner}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-2">
+              <label>DSS:</label>
+              <select
+                value={selectedDss}
+                onChange={e => setSelectedDss(e.target.value)}
+                className="block w-full border rounded p-1"
+                required
+              >
+                <option value="">Select DSS</option>
+                {dssList.map(dss => (
+                  <option key={dss.Assetid} value={dss.Assetid}>
+                    {dss.DSS_11KV_415V_Name} ({dss.DSS_11KV_415V_Address})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-2">
+              <label>Tariff:</label>
+              <select
+                value={selectedTariff}
+                onChange={e => setSelectedTariff(e.target.value)}
+                className="block w-full border rounded p-1"
+                required
+              >
+                <option value="">Select Tariff</option>
+                {tariffList.map(tariff => (
+                  <option key={tariff.TariffID} value={tariff.TariffID}>
+                    {tariff.Description}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-2">Email: {account.account.email}</div>
+            <div className="mb-2">ID: {account.id}</div>
+          </div>
+          {/* Column 2 */}
+          <div>
+            <div className="mb-2">
+              <label>Picture (real-time capture):</label>
+              {!captured ? (
+                <>
+                  <Webcam
+                    audio={false}
+                    ref={webcamRef}
+                    screenshotFormat="image/jpeg"
+                    width={320}
+                    height={240}
+                    videoConstraints={{ facingMode: 'environment' }}
+                    className="rounded border"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCapturePhoto}
+                    className="bg-blue-500 text-white px-4 py-2 rounded mt-2"
+                  >
+                    Capture Building
+                  </button>
+                </>
+              ) : (
+                <div className="mb-2">
+                  <img
+                    src={picture}
+                    alt="Preview"
+                    className="w-32 h-32 object-cover rounded"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setCaptured(false); setPicture(null); }}
+                    className="bg-gray-400 text-white px-2 py-1 rounded mt-2 ml-2"
+                  >
+                    Retake
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="mb-2">Latitude: {latitude}</div>
+            <div className="mb-2">Longitude: {longitude}</div>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-4">
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || !picture || !latitude || !longitude || !selectedDss || !selectedTariff || !selectedServiceCenter}
+            className="bg-green-500 text-white px-4 py-2 rounded"
+          >
+            {submitting ? 'Submitting...' : 'Submit'}
+          </button>
+          <button
+            onClick={typeof onClose === 'function' ? onClose : undefined}
+            className="bg-gray-300 px-4 py-2 rounded"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

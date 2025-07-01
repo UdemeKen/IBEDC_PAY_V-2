@@ -25,6 +25,12 @@ import CancelPay from "./views/errorBoundary/CancelPay";
 import SuccessfulPay from "./views/errorBoundary/SuccessPay";
 import Spinner from "./views/errorBoundary/Spinner";
 import PrivacyPolicy from "./views/policies/Privacy-Policy";
+import ElectricitySupplyForm from "./views/electricitySupplyForm/ElectricitySupplyForm";
+import ContinuationForm from "./views/electricitySupplyForm/ContinuationForm";
+import DocumentUpload from "./views/electricitySupplyForm/DocumentUpload";
+import ConnectionDetailsPage from "./views/electricitySupplyForm/ConnectionDetailsPage";
+import FinalFormPage from "./views/electricitySupplyForm/FinalFormPage";
+import LecanUploadPage from "./views/electricitySupplyForm/LecanUploadPage";
 
 const router = createBrowserRouter([
     {
@@ -166,6 +172,36 @@ const router = createBrowserRouter([
     {
         path: "/privacypolicy",
         element: <ErrorBoundary><PrivacyPolicy /></ErrorBoundary>,
+        errorElement: <ErrorPage />
+    },
+    {
+        path: "/electricitySupplyForm",
+        element: <ErrorBoundary><ElectricitySupplyForm /></ErrorBoundary>,
+        errorElement: <ErrorPage />
+    },
+    {
+        path: "/continuationForm",
+        element: <ErrorBoundary><ContinuationForm /></ErrorBoundary>,
+        errorElement: <ErrorPage />
+    },
+    {
+        path: "/documentUpload",
+        element: <ErrorBoundary><DocumentUpload /></ErrorBoundary>,
+        errorElement: <ErrorPage />
+    },
+    {
+        path: "/connectionDetails",
+        element: <ErrorBoundary><ConnectionDetailsPage /></ErrorBoundary>,
+        errorElement: <ErrorPage />
+    },
+    {
+        path: "/finalForm",
+        element: <ErrorBoundary><FinalFormPage /></ErrorBoundary>,
+        errorElement: <ErrorPage />
+    },
+    {
+        path: "/lecanUpload",
+        element: <ErrorBoundary><LecanUploadPage /></ErrorBoundary>,
         errorElement: <ErrorPage />
     }
 ]);
