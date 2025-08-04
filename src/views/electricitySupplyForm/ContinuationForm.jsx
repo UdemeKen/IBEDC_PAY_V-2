@@ -26,6 +26,7 @@ export default function ContinuationForm() {
     landlord_othernames: '',
     landlord_dob: '',
     landlord_telephone: '',
+    landlord_alternate_telephone: '', // NEW FIELD
     landlord_email: '',
     name_address_of_previous_employer: '',
     previous_customer_address: '',
@@ -44,6 +45,8 @@ export default function ContinuationForm() {
   const [loadingExit, setLoadingExit] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalTrackingId, setModalTrackingId] = useState('');
+  const [ninLoading, setNinLoading] = useState(false);
+  const [ninValidated, setNinValidated] = useState(false);
   const navigate = useNavigate();
 
   // Set tracking_id from location.state if available
@@ -112,6 +115,7 @@ export default function ContinuationForm() {
       landlord_othernames: form.landlord_othernames,
       landlord_dob: form.landlord_dob,
       landlord_telephone: form.landlord_telephone,
+      landlord_alternate_telephone: form.landlord_alternate_telephone, // NEW FIELD
       landlord_email: form.landlord_email,
       name_address_of_previous_employer: form.name_address_of_previous_employer,
       previous_customer_address: form.previous_customer_address,
@@ -179,6 +183,7 @@ export default function ContinuationForm() {
       landlord_othernames: form.landlord_othernames,
       landlord_dob: form.landlord_dob,
       landlord_telephone: form.landlord_telephone,
+      landlord_alternate_telephone: form.landlord_alternate_telephone, // NEW FIELD
       landlord_email: form.landlord_email,
       name_address_of_previous_employer: form.name_address_of_previous_employer,
       previous_customer_address: form.previous_customer_address,
@@ -284,70 +289,128 @@ export default function ContinuationForm() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">NIN Number:</label>
-                  <input
-                    type="text"
-                    name="nin_number"
-                    value={form.nin_number}
-                    onChange={handleChange}
-                    className="w-full border rounded px-2 py-1 text-sm sm:text-base"
-                  />
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      name="nin_number"
+                      value={form.nin_number}
+                      onChange={handleChange}
+                      className="w-full border rounded px-2 py-1 text-sm sm:text-base"
+                      disabled={ninLoading || ninValidated}
+                    />
+                    <button
+                      type="button"
+                      className={`px-2 py-1 text-xs rounded ${ninValidated ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'} ${ninLoading ? 'opacity-50' : ''}`}
+                      onClick={async () => {
+                        if (!form.nin_number) {
+                          toast.error('Please enter a NIN number');
+                          return;
+                        }
+                        setNinLoading(true);
+                        setNinValidated(false);
+                        try {
+                          const res = await axiosClient.post(`/V4IBEDC_new_account_setup_sync/initiate/nin-validation?nin=${encodeURIComponent(form.nin_number)}`);
+                          if (res.data.success && res.data.payload && res.data.payload.customer) {
+                            const c = res.data.payload.customer;
+                            // Convert birthdate from DD-MM-YYYY to YYYY-MM-DD
+                            let dob = '';
+                            if (c.birthdate && c.birthdate.includes('-')) {
+                              const [d, m, y] = c.birthdate.split('-');
+                              dob = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                            }
+                            setForm(prev => ({
+                              ...prev,
+                              nin_number: c.nin || prev.nin_number,
+                              landlord_surname: c.surname || prev.landlord_surname,
+                              landlord_othernames: [c.firstname, c.middlename].filter(Boolean).join(' '),
+                              landlord_dob: dob || prev.landlord_dob,
+                              landlord_telephone: c.telephoneno || prev.landlord_telephone,
+                              landlord_email: c.email || prev.landlord_email,
+                            }));
+                            setNinValidated(true);
+                            toast.success('NIN validated and fields prefilled!');
+                          } else {
+                            toast.error(res.data.message || 'NIN validation failed');
+                          }
+                        } catch (e) {
+                          toast.error('NIN validation failed');
+                        } finally {
+                          setNinLoading(false);
+                        }
+                      }}
+                      disabled={ninLoading || !form.nin_number || ninValidated}
+                    >
+                      {ninLoading ? 'Validating...' : ninValidated ? 'Validated' : 'Validate NIN'}
+                    </button>
+                  </div>
                 </div>
-
+                {/* Only show landlord fields after NIN is validated */}
+                {ninValidated && <>
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Landlord Surname:</label>
                   <input
                     type="text"
                     name="landlord_surname"
                     value={form.landlord_surname}
-                    onChange={handleChange}
-                    className="w-full border rounded px-2 py-1 text-sm sm:text-base"
+                    readOnly
+                    className="w-full border rounded px-2 py-1 text-sm sm:text-base bg-gray-100"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Landlord Other Names:</label>
                   <input
                     type="text"
                     name="landlord_othernames"
                     value={form.landlord_othernames}
-                    onChange={handleChange}
-                    className="w-full border rounded px-2 py-1 text-sm sm:text-base"
+                    readOnly
+                    className="w-full border rounded px-2 py-1 text-sm sm:text-base bg-gray-100"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Landlord Date of Birth:</label>
                   <input
                     type="date"
                     name="landlord_dob"
                     value={form.landlord_dob}
-                    onChange={handleChange}
-                    className="w-full border rounded px-2 py-1 text-sm sm:text-base"
+                    readOnly
+                    className="w-full border rounded px-2 py-1 text-sm sm:text-base bg-gray-100"
+                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Landlord Telephone:</label>
                   <input
                     type="tel"
                     name="landlord_telephone"
                     value={form.landlord_telephone}
-                    onChange={handleChange}
-                    className="w-full border rounded px-2 py-1 text-sm sm:text-base"
+                    readOnly
+                    className="w-full border rounded px-2 py-1 text-sm sm:text-base bg-gray-100"
                   />
                 </div>
-
+                <div>
+                  <label className="block text-sm sm:text-base font-semibold mb-2">Alternate Landlord Telephone:</label>
+                  <input
+                    type="tel"
+                    name="landlord_alternate_telephone"
+                    value={form.landlord_alternate_telephone}
+                    onChange={handleChange}
+                    className="w-full border rounded px-2 py-1 text-sm sm:text-base"
+                    placeholder="Enter alternate phone number (optional)"
+                  />
+                </div>
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Landlord Email:</label>
                   <input
                     type="email"
                     name="landlord_email"
                     value={form.landlord_email}
-                    onChange={handleChange}
-                    className="w-full border rounded px-2 py-1 text-sm sm:text-base"
+                    readOnly
+                    className="w-full border rounded px-2 py-1 text-sm sm:text-base bg-gray-100"
                   />
                 </div>
-
+                </>}
+                {/* End landlord fields */}
+                {ninValidated && <>
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Number of Accounts to Apply For:</label>
                   <input
@@ -358,7 +421,6 @@ export default function ContinuationForm() {
                     className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Landlord Personal Identification:</label>
                   <select
@@ -373,7 +435,6 @@ export default function ContinuationForm() {
                     ))}
                   </select>
                 </div>
-
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Landlord Picture:</label>
                   <input
@@ -396,6 +457,7 @@ export default function ContinuationForm() {
                     />
                   )}
                 </div>
+                </>}
               </div>
             </div>
 
@@ -451,10 +513,10 @@ export default function ContinuationForm() {
 
             {/* Bill Receiving Method Section */}
             <div className="mb-6">
-              <h2 className="text-base sm:text-lg font-bold mb-4">Bill Receiving Method</h2>
+              <h2 className="text-base sm:text-lg font-bold mb-4">Information Receiving Method</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <label className="block text-sm sm:text-base font-semibold mb-2">Preferred Method of Receiving Bill:</label>
+                  <label className="block text-sm sm:text-base font-semibold mb-2">Preferred Method of Receiving Information:</label>
                   <select
                     name="prefered_method_of_recieving_bill"
                     value={form.prefered_method_of_recieving_bill}

@@ -35,6 +35,7 @@ export default function DefaultLayout() {
   const userName = localStorage.getItem('USER_NAME');
   const userId = localStorage.getItem('USER_ID');
   const account_number = localStorage.getItem('USER_METER_NUMBER');
+  const authority = localStorage.getItem('AUTHORITY');
 
   const handleSendPin = async () => {
     setIsSendingPin(true);
@@ -251,6 +252,7 @@ export default function DefaultLayout() {
             />
           </Link>
           <div className=''>
+            {authority !== 'dtm' && (
             <ul className='flex justify-center items-center space-x-4 capitalize'>
               <li><Link to={"/default/customerdashboard"} className={`${location.pathname === "/default/customerdashboard" ? "bg-blue-950 opacity-75 text-slate-300 rounded-md px-3 py-1" : "hover:bg-blue-950 opacity-75 transform duration-300 ease-in-out rounded-md px-3 py-1 hover:text-slate-300"}`}>dashboard</Link></li>
               {/* <li><Link to={"/default/spinner"} className={`${location.pathname === "/default/alltransactions" || location.pathname === "/default/alltransactions/billhistory" || location.pathname === "/default/alltransactions/wallethistory" ? "bg-blue-950 opacity-75 text-slate-300 rounded-md px-3 py-1" : "hover:bg-blue-950 opacity-75 transform duration-300 ease-in-out rounded-md px-3 py-1 hover:text-slate-300"}`}>transactions</Link></li> */}
@@ -259,6 +261,7 @@ export default function DefaultLayout() {
               <li><Link to={"/default/faq"} className={`${location.pathname === "/default/faq" ? "bg-blue-950 opacity-75 text-slate-300 rounded-md px-3 py-1" : "hover:bg-blue-950 opacity-75 transform duration-300 ease-in-out rounded-md px-3 py-1 hover:text-slate-300"}`}>FAQ</Link></li>
               <li><Link to={"/default/contactus"} className={`${location.pathname === "/default/contactus" ? "bg-blue-950 opacity-75 text-slate-300 rounded-md px-3 py-1" : "hover:bg-blue-950 opacity-75 transform duration-300 ease-in-out rounded-md px-3 py-1 hover:text-slate-300"}`}>contact</Link></li>
             </ul>
+            )}
           </div>
           <div className='flex justify-normal items-center space-x-8'>
             <div className='flex justify-normal items-center space-x-4 rounded-md hover:bg-blue-950 opacity-75 transform duration-300 ease-in-out'>

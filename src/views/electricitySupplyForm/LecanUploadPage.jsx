@@ -10,7 +10,9 @@ export default function LecanUploadPage() {
   const navigate = useNavigate();
 
   // Get the list of buildings that have already been uploaded
-  const { trackingId, numBuildings, uploadedBuildings = [], buildingIds = [] } = location.state || {};
+  const { trackingId, numBuildings: numBuildingsRaw, uploadedBuildings = [], buildingIds = [] } = location.state || {};
+  // Fallback: if numBuildings is not set, use uploadedBuildings.length
+  const numBuildings = typeof numBuildingsRaw === 'number' && numBuildingsRaw > 0 ? numBuildingsRaw : uploadedBuildings.length;
   console.log(buildingIds);
   
 
@@ -21,11 +23,11 @@ export default function LecanUploadPage() {
 
   // Redirect if no data is passed
   useEffect(() => {
-    if (!trackingId || numBuildings === undefined || numBuildings <= 0) {
+    if (!trackingId || !Array.isArray(uploadedBuildings) || uploadedBuildings.length === 0) {
       toast.error('Invalid data received. Redirecting...');
       navigate('/');
     }
-  }, [trackingId, numBuildings, navigate]);
+  }, [trackingId, numBuildings, uploadedBuildings, navigate]);
 
   const handleFileChange = (index, file) => {
     const newFiles = [...lecanFiles];
@@ -83,7 +85,7 @@ export default function LecanUploadPage() {
     }
   };
 
-  if (!trackingId || numBuildings === undefined || numBuildings <= 0) {
+  if (!trackingId || !Array.isArray(uploadedBuildings) || uploadedBuildings.length === 0) {
     return null;
   }
 

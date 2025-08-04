@@ -81,7 +81,7 @@ export default function CustomerDashboard() {
   const [dtmLoading, setDtmLoading] = useState(false);
   const [dtmRecentActivity, setDtmRecentActivity] = useState([]);
   const [dtmPage, setDtmPage] = useState(1);
-  const dtmPerPage = 3;
+  const dtmPerPage = 4;
   const navigate = useNavigate();
 
   const [validateModalOpen, setValidateModalOpen] = useState(false);
@@ -90,6 +90,9 @@ export default function CustomerDashboard() {
 
   const [serviceCenters, setServiceCenters] = useState([]);
   const [selectedServiceCenter, setSelectedServiceCenter] = useState('');
+
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [viewAccount, setViewAccount] = useState(null);
 
   useEffect(() => {
     const isValid = METER_ACCT_NUMBER_REGEX.test(user);
@@ -384,7 +387,7 @@ export default function CustomerDashboard() {
           </div>
         </div>
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
             <span className="text-2xl font-bold text-pink-500">{dtmStats.pending}</span>
             <span className="text-xs text-gray-500 mt-1">PENDING APPLICATIONS</span>
@@ -401,7 +404,7 @@ export default function CustomerDashboard() {
             <span className="text-2xl font-bold text-indigo-500">{dtmStats.photos}</span>
             <span className="text-xs text-gray-500 mt-1">PHOTOS CAPTURED</span>
           </div>
-        </div>
+        </div> */}
         {/* Main Content */}
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Account Applications */}
@@ -450,7 +453,7 @@ export default function CustomerDashboard() {
                         </button>
                       )}
                       {isValidated(acc) && <span className="text-green-600 font-semibold">Validated</span>}
-                      <button className="bg-blue-500 text-white px-3 py-1 rounded font-semibold text-xs">View</button>
+                      <button className="bg-blue-500 text-white px-3 py-1 rounded font-semibold text-xs" onClick={() => { setViewAccount(acc); setViewModalOpen(true); }}>View</button>
                     </div>
                   </div>
                 ))}
@@ -513,6 +516,51 @@ export default function CustomerDashboard() {
               setDtmPendingAccounts((prev) => prev.filter(acc => acc.id !== selectedAccount.id));
             }}
           />
+        )}
+        {viewModalOpen && viewAccount && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded shadow-lg w-full max-w-2xl overflow-y-auto max-h-[90vh]">
+              <h2 className="font-bold mb-4 text-lg">Account Details</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="mb-2"><strong>Tracking ID:</strong> {viewAccount.tracking_id}</div>
+                  <div className="mb-2"><strong>Region:</strong> {viewAccount.region}</div>
+                  <div className="mb-2"><strong>State:</strong> {viewAccount.state}</div>
+                  <div className="mb-2"><strong>Business Hub:</strong> {viewAccount.business_hub}</div>
+                  <div className="mb-2"><strong>Service Center:</strong> {viewAccount.service_center}</div>
+                  <div className="mb-2"><strong>DSS:</strong> {viewAccount.dss}</div>
+                  <div className="mb-2"><strong>House No:</strong> {viewAccount.house_no}</div>
+                  <div className="mb-2"><strong>Full Address:</strong> {viewAccount.full_address}</div>
+                  <div className="mb-2"><strong>Nearest Bus Stop:</strong> {viewAccount.nearest_bustop}</div>
+                  <div className="mb-2"><strong>LGA:</strong> {viewAccount.lga}</div>
+                  <div className="mb-2"><strong>Landmark:</strong> {viewAccount.landmark}</div>
+                  <div className="mb-2"><strong>Type of Premise:</strong> {viewAccount.type_of_premise}</div>
+                  <div className="mb-2"><strong>Use of Premise:</strong> {viewAccount.use_of_premise}</div>
+                  {/* <div className="mb-2"><strong>Tariff:</strong> {viewAccount.tarrif}</div> */}
+                  {/* <div className="mb-2"><strong>Latitude:</strong> {viewAccount.latitude}</div>
+                  <div className="mb-2"><strong>Longitude:</strong> {viewAccount.longitude}</div> */}
+                  <div className="mb-2"><strong>Account:</strong> {viewAccount.account?.surname} {viewAccount.account?.firstname} {viewAccount.account?.other_name}</div>
+                  <div className="mb-2"><strong>Phone:</strong> {viewAccount.account?.phone}</div>
+                  <div className="mb-2"><strong>Email:</strong> {viewAccount.account?.email}</div>
+                </div>
+                <div>
+                  <div className="mb-2"><strong>Picture:</strong><br/>
+                    {viewAccount.picture && (
+                      <img src={`https://ipay.ibedc.com:7642/storage/${viewAccount.picture}`} alt="Account" className="w-40 h-40 object-cover rounded border mb-2" />
+                    )}
+                  </div>
+                  <div className="mb-2"><strong>LECAN Link:</strong><br/>
+                    {viewAccount.lecan_link && (
+                      <a href={`https://ipay.ibedc.com:7642/storage/${viewAccount.lecan_link}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View LECAN Document</a>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end mt-4">
+                <button onClick={() => setViewModalOpen(false)} className="bg-gray-400 text-white px-4 py-2 rounded">Close</button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     );

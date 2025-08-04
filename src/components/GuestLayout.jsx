@@ -264,7 +264,7 @@ export default function GuestLayout() {
             <h2 className="text-xl font-bold mb-4 text-center text-yellow-600">Application Status Pending</h2>
             <div className="text-center mb-6">
               <p className="mb-2">Your previous application is currently being processed.</p>
-              <p className="mb-2">Please check back after 5 days to continue with your application.</p>
+              <p className="mb-2">Please check back after 10 days to continue with your application.</p>
               <p className="text-sm text-gray-600">This is to ensure all your previous applications are properly processed.</p>
             </div>
             <button
@@ -281,19 +281,13 @@ export default function GuestLayout() {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-8 rounded shadow-lg max-w-lg w-full flex flex-col items-center">
             <h2 className="text-xl font-bold mb-4 text-center text-blue-700">Checklist: What You Need to Start</h2>
-            <p className="mb-4 text-center text-gray-700">Please ensure you have the following information and documents ready before starting your application:</p>
+            <p className="mb-4 text-center text-gray-700">Dear customer, to fill this form successfully, please ensure you have the following information and documents ready before starting your application:</p>
             <ul className="list-disc list-inside text-left mb-6 text-gray-800 text-sm sm:text-base">
               <li>Valid phone number and email address</li>
               <li>National Identification Number (NIN)</li>
               <li>Landlord's full name, phone number, and email</li>
               <li>Landlord's date of birth</li>
               <li>Landlord's means of identification (e.g., NIN, Driver's License, International Passport)</li>
-              <li>Proof of address (e.g., utility bill, tenancy agreement)</li>
-              <li>Passport photograph (digital copy)</li>
-              <li>Previous employer's name and address (if applicable)</li>
-              <li>Previous customer address, account number, and meter number (if applicable)</li>
-              <li>Preferred method of receiving bill (email or SMS)</li>
-              <li>GPS coordinates of the property (if available)</li>
             </ul>
             <button
               onClick={() => {

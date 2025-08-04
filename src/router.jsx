@@ -24,6 +24,7 @@ import CancelPayment from "./views/errorBoundary/CancelPayment";
 import CancelPay from "./views/errorBoundary/CancelPay";
 import SuccessfulPay from "./views/errorBoundary/SuccessPay";
 import Spinner from "./views/errorBoundary/Spinner";
+import PaymentCallback from "./views/errorBoundary/PaymentCallback";
 import PrivacyPolicy from "./views/policies/Privacy-Policy";
 import ElectricitySupplyForm from "./views/electricitySupplyForm/ElectricitySupplyForm";
 import ContinuationForm from "./views/electricitySupplyForm/ContinuationForm";
@@ -31,6 +32,7 @@ import DocumentUpload from "./views/electricitySupplyForm/DocumentUpload";
 import ConnectionDetailsPage from "./views/electricitySupplyForm/ConnectionDetailsPage";
 import FinalFormPage from "./views/electricitySupplyForm/FinalFormPage";
 import LecanUploadPage from "./views/electricitySupplyForm/LecanUploadPage";
+import DTEValidation from "./views/auth/loginTypes/DTEValidation";
 
 const router = createBrowserRouter([
     {
@@ -131,6 +133,11 @@ const router = createBrowserRouter([
                 path: "successpay",
                 element: <ErrorBoundary><SuccessfulPay /></ErrorBoundary>,
                 errorElement: <ErrorPage />
+            },
+            {
+                path: "payment-callback",
+                element: <ErrorBoundary><PaymentCallback /></ErrorBoundary>,
+                errorElement: <ErrorPage />
             }
         ]
     },
@@ -202,6 +209,11 @@ const router = createBrowserRouter([
     {
         path: "/lecanUpload",
         element: <ErrorBoundary><LecanUploadPage /></ErrorBoundary>,
+        errorElement: <ErrorPage />
+    },
+    {
+        path: "/dtevalidation",
+        element: <ErrorBoundary><DTEValidation /></ErrorBoundary>,
         errorElement: <ErrorPage />
     }
 ]);

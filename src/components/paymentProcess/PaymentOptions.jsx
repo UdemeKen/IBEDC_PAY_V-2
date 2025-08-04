@@ -31,6 +31,8 @@ const navigate = useNavigate();
     const [loading_01, setLoading_01] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
+    const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+    const [showFlutterWaveButton, setShowFlutterWaveButton] = useState(false);
 
     localStorage.setItem('SELECTED_OPTION', selectedOption);
 
@@ -129,7 +131,7 @@ const navigate = useNavigate();
         "tx_ref": transaction_id,
         "amount": parseInt(amount),
         "currency": "NGN",
-        "redirect_url": "https://ibedcnew.ibedc.com/default/customerdashboard",
+        "redirect_url": `${window.location.origin}/default/payment-callback`,
           "customer": {
             "name": customer_name,
             "phonenumber": phone,
@@ -210,6 +212,25 @@ const navigate = useNavigate();
         setSelectedOption(option);
     };
 
+    const openConfirmationModal = () => {
+        setShowConfirmationModal(true);
+    };
+
+    const closeConfirmationModal = () => {
+        setShowConfirmationModal(false);
+    };
+
+    const handleConfirmPayment = () => {
+        closeConfirmationModal();
+        if (selectedOption === "fcmb") {
+            fcmbpayloadRequest();
+        } else if (selectedOption === "wallet") {
+            walletFunction();
+        } else if (selectedOption === "polaris") {
+            setShowFlutterWaveButton(true);
+        }
+    };
+
   return (
     <section>
         <div className={`bg-blue-950 opacity-75 capitalize text-center font-semibold text-slate-200 py-1 ${blur ? "hidden" : ""}`}>
@@ -224,14 +245,14 @@ const navigate = useNavigate();
                     alt={'polaris bank'} 
                     className='w-10 sm:w-20 h-10 sm:h-20'/>
             </div>
-            {/* <div className={`flex justify-center items-center w-16 sm:w-32 text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
+            <div className={`flex justify-center items-center w-16 sm:w-32 text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
                 selectedOption === 'fcmb' ? 'bg-orange-600' : ''
             }`} onClick={() => handleOptionChange('fcmb')}>
                 <img 
                     src={FCMB_Logo} 
                     alt={'fcmb'} 
                     className='w-10 sm:w-20 h-10 sm:h-20'/>
-            </div> */}
+            </div>
             <div className={`flex justify-center items-center w-16 sm:w-32 text-center cursor-pointer py-2 rounded-md text-slate-200 hover:bg-orange-600 transform duration-300 ease-in-out ${
                 selectedOption === 'wallet' ? 'bg-orange-600' : ''
             }`} onClick={() => handleOptionChange('wallet')}>
@@ -245,7 +266,7 @@ const navigate = useNavigate();
             <button
             type="submit"
             disabled={buttonDisabled || loading_01}
-            onClick={!loading && selectedOption === "fcmb" ? fcmbpayloadRequest : !loading && selectedOption === "wallet" ? walletFunction : null}
+            onClick={!loading ? openConfirmationModal : null}
             className={`w-1/2 rounded-md py-1 text-sm font-semibold leading-6 shadow-sm transition duration-300 ease-in-out ${
                 (buttonDisabled || loading_01)
                 ? 'w-1/2 bg-blue-950 opacity-30 text-white cursor-not-allowed '
@@ -265,10 +286,17 @@ const navigate = useNavigate();
             </div>
         </div>
     ) : (
-        selectedOption === "polaris" ? <FlutterWaveButton {...fwConfig}/> : "Authorize Payment"
+        "Authorize Payment"
     )}
             </button>
         </div>
+
+        {/* FlutterWave Button (shown after confirmation for Polaris) */}
+        {showFlutterWaveButton && selectedOption === "polaris" && (
+            <div className="flex flex-col justify-center items-center mt-4">
+                <FlutterWaveButton {...fwConfig} />
+            </div>
+        )}
 
         {/* Modal for loading state */}
         {isModalVisible && (
@@ -283,6 +311,79 @@ const navigate = useNavigate();
                         </div>
                         <div>
                             <span className="font-medium">{modalMessage}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* Confirmation Modal */}
+        {showConfirmationModal && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+                    <div className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900">Confirm Payment Details</h3>
+                            <button
+                                onClick={closeConfirmationModal}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div className="space-y-3 mb-6">
+                            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                                <span className="text-sm font-medium text-gray-600">Amount:</span>
+                                <span className="text-sm font-semibold text-gray-900">₦{parseInt(amount).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                                <span className="text-sm font-medium text-gray-600">Account Type:</span>
+                                <span className="text-sm font-semibold text-gray-900">{account_type}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                                <span className="text-sm font-medium text-gray-600">Meter/Account No:</span>
+                                <span className="text-sm font-semibold text-gray-900">{meter_number || meterNumber}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                                <span className="text-sm font-medium text-gray-600">Customer Name:</span>
+                                <span className="text-sm font-semibold text-gray-900">{customer_name}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                                <span className="text-sm font-medium text-gray-600">Email:</span>
+                                <span className="text-sm font-semibold text-gray-900">{email}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                                <span className="text-sm font-medium text-gray-600">Phone:</span>
+                                <span className="text-sm font-semibold text-gray-900">{phone}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                                <span className="text-sm font-medium text-gray-600">Payment Method:</span>
+                                <span className="text-sm font-semibold text-gray-900 capitalize">{selectedOption}</span>
+                            </div>
+                            {selectedOption === 'wallet' && (
+                                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                                    <span className="text-sm font-medium text-gray-600">Wallet Balance:</span>
+                                    <span className="text-sm font-semibold text-gray-900">₦{parseInt(walletBalance || 0).toLocaleString()}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex space-x-3">
+                            <button
+                                onClick={closeConfirmationModal}
+                                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleConfirmPayment}
+                                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-950 border border-transparent rounded-md hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-900 transition-colors"
+                            >
+                                Confirm Payment
+                            </button>
                         </div>
                     </div>
                 </div>
