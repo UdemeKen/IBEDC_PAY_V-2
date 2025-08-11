@@ -1012,7 +1012,37 @@ function ValidateAccountModal({ account, onClose, onValidated }) {
   const [regionForHub, setRegionForHub] = useState(account.region);
   const [serviceCenters, setServiceCenters] = useState([]);
   const [selectedServiceCenter, setSelectedServiceCenter] = useState('');
+  
+  // New state for editable region and business hub
+  const [allRegions, setAllRegions] = useState([]);
+  const [selectedRegion, setSelectedRegion] = useState(account.region);
+  const [businessHubsForRegion, setBusinessHubsForRegion] = useState([]);
+  const [selectedBusinessHub, setSelectedBusinessHub] = useState(account.business_hub);
+  const [redirecting, setRedirecting] = useState(false);
+  
   const webcamRef = React.useRef(null);
+
+  // Extract regions from business hubs data
+  useEffect(() => {
+    if (allBusinessHubs.length > 0) {
+      const regions = [...new Set(allBusinessHubs.map(hub => 
+        hub.Region ? hub.Region.replace(/region/i, '').trim() : ''
+      ).filter(region => region))];
+      setAllRegions(regions);
+    }
+  }, [allBusinessHubs]);
+
+  // Filter business hubs when region changes
+  useEffect(() => {
+    if (!selectedRegion || allBusinessHubs.length === 0) return;
+    const filteredHubs = allBusinessHubs.filter(hub => 
+      hub.Region && hub.Region.replace(/region/i, '').trim().toLowerCase() === selectedRegion.toLowerCase()
+    );
+    setBusinessHubsForRegion(filteredHubs.map(hub => hub.Business_Hub));
+    // Reset business hub and service center when region changes
+    setSelectedBusinessHub('');
+    setSelectedServiceCenter('');
+  }, [selectedRegion, allBusinessHubs]);
 
   // Fetch all business hubs on mount
   useEffect(() => {
@@ -1029,25 +1059,25 @@ function ValidateAccountModal({ account, onClose, onValidated }) {
 
   // Set region for selected business hub
   useEffect(() => {
-    if (allBusinessHubs.length > 0 && account.business_hub) {
+    if (allBusinessHubs.length > 0 && selectedBusinessHub) {
       const found = allBusinessHubs.find(
-        hub => hub.Business_Hub.trim().toLowerCase() === account.business_hub.trim().toLowerCase()
+        hub => hub.Business_Hub.trim().toLowerCase() === selectedBusinessHub.trim().toLowerCase()
       );
       if (found) {
         // Remove 'REGION' (case-insensitive) and trim whitespace
-        const cleanRegion = (found.Region || account.region || '').replace(/region/i, '').trim();
+        const cleanRegion = (found.Region || selectedRegion || '').replace(/region/i, '').trim();
         setRegionForHub(cleanRegion);
       }
     }
-  }, [allBusinessHubs, account.business_hub, account.region]);
+  }, [allBusinessHubs, selectedBusinessHub, selectedRegion]);
 
   // Fetch DSS and Tariff only after regionForHub is set
   useEffect(() => {
-    if (!regionForHub || !account.business_hub || !account.service_center) return;
+    if (!regionForHub || !selectedBusinessHub || !selectedServiceCenter) return;
     // Fetch DSS
     const fetchDss = async () => {
       try {
-        const url = `/V4IBEDC_new_account_setup_sync/initiate/get_dss?region=${encodeURIComponent(regionForHub)}&hub=${encodeURIComponent(account.business_hub)}&service_center=${encodeURIComponent(account.service_center)}`;
+        const url = `/V4IBEDC_new_account_setup_sync/initiate/get_dss?region=${encodeURIComponent(regionForHub)}&hub=${encodeURIComponent(selectedBusinessHub)}&service_center=${encodeURIComponent(selectedServiceCenter)}`;
         const res = await axiosClient.get(url);
         setDssList(res.data.payload.dss || []);
       } catch (e) {
@@ -1065,22 +1095,24 @@ function ValidateAccountModal({ account, onClose, onValidated }) {
     };
     fetchDss();
     fetchTariff();
-  }, [regionForHub, account.business_hub, account.service_center]);
+  }, [regionForHub, selectedBusinessHub, selectedServiceCenter]);
 
   // Fetch service centers when business hub changes
   useEffect(() => {
-    if (!account.business_hub) return;
+    if (!selectedBusinessHub) return;
     const fetchServiceCenters = async () => {
       try {
-        const url = `/V4IBEDC_new_account_setup_sync/initiate/service_centers/${encodeURIComponent(account.business_hub)}`;
+        const url = `/V4IBEDC_new_account_setup_sync/initiate/service_centers/${encodeURIComponent(selectedBusinessHub)}`;
         const res = await axiosClient.get(url);
         setServiceCenters(res.data.payload.service_center || []);
+        // Reset service center when business hub changes
+        setSelectedServiceCenter('');
       } catch (e) {
         setServiceCenters([]);
       }
     };
     fetchServiceCenters();
-  }, [account.business_hub, regionForHub]);
+  }, [selectedBusinessHub, regionForHub]);
 
   // Handler for capturing photo and location
   const handleCapturePhoto = () => {
@@ -1116,8 +1148,8 @@ function ValidateAccountModal({ account, onClose, onValidated }) {
     }
     formData.append('latitude', latitude);
     formData.append('longitude', longitude);
-    formData.append('region', regionForHub);
-    formData.append('business_hub', account.business_hub);
+    formData.append('region', selectedRegion);
+    formData.append('business_hub', selectedBusinessHub);
     formData.append('service_center', selectedServiceCenter);
     formData.append('dss', selectedDss);
     formData.append('id', account.id);
@@ -1136,6 +1168,29 @@ function ValidateAccountModal({ account, onClose, onValidated }) {
     }
   };
 
+  const handleRedirect = async () => {
+    setRedirecting(true);
+    try {
+      const payload = {
+        tracking_id: account.tracking_id,
+        region: selectedRegion,
+        business_hub: selectedBusinessHub,
+        service_center: selectedServiceCenter,
+        id: String(account.id),
+        email: account.account.email
+      };
+      
+      await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/change_account_location', payload);
+      toast.success('Account redirected successfully!');
+      if (typeof onValidated === 'function') onValidated();
+      if (typeof onClose === 'function') onClose();
+    } catch (e) {
+      toast.error('Redirect failed: ' + (e.response?.data?.message || e.message));
+    } finally {
+      setRedirecting(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded shadow-lg w-full max-w-2xl">
@@ -1144,8 +1199,35 @@ function ValidateAccountModal({ account, onClose, onValidated }) {
           {/* Column 1 */}
           <div>
             <div className="mb-2">Tracking ID: <span className="font-mono">{account.tracking_id}</span></div>
-            <div className="mb-2">Region: {regionForHub}</div>
-            <div className="mb-2">Business Hub: {account.business_hub}</div>
+            <div className="mb-2">
+              <label>Region:</label>
+              <select
+                value={selectedRegion}
+                onChange={e => setSelectedRegion(e.target.value)}
+                className="block w-full border rounded p-1"
+                required
+              >
+                <option value="">Select Region</option>
+                {allRegions.map(region => (
+                  <option key={region} value={region}>{region}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-2">
+              <label>Business Hub:</label>
+              <select
+                value={selectedBusinessHub}
+                onChange={e => setSelectedBusinessHub(e.target.value)}
+                className="block w-full border rounded p-1"
+                required
+                disabled={businessHubsForRegion.length === 0}
+              >
+                <option value="">Select Business Hub</option>
+                {businessHubsForRegion.map(hub => (
+                  <option key={hub} value={hub}>{hub}</option>
+                ))}
+              </select>
+            </div>
             <div className="mb-2">
               <label>Service Center:</label>
               <select
@@ -1240,10 +1322,23 @@ function ValidateAccountModal({ account, onClose, onValidated }) {
             <div className="mb-2">Longitude: {longitude}</div>
           </div>
         </div>
+        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+          <p className="text-sm text-blue-800">
+            <strong>Note:</strong> Use the <strong>Redirect</strong> button if the business hub or service center doesn't match your jurisdiction. 
+            This will redirect the account to the correct DTM for validation.
+          </p>
+        </div>
         <div className="flex justify-end gap-2 mt-4">
           <button
+            onClick={handleRedirect}
+            disabled={redirecting || !selectedRegion || !selectedBusinessHub || !selectedServiceCenter}
+            className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
+          >
+            {redirecting ? 'Redirecting...' : 'Redirect'}
+          </button>
+          <button
             onClick={handleSubmit}
-            disabled={submitting || !picture || !latitude || !longitude || !selectedDss || !selectedTariff || !selectedServiceCenter}
+            disabled={submitting || !picture || !latitude || !longitude || !selectedDss || !selectedTariff || !selectedServiceCenter || !selectedRegion || !selectedBusinessHub}
             className="bg-green-500 text-white px-4 py-2 rounded"
           >
             {submitting ? 'Submitting...' : 'Submit'}

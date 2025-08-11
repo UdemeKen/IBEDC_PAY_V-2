@@ -33,6 +33,7 @@ import ConnectionDetailsPage from "./views/electricitySupplyForm/ConnectionDetai
 import FinalFormPage from "./views/electricitySupplyForm/FinalFormPage";
 import LecanUploadPage from "./views/electricitySupplyForm/LecanUploadPage";
 import DTEValidation from "./views/auth/loginTypes/DTEValidation";
+import NewAccount from "./views/auth/NewAccount";
 
 const router = createBrowserRouter([
     {
@@ -214,6 +215,11 @@ const router = createBrowserRouter([
     {
         path: "/dtevalidation",
         element: <ErrorBoundary><DTEValidation /></ErrorBoundary>,
+        errorElement: <ErrorPage />
+    },
+    {
+        path: "/newaccount",
+        element: <ErrorBoundary><NewAccount /></ErrorBoundary>,
         errorElement: <ErrorPage />
     }
 ]);

@@ -274,7 +274,7 @@ export default function ElectricitySupplyForm() {
                 className="w-full sm:w-auto px-4 sm:px-6 py-2 text-sm sm:text-base bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 disabled={loading}
               >
-                {loading ? 'Submitting...' : 'Submit'}
+                {loading ? 'Saving...' : 'Save and Continue'}
               </button>
               <button
                 type="button"

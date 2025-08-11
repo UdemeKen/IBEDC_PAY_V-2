@@ -5,19 +5,13 @@ import { AiOutlineArrowRight, AiOutlineArrowLeft } from 'react-icons/ai';
 import { useStateContext } from '../context/ContextProvider';
 import GoogleStore from '../assets/images/googleStore.png';
 import AppleStore from '../assets/images/appleStore.png';
-import axiosClient from '../axios';
-import { toast } from 'react-toastify';
 
 export default function GuestLayout() {
 
   const location = useLocation();
   const { userToken } = useStateContext();
   const [ currentSlide, setCurrentSlide ] = useState(0);
-  const [showTrackingModal, setShowTrackingModal] = useState(false);
-  const [trackingIdInput, setTrackingIdInput] = useState('');
-  const [modalLoading, setModalLoading] = useState(false);
-  const [showWarningModal, setShowWarningModal] = useState(false);
-  const [showChecklistModal, setShowChecklistModal] = useState(false);
+  // New Account flow moved to dedicated page `/newaccount`
   const navigate = useNavigate();
 
   const slideLength = slideData.length;
@@ -55,99 +49,7 @@ export default function GuestLayout() {
     return <Navigate to="/default/customerdashboard" />;
   }
 
-  const handleNewCustomerClick = (e) => {
-    e.preventDefault();
-    setShowTrackingModal(true);
-  };
-
-  const handleContinueWithTrackingId = async () => {
-    if (trackingIdInput.trim()) {
-      setModalLoading(true);
-      try {
-        const response = await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/track-application', { tracking_id: trackingIdInput.trim() });
-        const data = response.data;
-        if (data.success && data.payload && data.payload.customer) {
-          setShowTrackingModal(false);
-          setModalLoading(false);
-          const customer = data.payload.customer;
-
-          // Store all relevant data in localStorage for later use
-          localStorage.setItem('TRACKING_ID', customer.tracking_id);
-          if (customer.no_of_account_apply_for) {
-            localStorage.setItem('no_of_account_apply_for', customer.no_of_account_apply_for);
-          }
-          if (customer.continuation?.latitude) {
-            localStorage.setItem('LATITUDE', customer.continuation.latitude);
-            localStorage.setItem('LONGITUDE', customer.continuation.longitude);
-          }
-
-          // Check if all uploaded pictures have lecan links
-          const hasMissingLecan = customer.uploaded_pictures?.some(picture => !picture.lecan_link);
-          if (hasMissingLecan) {
-            const numBuildings = customer.no_of_account_apply_for
-              ? Number(customer.no_of_account_apply_for)
-              : (customer.uploaded_pictures && customer.uploaded_pictures.length)
-                ? customer.uploaded_pictures.length
-                : 1;
-            console.log('Navigating to /lecanUpload with:', {
-              trackingId: String(customer.tracking_id),
-              numBuildings,
-              uploadedBuildings: customer.uploaded_pictures || [],
-              buildingIds: customer.uploaded_pictures ? customer.uploaded_pictures.map(pic => pic.id) : []
-            });
-            navigate('/lecanUpload', {
-              state: {
-                trackingId: String(customer.tracking_id),
-                numBuildings,
-                uploadedBuildings: customer.uploaded_pictures || [],
-                buildingIds: customer.uploaded_pictures ? customer.uploaded_pictures.map(pic => pic.id) : []
-              }
-            });
-            return;
-          }
-
-          // Check if all uploaded pictures have account numbers
-          const hasPendingApplications = customer.uploaded_pictures?.some(picture => !picture.account_no);
-          if (hasPendingApplications) {
-            setShowWarningModal(true);
-            setModalLoading(false);
-            return;
-          }
-
-          // Navigation logic based on what is filled
-          if (!customer.continuation) {
-            // Only main form filled, go to continuation form
-            navigate('/continuationForm', { state: { prefill: customer } });
-          } else if (!customer.uploadinformation) {
-            // Main + continuation filled, go to document upload
-            navigate('/finalForm', { state: { prefill: customer.continuation } });
-          } else if (!customer.uploaded_pictures || customer.uploaded_pictures.length === 0) {
-            // Main + continuation + document upload filled, go to final upload
-            navigate('/finalForm', { state: { prefill: customer.uploaded_pictures } });
-          } else {
-            // All steps complete, show summary or success
-            navigate('/finalForm', { state: { prefill: customer.uploaded_pictures } });
-          }
-        } else {
-          toast.error(data.message || 'Invalid tracking ID.');
-          setModalLoading(false);
-        }
-      } catch (error) {
-        toast.error(error.response?.data?.message || 'Network error. Please try again.');
-        setModalLoading(false);
-      }
-    }
-  };
-
-  const handleCloseWarningModal = () => {
-    setShowWarningModal(false);
-    setShowTrackingModal(false);
-  };
-
-  const handleStartNew = () => {
-    setShowTrackingModal(false);
-    setShowChecklistModal(true);
-  };
+  // All logic for new account creation moved to NewAccount page
 
   return (
     <section className='bg-white border border-black h-screen sm:h-full'>
@@ -216,91 +118,17 @@ export default function GuestLayout() {
                     />
                 </Link>
             </div> 
-            <div className='flex flex-row justify-center items-center space-x-10'>
-                <button
+            {/* <div className='flex flex-row justify-center items-center space-x-10'>
+                <Link
                     className='bg-blue-950 opacity-75 hover:bg-orange-500 duration-300 ease-in-out text-white font-bold py-2 px-4 rounded'
-                    onClick={handleNewCustomerClick}
+                    to={'/newaccount'}
                 >
                     New Customer Account Creation
-                </button>
-            </div>
+                </Link>
+            </div> */}
         </div>
       </div>
-      {showTrackingModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-8 rounded shadow-lg max-w-md w-full flex flex-col items-center">
-            <h2 className="text-xl font-bold mb-4 text-center text-blue-700">Continue Application</h2>
-            <p className="mb-2 text-center">If you have a Tracking ID, enter it below to continue your application. Otherwise, start a new application.</p>
-            <input
-              type="text"
-              placeholder="Enter Tracking ID"
-              value={trackingIdInput}
-              onChange={e => setTrackingIdInput(e.target.value)}
-              className="mb-4 border rounded px-2 py-1 w-full text-center"
-            />
-            <div className="flex flex-row gap-4 w-full justify-center">
-              <button
-                onClick={handleContinueWithTrackingId}
-                className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                disabled={!trackingIdInput.trim() || modalLoading}
-              >
-                {modalLoading ? 'Loading...' : 'Continue'}
-              </button>
-              <button
-                onClick={handleStartNew}
-                className="px-6 py-2 bg-gray-400 text-white font-semibold rounded-lg shadow hover:bg-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                disabled={modalLoading}
-              >
-                Start New
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showWarningModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-8 rounded shadow-lg max-w-md w-full flex flex-col items-center">
-            <h2 className="text-xl font-bold mb-4 text-center text-yellow-600">Application Status Pending</h2>
-            <div className="text-center mb-6">
-              <p className="mb-2">Your previous application is currently being processed.</p>
-              <p className="mb-2">Please check back after 10 days to continue with your application.</p>
-              <p className="text-sm text-gray-600">This is to ensure all your previous applications are properly processed.</p>
-            </div>
-            <button
-              onClick={handleCloseWarningModal}
-              className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showChecklistModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-8 rounded shadow-lg max-w-lg w-full flex flex-col items-center">
-            <h2 className="text-xl font-bold mb-4 text-center text-blue-700">Checklist: What You Need to Start</h2>
-            <p className="mb-4 text-center text-gray-700">Dear customer, to fill this form successfully, please ensure you have the following information and documents ready before starting your application:</p>
-            <ul className="list-disc list-inside text-left mb-6 text-gray-800 text-sm sm:text-base">
-              <li>Valid phone number and email address</li>
-              <li>National Identification Number (NIN)</li>
-              <li>Landlord's full name, phone number, and email</li>
-              <li>Landlord's date of birth</li>
-              <li>Landlord's means of identification (e.g., NIN, Driver's License, International Passport)</li>
-            </ul>
-            <button
-              onClick={() => {
-                setShowChecklistModal(false);
-                navigate('/electricitySupplyForm');
-              }}
-              className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full mt-2"
-            >
-              Proceed to Application
-            </button>
-          </div>
-        </div>
-      )}
+      {/* New account flows handled on /newaccount */}
     </section>
   )
 }

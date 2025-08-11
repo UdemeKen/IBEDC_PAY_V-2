@@ -14,7 +14,6 @@ const landlordIdOptions = [
 const billMethods = [
   'Bill Sent By Email',
   'Bill Sent By SMS',
-  'Bills Delivery to the House',
 ];
 
 export default function ContinuationForm() {
@@ -32,11 +31,11 @@ export default function ContinuationForm() {
     previous_customer_address: '',
     previous_account_number: '',
     previous_meter_number: '',
-    landlord_personal_identification: '',
+    landlord_personal_identification: 'NIN',
     landloard_picture: null,
     prefered_method_of_recieving_bill: '',
     comments: 'Making the user go viral',
-    no_of_account_apply_for: '0',
+    no_of_account_apply_for: '1',
     latitude: '',
     longitude: '',
   });
@@ -421,7 +420,7 @@ export default function ContinuationForm() {
                     className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                   />
                 </div>
-                <div>
+                {/* <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Landlord Personal Identification:</label>
                   <select
                     name="landlord_personal_identification"
@@ -434,7 +433,7 @@ export default function ContinuationForm() {
                       <option key={option} value={option}>{option}</option>
                     ))}
                   </select>
-                </div>
+                </div> */}
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Landlord Picture:</label>
                   <input
@@ -472,6 +471,7 @@ export default function ContinuationForm() {
                     name="name_address_of_previous_employer"
                     value={form.name_address_of_previous_employer}
                     onChange={handleChange}
+                    placeholder="Enter name/address of previous employer (optional)"
                     className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                   />
                 </div>
@@ -483,6 +483,7 @@ export default function ContinuationForm() {
                     name="previous_customer_address"
                     value={form.previous_customer_address}
                     onChange={handleChange}
+                    placeholder="Enter previous customer address (optional)"
                     className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                   />
                 </div>
@@ -494,6 +495,7 @@ export default function ContinuationForm() {
                     name="previous_account_number"
                     value={form.previous_account_number}
                     onChange={handleChange}
+                    placeholder="Enter previous account number (optional)"
                     className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                   />
                 </div>
@@ -505,6 +507,7 @@ export default function ContinuationForm() {
                     name="previous_meter_number"
                     value={form.previous_meter_number}
                     onChange={handleChange}
+                    placeholder="Enter previous meter number (optional)"
                     className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                   />
                 </div>
@@ -539,7 +542,7 @@ export default function ContinuationForm() {
                 className="w-full sm:w-auto px-4 sm:px-6 py-2 text-sm sm:text-base bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 disabled={loading}
               >
-                {loading ? 'Submitting...' : 'Submit'}
+                {loading ? 'Saving...' : 'Save and Continue'}
               </button>
               <button
                 type="button"
@@ -547,7 +550,7 @@ export default function ContinuationForm() {
                 className="w-full sm:w-auto px-4 sm:px-6 py-2 text-sm sm:text-base bg-gray-400 text-white font-semibold rounded-lg shadow hover:bg-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
                 disabled={loadingExit}
               >
-                {loadingExit ? 'Saving...' : 'Save and Exit'}
+                {loadingExit ? 'Saving...' : 'Save and Exist'}
               </button>
             </div>
           </div>
