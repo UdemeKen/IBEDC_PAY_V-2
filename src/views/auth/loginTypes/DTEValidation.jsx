@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 const isPending = (acc) => acc.picture === "0" || acc.latitude === "0" || acc.longitude === "0";
 const isValidated = (acc) => acc.picture !== "0" && acc.latitude !== "0" && acc.longitude !== "0";
 
-function ValidateAccountModal({ account, onClose, onValidated }) {
+function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }) {
   const [picture, setPicture] = useState(null);
   const [latitude, setLatitude] = useState(account.latitude);
   const [longitude, setLongitude] = useState(account.longitude);
@@ -16,8 +16,7 @@ function ValidateAccountModal({ account, onClose, onValidated }) {
   const [dssList, setDssList] = useState([]);
   const [selectedDss, setSelectedDss] = useState('');
   const [tariffList, setTariffList] = useState([]);
-  const [selectedTariff, setSelectedTariff] = useState('');
-  const [allBusinessHubs, setAllBusinessHubs] = useState([]);
+  const [selectedTariff] = useState('');
   const [regionForHub, setRegionForHub] = useState(account.region);
   const [serviceCenters, setServiceCenters] = useState([]);
   const [selectedServiceCenter, setSelectedServiceCenter] = useState('');
@@ -58,18 +57,6 @@ function ValidateAccountModal({ account, onClose, onValidated }) {
     setSelectedBusinessHub('');
     setSelectedServiceCenter('');
   }, [selectedRegion, allBusinessHubs]);
-
-  useEffect(() => {
-    const fetchAllBusinessHubs = async () => {
-      try {
-        const res = await axiosClient.get('/V4IBEDC_new_account_setup_sync/initiate/all_business_hub');
-        setAllBusinessHubs(res.data.payload.business_hubs || []);
-      } catch (e) {
-        setAllBusinessHubs([]);
-      }
-    };
-    fetchAllBusinessHubs();
-  }, []);
 
   useEffect(() => {
     if (allBusinessHubs.length > 0 && selectedBusinessHub) {
@@ -160,7 +147,7 @@ function ValidateAccountModal({ account, onClose, onValidated }) {
     formData.append('code', code);
     formData.append('email', account.account.email);
     try {
-      await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/process_account', formData);
+      await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/process_account_dte', formData);
       toast.success('Account validated!');
       if (typeof onValidated === 'function') onValidated();
       if (typeof onClose === 'function') onClose();
@@ -331,6 +318,22 @@ export default function DTEValidation() {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [viewAccount, setViewAccount] = useState(null);
+  
+  // Add allBusinessHubs state for region derivation
+  const [allBusinessHubs, setAllBusinessHubs] = useState([]);
+
+  // Fetch all business hubs for region derivation
+  useEffect(() => {
+    const fetchAllBusinessHubs = async () => {
+      try {
+        const res = await axiosClient.get('/V4IBEDC_new_account_setup_sync/initiate/all_business_hub');
+        setAllBusinessHubs(res.data.payload.business_hubs || []);
+      } catch (e) {
+        setAllBusinessHubs([]);
+      }
+    };
+    fetchAllBusinessHubs();
+  }, []);
 
   if (!Array.isArray(accounts) || accounts.length === 0) {
     return (
@@ -398,6 +401,7 @@ export default function DTEValidation() {
               setValidateModalOpen(false);
               // Optionally refresh or update the accounts list here
             }}
+            allBusinessHubs={allBusinessHubs}
           />
         )}
         {viewModalOpen && viewAccount && (
@@ -407,7 +411,22 @@ export default function DTEValidation() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <div className="mb-2"><strong>Tracking ID:</strong> {viewAccount.tracking_id}</div>
-                  <div className="mb-2"><strong>Region:</strong> {viewAccount.region}</div>
+                  <div className="mb-2"><strong>Region:</strong> {(() => {
+                    // Try to get region from viewAccount.region first, if null, derive from business hub
+                    if (viewAccount.region) {
+                      return viewAccount.region;
+                    }
+                    // Find the business hub in allBusinessHubs to get its region
+                    if (allBusinessHubs.length > 0 && viewAccount.business_hub) {
+                      const found = allBusinessHubs.find(
+                        hub => hub.Business_Hub.trim().toLowerCase() === viewAccount.business_hub.trim().toLowerCase()
+                      );
+                      if (found && found.Region) {
+                        return found.Region.replace(/region/i, '').trim();
+                      }
+                    }
+                    return 'Not specified';
+                  })()}</div>
                   <div className="mb-2"><strong>State:</strong> {viewAccount.state}</div>
                   <div className="mb-2"><strong>Business Hub:</strong> {viewAccount.business_hub}</div>
                   <div className="mb-2"><strong>Service Center:</strong> {viewAccount.service_center}</div>

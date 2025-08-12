@@ -46,6 +46,8 @@ export default function ContinuationForm() {
   const [modalTrackingId, setModalTrackingId] = useState('');
   const [ninLoading, setNinLoading] = useState(false);
   const [ninValidated, setNinValidated] = useState(false);
+  const [ninServiceDown, setNinServiceDown] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
   const navigate = useNavigate();
 
   // Set tracking_id from location.state if available
@@ -85,14 +87,29 @@ export default function ContinuationForm() {
 
   // Helper: Validate required fields (customize as needed)
   const requiredFields = [
-    // Add required fields here as per your business logic
-    // 'tracking_id',
-    // 'nin_number',
-    // ...
+    'tracking_id',
+    'nin_number',
+    // Add other required fields here as per your business logic
   ];
+  
+  // Additional validation for manual mode
+  const getManualModeRequiredFields = () => {
+    if (manualMode) {
+      return [
+        'landlord_surname',
+        'landlord_othernames', 
+        'landlord_dob',
+        'landlord_telephone',
+        'landlord_email'
+      ];
+    }
+    return [];
+  };
+  
   const validateForm = () => {
-    const missing = requiredFields.filter(field => !form[field] || form[field].toString().trim() === '');
-    return missing;
+    const basicRequired = requiredFields.filter(field => !form[field] || form[field].toString().trim() === '');
+    const manualRequired = getManualModeRequiredFields().filter(field => !form[field] || form[field].toString().trim() === '');
+    return [...basicRequired, ...manualRequired];
   };
 
   // API submit logic
@@ -285,6 +302,53 @@ export default function ContinuationForm() {
             {/* Landlord Information Section */}
             <div className="mb-6">
               <h2 className="text-base sm:text-lg font-bold mb-4">Landlord Information</h2>
+              
+              {/* NIN Service Status Toggle */}
+              <div className={`mb-4 p-3 border rounded ${
+                ninServiceDown ? 'bg-red-50 border-red-200' : 'bg-yellow-50 border-yellow-200'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm ${
+                      ninServiceDown ? 'text-red-800' : 'text-yellow-800'
+                    }`}>
+                      {ninServiceDown ? 'NIN Service is currently down' : 'NIN Service is available'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNinServiceDown(!ninServiceDown);
+                        setManualMode(!ninServiceDown);
+                        if (!ninServiceDown) {
+                          // Clear NIN validation when switching to manual mode
+                          setNinValidated(false);
+                          setForm(prev => ({
+                            ...prev,
+                            landlord_surname: '',
+                            landlord_othernames: '',
+                            landlord_dob: '',
+                            landlord_telephone: '',
+                            landlord_email: ''
+                          }));
+                        }
+                      }}
+                      className={`px-3 py-1 text-xs rounded font-semibold ${
+                        ninServiceDown 
+                          ? 'bg-green-500 text-white hover:bg-green-600' 
+                          : 'bg-red-500 text-white hover:bg-red-600'
+                      }`}
+                    >
+                      {ninServiceDown ? 'Switch to NIN Mode' : 'Switch to Manual Mode'}
+                    </button>
+                  </div>
+                </div>
+                {ninServiceDown && (
+                  <p className="text-xs text-red-700 mt-2">
+                    You can now manually fill in the landlord information below. All fields marked with * are required.
+                  </p>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">NIN Number:</label>
@@ -295,64 +359,72 @@ export default function ContinuationForm() {
                       value={form.nin_number}
                       onChange={handleChange}
                       className="w-full border rounded px-2 py-1 text-sm sm:text-base"
-                      disabled={ninLoading || ninValidated}
+                      disabled={ninLoading || (ninValidated && !manualMode)}
                     />
-                    <button
-                      type="button"
-                      className={`px-2 py-1 text-xs rounded ${ninValidated ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'} ${ninLoading ? 'opacity-50' : ''}`}
-                      onClick={async () => {
-                        if (!form.nin_number) {
-                          toast.error('Please enter a NIN number');
-                          return;
-                        }
-                        setNinLoading(true);
-                        setNinValidated(false);
-                        try {
-                          const res = await axiosClient.post(`/V4IBEDC_new_account_setup_sync/initiate/nin-validation?nin=${encodeURIComponent(form.nin_number)}`);
-                          if (res.data.success && res.data.payload && res.data.payload.customer) {
-                            const c = res.data.payload.customer;
-                            // Convert birthdate from DD-MM-YYYY to YYYY-MM-DD
-                            let dob = '';
-                            if (c.birthdate && c.birthdate.includes('-')) {
-                              const [d, m, y] = c.birthdate.split('-');
-                              dob = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-                            }
-                            setForm(prev => ({
-                              ...prev,
-                              nin_number: c.nin || prev.nin_number,
-                              landlord_surname: c.surname || prev.landlord_surname,
-                              landlord_othernames: [c.firstname, c.middlename].filter(Boolean).join(' '),
-                              landlord_dob: dob || prev.landlord_dob,
-                              landlord_telephone: c.telephoneno || prev.landlord_telephone,
-                              landlord_email: c.email || prev.landlord_email,
-                            }));
-                            setNinValidated(true);
-                            toast.success('NIN validated and fields prefilled!');
-                          } else {
-                            toast.error(res.data.message || 'NIN validation failed');
+                    {!manualMode && (
+                      <button
+                        type="button"
+                        className={`px-2 py-1 text-xs rounded ${ninValidated ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'} ${ninLoading ? 'opacity-50' : ''}`}
+                        onClick={async () => {
+                          if (!form.nin_number) {
+                            toast.error('Please enter a NIN number');
+                            return;
                           }
-                        } catch (e) {
-                          toast.error('NIN validation failed');
-                        } finally {
-                          setNinLoading(false);
-                        }
-                      }}
-                      disabled={ninLoading || !form.nin_number || ninValidated}
-                    >
-                      {ninLoading ? 'Validating...' : ninValidated ? 'Validated' : 'Validate NIN'}
-                    </button>
+                          setNinLoading(true);
+                          setNinValidated(false);
+                          try {
+                            const res = await axiosClient.post(`/V4IBEDC_new_account_setup_sync/initiate/nin-validation?nin=${encodeURIComponent(form.nin_number)}`);
+                            if (res.data.success && res.data.payload && res.data.payload.customer) {
+                              const c = res.data.payload.customer;
+                              // Convert birthdate from DD-MM-YYYY to YYYY-MM-DD
+                              let dob = '';
+                              if (c.birthdate && c.birthdate.includes('-')) {
+                                const [d, m, y] = c.birthdate.split('-');
+                                dob = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                              }
+                              setForm(prev => ({
+                                ...prev,
+                                nin_number: c.nin || prev.nin_number,
+                                landlord_surname: c.surname || prev.landlord_surname,
+                                landlord_othernames: [c.firstname, c.middlename].filter(Boolean).join(' '),
+                                landlord_dob: dob || prev.landlord_dob,
+                                landlord_telephone: c.telephoneno || prev.landlord_telephone,
+                                landlord_email: c.email || prev.landlord_email,
+                              }));
+                              setNinValidated(true);
+                              toast.success('NIN validated and fields prefilled!');
+                            } else {
+                              toast.error(res.data.message || 'NIN validation failed');
+                            }
+                          } catch (e) {
+                            toast.error('NIN validation failed');
+                            setNinServiceDown(true);
+                            setManualMode(true);
+                          } finally {
+                            setNinLoading(false);
+                          }
+                        }}
+                        disabled={ninLoading || !form.nin_number || ninValidated}
+                      >
+                        {ninLoading ? 'Validating...' : ninValidated ? 'Validated' : 'Validate NIN'}
+                      </button>
+                    )}
                   </div>
                 </div>
-                {/* Only show landlord fields after NIN is validated */}
-                {ninValidated && <>
+                {/* Show landlord fields after NIN is validated OR when in manual mode */}
+                {(ninValidated || manualMode) && <>
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Landlord Surname:</label>
                   <input
                     type="text"
                     name="landlord_surname"
                     value={form.landlord_surname}
-                    readOnly
-                    className="w-full border rounded px-2 py-1 text-sm sm:text-base bg-gray-100"
+                    onChange={handleChange}
+                    readOnly={ninValidated && !manualMode}
+                    className={`w-full border rounded px-2 py-1 text-sm sm:text-base ${
+                      ninValidated && !manualMode ? 'bg-gray-100' : ''
+                    }`}
+                    placeholder={manualMode ? "Enter landlord surname" : ""}
                   />
                 </div>
                 <div>
@@ -361,8 +433,12 @@ export default function ContinuationForm() {
                     type="text"
                     name="landlord_othernames"
                     value={form.landlord_othernames}
-                    readOnly
-                    className="w-full border rounded px-2 py-1 text-sm sm:text-base bg-gray-100"
+                    onChange={handleChange}
+                    readOnly={ninValidated && !manualMode}
+                    className={`w-full border rounded px-2 py-1 text-sm sm:text-base ${
+                      ninValidated && !manualMode ? 'bg-gray-100' : ''
+                    }`}
+                    placeholder={manualMode ? "Enter landlord other names" : ""}
                   />
                 </div>
                 <div>
@@ -371,8 +447,11 @@ export default function ContinuationForm() {
                     type="date"
                     name="landlord_dob"
                     value={form.landlord_dob}
-                    readOnly
-                    className="w-full border rounded px-2 py-1 text-sm sm:text-base bg-gray-100"
+                    onChange={handleChange}
+                    readOnly={ninValidated && !manualMode}
+                    className={`w-full border rounded px-2 py-1 text-sm sm:text-base ${
+                      ninValidated && !manualMode ? 'bg-gray-100' : ''
+                    }`}
                     max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
                   />
                 </div>
@@ -382,8 +461,12 @@ export default function ContinuationForm() {
                     type="tel"
                     name="landlord_telephone"
                     value={form.landlord_telephone}
-                    readOnly
-                    className="w-full border rounded px-2 py-1 text-sm sm:text-base bg-gray-100"
+                    onChange={handleChange}
+                    readOnly={ninValidated && !manualMode}
+                    className={`w-full border rounded px-2 py-1 text-sm sm:text-base ${
+                      ninValidated && !manualMode ? 'bg-gray-100' : ''
+                    }`}
+                    placeholder={manualMode ? "Enter landlord phone number" : ""}
                   />
                 </div>
                 <div>
@@ -403,13 +486,17 @@ export default function ContinuationForm() {
                     type="email"
                     name="landlord_email"
                     value={form.landlord_email}
-                    readOnly
-                    className="w-full border rounded px-2 py-1 text-sm sm:text-base bg-gray-100"
+                    onChange={handleChange}
+                    readOnly={ninValidated && !manualMode}
+                    className={`w-full border rounded px-2 py-1 text-sm sm:text-base ${
+                      ninValidated && !manualMode ? 'bg-gray-100' : ''
+                    }`}
+                    placeholder={manualMode ? "Enter landlord email" : ""}
                   />
                 </div>
                 </>}
                 {/* End landlord fields */}
-                {ninValidated && <>
+                {(ninValidated || manualMode) && <>
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Number of Accounts to Apply For:</label>
                   <input

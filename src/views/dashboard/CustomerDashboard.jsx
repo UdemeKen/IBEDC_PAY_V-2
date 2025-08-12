@@ -93,6 +93,9 @@ export default function CustomerDashboard() {
 
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [viewAccount, setViewAccount] = useState(null);
+  
+  // Add allBusinessHubs state for both validation modal and view modal
+  const [allBusinessHubs, setAllBusinessHubs] = useState([]);
 
   useEffect(() => {
     const isValid = METER_ACCT_NUMBER_REGEX.test(user);
@@ -314,6 +317,19 @@ export default function CustomerDashboard() {
 
   // console.log(  displayAccountType  );
 
+  // Fetch all business hubs for region derivation
+  useEffect(() => {
+    const fetchAllBusinessHubs = async () => {
+      try {
+        const res = await axiosClient.get('/V4IBEDC_new_account_setup_sync/initiate/all_business_hub');
+        setAllBusinessHubs(res.data.payload.business_hubs || []);
+      } catch (e) {
+        setAllBusinessHubs([]);
+      }
+    };
+    fetchAllBusinessHubs();
+  }, []);
+
   useEffect(() => {
     if (authority === 'dtm') {
       const fetchPendingAccounts = async () => {
@@ -515,6 +531,7 @@ export default function CustomerDashboard() {
             onValidated={() => {
               setDtmPendingAccounts((prev) => prev.filter(acc => acc.id !== selectedAccount.id));
             }}
+            allBusinessHubs={allBusinessHubs}
           />
         )}
         {viewModalOpen && viewAccount && (
@@ -524,7 +541,22 @@ export default function CustomerDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <div className="mb-2"><strong>Tracking ID:</strong> {viewAccount.tracking_id}</div>
-                  <div className="mb-2"><strong>Region:</strong> {viewAccount.region}</div>
+                  <div className="mb-2"><strong>Region:</strong> {(() => {
+                    // Try to get region from viewAccount.region first, if null, derive from business hub
+                    if (viewAccount.region) {
+                      return viewAccount.region;
+                    }
+                    // Find the business hub in allBusinessHubs to get its region
+                    if (allBusinessHubs.length > 0 && viewAccount.business_hub) {
+                      const found = allBusinessHubs.find(
+                        hub => hub.Business_Hub.trim().toLowerCase() === viewAccount.business_hub.trim().toLowerCase()
+                      );
+                      if (found && found.Region) {
+                        return found.Region.replace(/region/i, '').trim();
+                      }
+                    }
+                    return 'Not specified';
+                  })()}</div>
                   <div className="mb-2"><strong>State:</strong> {viewAccount.state}</div>
                   <div className="mb-2"><strong>Business Hub:</strong> {viewAccount.business_hub}</div>
                   <div className="mb-2"><strong>Service Center:</strong> {viewAccount.service_center}</div>
@@ -998,7 +1030,7 @@ export default function CustomerDashboard() {
 const isPending = (acc) => acc.picture === "0" || acc.latitude === "0" || acc.longitude === "0";
 const isValidated = (acc) => acc.picture !== "0" && acc.latitude !== "0" && acc.longitude !== "0";
 
-function ValidateAccountModal({ account, onClose, onValidated }) {
+function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }) {
   const [picture, setPicture] = useState(null);
   const [latitude, setLatitude] = useState(account.latitude);
   const [longitude, setLongitude] = useState(account.longitude);
@@ -1008,7 +1040,6 @@ function ValidateAccountModal({ account, onClose, onValidated }) {
   const [selectedDss, setSelectedDss] = useState('');
   const [tariffList, setTariffList] = useState([]);
   const [selectedTariff, setSelectedTariff] = useState('');
-  const [allBusinessHubs, setAllBusinessHubs] = useState([]);
   const [regionForHub, setRegionForHub] = useState(account.region);
   const [serviceCenters, setServiceCenters] = useState([]);
   const [selectedServiceCenter, setSelectedServiceCenter] = useState('');
@@ -1044,18 +1075,7 @@ function ValidateAccountModal({ account, onClose, onValidated }) {
     setSelectedServiceCenter('');
   }, [selectedRegion, allBusinessHubs]);
 
-  // Fetch all business hubs on mount
-  useEffect(() => {
-    const fetchAllBusinessHubs = async () => {
-      try {
-        const res = await axiosClient.get('/V4IBEDC_new_account_setup_sync/initiate/all_business_hub');
-        setAllBusinessHubs(res.data.payload.business_hubs || []);
-      } catch (e) {
-        setAllBusinessHubs([]);
-      }
-    };
-    fetchAllBusinessHubs();
-  }, []);
+
 
   // Set region for selected business hub
   useEffect(() => {
