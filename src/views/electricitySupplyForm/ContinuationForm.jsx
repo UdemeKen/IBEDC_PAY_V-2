@@ -11,9 +11,10 @@ const landlordIdOptions = [
   "Driver's License",
   'PVC',
 ];
+// Display-only suffixes; actual value sent to API will be prefixed with "Bill Sent "
 const billMethods = [
-  'Bill Sent By Email',
-  'Bill Sent By SMS',
+  'By Email',
+  'By SMS',
 ];
 
 export default function ContinuationForm() {
@@ -25,7 +26,7 @@ export default function ContinuationForm() {
     landlord_othernames: '',
     landlord_dob: '',
     landlord_telephone: '',
-    landlord_alternate_telephone: '', // NEW FIELD
+    // landlord_alternate_telephone: '', // NEW FIELD
     landlord_email: '',
     name_address_of_previous_employer: '',
     previous_customer_address: '',
@@ -48,6 +49,7 @@ export default function ContinuationForm() {
   const [ninValidated, setNinValidated] = useState(false);
   const [ninServiceDown, setNinServiceDown] = useState(false);
   const [manualMode, setManualMode] = useState(false);
+  const [ninData, setNinData] = useState(null); // holds full NIN payload for display
   const navigate = useNavigate();
 
   // Set tracking_id from location.state if available
@@ -131,14 +133,14 @@ export default function ContinuationForm() {
       landlord_othernames: form.landlord_othernames,
       landlord_dob: form.landlord_dob,
       landlord_telephone: form.landlord_telephone,
-      landlord_alternate_telephone: form.landlord_alternate_telephone, // NEW FIELD
+      // landlord_alternate_telephone: form.landlord_alternate_telephone, // NEW FIELD
       landlord_email: form.landlord_email,
       name_address_of_previous_employer: form.name_address_of_previous_employer,
       previous_customer_address: form.previous_customer_address,
       previous_account_number: form.previous_account_number,
       previous_meter_number: form.previous_meter_number,
       landlord_personal_identification: form.landlord_personal_identification,
-      prefered_method_of_recieving_bill: form.prefered_method_of_recieving_bill,
+      prefered_method_of_recieving_bill: form.prefered_method_of_recieving_bill ? `Bill Sent ${form.prefered_method_of_recieving_bill}` : '',
       comments: form.comments,
       no_of_account_apply_for: form.no_of_account_apply_for,
       latitude: localStorage.getItem('LATITUDE') || '',
@@ -167,11 +169,11 @@ export default function ContinuationForm() {
         toast.success(data.message || 'Continuation submitted successfully!');
         navigate('/finalForm');
       } else {
-        toast.error(data.message || 'An error occurred.');
+        toast.error(data.payload?.nin_number || data.message || 'An error occurred.');
       }
     } catch (error) {
       if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
+        toast.error(error.response.data.payload?.nin_number || error.response.data.message);
       } else {
         toast.error('Network error. Please try again.');
       }
@@ -199,14 +201,14 @@ export default function ContinuationForm() {
       landlord_othernames: form.landlord_othernames,
       landlord_dob: form.landlord_dob,
       landlord_telephone: form.landlord_telephone,
-      landlord_alternate_telephone: form.landlord_alternate_telephone, // NEW FIELD
+      // landlord_alternate_telephone: form.landlord_alternate_telephone, // NEW FIELD
       landlord_email: form.landlord_email,
       name_address_of_previous_employer: form.name_address_of_previous_employer,
       previous_customer_address: form.previous_customer_address,
       previous_account_number: form.previous_account_number,
       previous_meter_number: form.previous_meter_number,
       landlord_personal_identification: form.landlord_personal_identification,
-      prefered_method_of_recieving_bill: form.prefered_method_of_recieving_bill,
+      prefered_method_of_recieving_bill: form.prefered_method_of_recieving_bill ? `Bill Sent ${form.prefered_method_of_recieving_bill}` : '',
       comments: form.comments,
       no_of_account_apply_for: form.no_of_account_apply_for,
       latitude: localStorage.getItem('LATITUDE') || '',
@@ -237,11 +239,11 @@ export default function ContinuationForm() {
         toast.success(data.message || 'Saved and exited successfully!');
         navigate('/');
       } else {
-        toast.error(data.message || 'An error occurred.');
+        toast.error(data.payload?.nin_number || data.message || 'An error occurred.');
       }
     } catch (error) {
       if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
+        toast.error(error.response.data.payload?.nin_number || error.response.data.message);
       } else {
         toast.error('Network error. Please try again.');
       }
@@ -376,21 +378,25 @@ export default function ContinuationForm() {
                             const res = await axiosClient.post(`/V4IBEDC_new_account_setup_sync/initiate/nin-validation?nin=${encodeURIComponent(form.nin_number)}`);
                             if (res.data.success && res.data.payload && res.data.payload.customer) {
                               const c = res.data.payload.customer;
+                              const p = c.payload || {}; // most fields live under customer.payload
                               // Convert birthdate from DD-MM-YYYY to YYYY-MM-DD
                               let dob = '';
-                              if (c.birthdate && c.birthdate.includes('-')) {
-                                const [d, m, y] = c.birthdate.split('-');
+                              if (p.birthdate && p.birthdate.includes('-')) {
+                                const [d, m, y] = p.birthdate.split('-');
                                 dob = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
                               }
                               setForm(prev => ({
                                 ...prev,
-                                nin_number: c.nin || prev.nin_number,
-                                landlord_surname: c.surname || prev.landlord_surname,
-                                landlord_othernames: [c.firstname, c.middlename].filter(Boolean).join(' '),
+                                nin_number: c.nin || p.nin || prev.nin_number,
+                                landlord_surname: p.surname || prev.landlord_surname,
+                                landlord_othernames: [p.firstname, p.middlename].filter(Boolean).join(' '),
                                 landlord_dob: dob || prev.landlord_dob,
-                                landlord_telephone: c.telephoneno || prev.landlord_telephone,
-                                landlord_email: c.email || prev.landlord_email,
+                                landlord_telephone: p.telephoneno || prev.landlord_telephone,
+                                landlord_email: p.email || prev.landlord_email,
                               }));
+                              // persist NIN payload for display-only section
+                              setNinData(p);
+                              // Do NOT auto-set photo from NIN; user must upload manually
                               setNinValidated(true);
                               toast.success('NIN validated and fields prefilled!');
                             } else {
@@ -469,7 +475,7 @@ export default function ContinuationForm() {
                     placeholder={manualMode ? "Enter landlord phone number" : ""}
                   />
                 </div>
-                <div>
+                {/* <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Alternate Landlord Telephone:</label>
                   <input
                     type="tel"
@@ -479,7 +485,7 @@ export default function ContinuationForm() {
                     className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                     placeholder="Enter alternate phone number (optional)"
                   />
-                </div>
+                </div> */}
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Landlord Email:</label>
                   <input
@@ -544,6 +550,51 @@ export default function ContinuationForm() {
                   )}
                 </div>
                 </>}
+                {/* NIN extra details (read-only) */}
+                {ninValidated && ninData && (
+                  <div className="sm:col-span-2 mt-2 p-3 border rounded bg-gray-50">
+                    <h3 className="font-semibold text-sm sm:text-base mb-2">NIN Details (Read-only)</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs sm:text-sm">
+                      <div>
+                        <span className="font-medium">Birth State:</span> {ninData.birthstate || '—'}
+                      </div>
+                      <div>
+                        <span className="font-medium">Birth LGA:</span> {ninData.birthlga || '—'}
+                      </div>
+                      <div>
+                        <span className="font-medium">Gender:</span> {ninData.gender?.toUpperCase() || '—'}
+                      </div>
+                      <div>
+                        <span className="font-medium">Residence State:</span> {ninData.residence_state || '—'}
+                      </div>
+                      <div>
+                        <span className="font-medium">Residence LGA:</span> {ninData.residence_lga || '—'}
+                      </div>
+                      <div>
+                        <span className="font-medium">Residence Town:</span> {ninData.residence_town || '—'}
+                      </div>
+                      <div className="sm:col-span-3">
+                        <span className="font-medium">Residence Address:</span> {ninData.residence_adressline1 || '—'}
+                      </div>
+                      <div className="sm:col-span-3">
+                        <span className="font-medium">Next of Kin:</span> {[
+                          ninData.nok_surname,
+                          ninData.nok_firstname,
+                          ninData.nok_middlename
+                        ].filter(Boolean).join(' ')}
+                      </div>
+                      <div>
+                        <span className="font-medium">NOK State:</span> {ninData.nok_state || '—'}
+                      </div>
+                      <div>
+                        <span className="font-medium">NOK LGA:</span> {ninData.nok_lga || '—'}
+                      </div>
+                      <div className="sm:col-span-3">
+                        <span className="font-medium">NOK Address:</span> {ninData.nok_address1 || '—'}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -29,6 +29,10 @@ export default function FinalFormPage() {
   const [loadingServiceCenters, setLoadingServiceCenters] = useState({});
 
   const [trackingId, setTrackingId] = useState('');
+  
+  // IBEDC covered states only
+  const allowedStates = ['Oyo', 'Ogun', 'Osun', 'Kwara', 'Ekiti', 'Kogi', 'Niger'];
+  const filteredStatesData = statesData.filter((stateObj) => allowedStates.includes(stateObj.states.name));
 
   // Premise type and use options
   const premiseTypes = [
@@ -143,7 +147,12 @@ export default function FinalFormPage() {
     }
     // Reset LGA if state changes
     if (name === 'state') {
+      // Reset LGA when state changes
       newBuildings[index].tga = '';
+      // If selected state is not part of IBEDC coverage, clear it
+      if (!allowedStates.includes(value)) {
+        newBuildings[index].state = '';
+      }
     }
     setBuildings(newBuildings);
   };
@@ -563,7 +572,7 @@ export default function FinalFormPage() {
                     required
                   >
                     <option value="" disabled>Select state</option>
-                    {statesData.map((stateObj) => (
+                    {filteredStatesData.map((stateObj) => (
                       <option key={stateObj.states.id} value={stateObj.states.name}>
                         {stateObj.states.name}
                       </option>
@@ -581,7 +590,7 @@ export default function FinalFormPage() {
                     disabled={!building.state}
                   >
                     <option value="" disabled>Select LGA</option>
-                    {statesData
+                    {filteredStatesData
                       .find((stateObj) => stateObj.states.name === building.state)?.states.locals.map((lga) => (
                         <option key={lga.id} value={lga.name}>
                           {lga.name}

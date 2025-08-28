@@ -86,7 +86,6 @@ export default function CustomerDashboard() {
 
   const [validateModalOpen, setValidateModalOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
-  const [dtmRejectingId, setDtmRejectingId] = useState(null);
 
   const [serviceCenters, setServiceCenters] = useState([]);
   const [selectedServiceCenter, setSelectedServiceCenter] = useState('');
@@ -96,6 +95,18 @@ export default function CustomerDashboard() {
   
   // Add allBusinessHubs state for both validation modal and view modal
   const [allBusinessHubs, setAllBusinessHubs] = useState([]);
+  
+  // Add rejection modal state
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectingAccount, setRejectingAccount] = useState(null);
+  const [rejectComment, setRejectComment] = useState('');
+  const [rejecting, setRejecting] = useState(false);
+
+  // Add final approval modal state for DTM final validation
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
+  const [approvingAccount, setApprovingAccount] = useState(null);
+  const [approveComment, setApproveComment] = useState('');
+  const [approving, setApproving] = useState(false);
 
   useEffect(() => {
     const isValid = METER_ACCT_NUMBER_REGEX.test(user);
@@ -367,16 +378,65 @@ export default function CustomerDashboard() {
   }, [authority]);
 
   // DTM action handlers
-  const handleReject = async (id) => {
-    setDtmRejectingId(id);
+  const handleReject = (account) => {
+    setRejectingAccount(account);
+    setRejectModalOpen(true);
+  };
+
+  const handleRejectSubmit = async () => {
+    if (!rejectComment.trim()) {
+      toast.error("Please provide a reason for rejection");
+      return;
+    }
+    
+    setRejecting(true);
     try {
-      await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/rejectform', { id: String(id) });
-      setDtmPendingAccounts(prev => prev.filter(acc => acc.id !== id));
-      toast.success("Application rejected and removed.");
+      const payload = {
+        tracking_id: rejectingAccount.tracking_id,
+        type: 'reject',
+        comment: rejectComment.trim(),
+        id: String(rejectingAccount.id)
+      };
+      
+      await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/approve_request', payload);
+      setDtmPendingAccounts(prev => prev.filter(acc => acc.id !== rejectingAccount.id));
+      toast.success("Application rejected successfully.");
+      setRejectModalOpen(false);
+      setRejectComment('');
+      setRejectingAccount(null);
     } catch (e) {
-      toast.error("Failed to reject application.");
+      toast.error("Failed to reject application: " + (e.response?.data?.payload || e.payload));
     } finally {
-      setDtmRejectingId(null);
+      setRejecting(false);
+    }
+  };
+
+  const handleApprove = (account) => {
+    setApprovingAccount(account);
+    setApproveModalOpen(true);
+  };
+
+  const handleApproveSubmit = async () => {
+    // approveComment is optional; backend may accept empty comment
+    setApproving(true);
+    try {
+      const payload = {
+        tracking_id: approvingAccount.tracking_id,
+        type: 'approve',
+        comment: approveComment.trim(),
+        id: String(approvingAccount.id)
+      };
+      await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/approve_request', payload);
+      // After final approval, remove from list
+      setDtmPendingAccounts(prev => prev.filter(acc => acc.id !== approvingAccount.id));
+      toast.success('Application approved successfully.');
+      setApproveModalOpen(false);
+      setApproveComment('');
+      setApprovingAccount(null);
+    } catch (e) {
+      toast.error('Failed to approve application: ' + (e.response?.data?.payload?.comment || e.payload?.comment));
+    } finally {
+      setApproving(false);
     }
   };
 
@@ -452,23 +512,29 @@ export default function CustomerDashboard() {
                       {isPending(acc) && (
                         <button
                           className="bg-red-500 text-white px-3 py-1 rounded font-semibold text-xs flex items-center justify-center min-w-[70px]"
-                          onClick={() => handleReject(acc.id)}
-                          disabled={dtmRejectingId === acc.id}
+                          onClick={() => handleReject(acc)}
                         >
-                          {dtmRejectingId === acc.id ? (
-                            <>
-                              <svg className="animate-spin h-4 w-4 mr-1 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                              Pending...
-                            </>
-                          ) : (
-                            'Reject'
-                          )}
+                          Reject
                         </button>
                       )}
-                      {isValidated(acc) && <span className="text-green-600 font-semibold">Validated</span>}
+                      {isValidated(acc) && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-green-600 font-semibold">Validated</span>
+                          {/* DTM can do final approval or reject */}
+                          <button
+                            className="bg-green-600 text-white px-3 py-1 rounded font-semibold text-xs"
+                            onClick={() => handleApprove(acc)}
+                          >
+                            Final Approve
+                          </button>
+                          <button
+                            className="bg-red-600 text-white px-3 py-1 rounded font-semibold text-xs"
+                            onClick={() => handleReject(acc)}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
                       <button className="bg-blue-500 text-white px-3 py-1 rounded font-semibold text-xs" onClick={() => { setViewAccount(acc); setViewModalOpen(true); }}>View</button>
                     </div>
                   </div>
@@ -590,6 +656,121 @@ export default function CustomerDashboard() {
               </div>
               <div className="flex justify-end mt-4">
                 <button onClick={() => setViewModalOpen(false)} className="bg-gray-400 text-white px-4 py-2 rounded">Close</button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Final Approval Modal */}
+        {approveModalOpen && approvingAccount && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded shadow-lg w-full max-w-md mx-4">
+              <h2 className="font-bold mb-4 text-lg text-green-700">Final Approval</h2>
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-2">
+                  <strong>Tracking ID:</strong> {approvingAccount.tracking_id}
+                </p>
+                <p className="text-sm text-gray-600 mb-2">
+                  <strong>Customer:</strong> {approvingAccount.account?.surname} {approvingAccount.account?.firstname} {approvingAccount.account?.other_name}
+                </p>
+                <p className="text-sm text-gray-600 mb-2">
+                  <strong>Address:</strong> {approvingAccount.full_address}
+                </p>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-semibold mb-2 text-gray-700">
+                  Comment (required)
+                </label>
+                <textarea
+                  value={approveComment}
+                  onChange={(e) => setApproveComment(e.target.value)}
+                  placeholder="Add a note for approval (optional)"
+                  className="w-full border rounded px-3 py-2 text-sm resize-none"
+                  rows={4}
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setApproveModalOpen(false);
+                    setApproveComment('');
+                    setApprovingAccount(null);
+                  }}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                  disabled={approving}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleApproveSubmit}
+                  disabled={approving}
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+                >
+                  {approving ? 'Approving...' : 'Approve'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Rejection Modal */}
+        {rejectModalOpen && rejectingAccount && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded shadow-lg w-full max-w-md mx-4">
+              <h2 className="font-bold mb-4 text-lg text-red-600">Reject Application</h2>
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-2">
+                  <strong>Tracking ID:</strong> {rejectingAccount.tracking_id}
+                </p>
+                <p className="text-sm text-gray-600 mb-2">
+                  <strong>Customer:</strong> {rejectingAccount.account?.surname} {rejectingAccount.account?.firstname} {rejectingAccount.account?.other_name}
+                </p>
+                <p className="text-sm text-gray-600 mb-2">
+                  <strong>Address:</strong> {rejectingAccount.full_address}
+                </p>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-semibold mb-2 text-gray-700">
+                  Reason for Rejection (required)
+                </label>
+                <textarea
+                  value={rejectComment}
+                  onChange={(e) => setRejectComment(e.target.value)}
+                  placeholder="Please provide a detailed reason for rejecting this application..."
+                  className="w-full border rounded px-3 py-2 text-sm resize-none"
+                  rows={4}
+                  required
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setRejectModalOpen(false);
+                    setRejectComment('');
+                    setRejectingAccount(null);
+                  }}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                  disabled={rejecting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRejectSubmit}
+                  disabled={rejecting || !rejectComment.trim()}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+                >
+                  {rejecting ? (
+                    <div className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Rejecting...
+                    </div>
+                  ) : (
+                    'Reject Application'
+                  )}
+                </button>
               </div>
             </div>
           </div>

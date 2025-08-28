@@ -114,10 +114,10 @@ export default function NewAccount() {
               <h2 className='text-blue-900 font-semibold mb-2'>Checklist: What You Need to Start</h2>
               <ul className='list-disc list-inside text-sm text-gray-800'>
                 <li>Valid phone number and email address</li>
-                <li>National Identification Number (NIN)</li>
-                <li>Landlord's full name, phone number, and email</li>
-                <li>Landlord's date of birth</li>
-                <li>Landlord's means of identification (e.g., NIN, Driver's License, International Passport)</li>
+                <li>Address and closest landmark of Building</li>
+                <li>Landlord's full name, phone number, and email(NIN)</li>
+                <li>Business hub and Service Center of the area- your building is located in</li>
+                <li>Complete Licenced Electrical Contractor form (Form will be downloaded to your device after putting in building information)</li>
               </ul>
               <button
                 onClick={() => navigate('/electricitySupplyForm')}
