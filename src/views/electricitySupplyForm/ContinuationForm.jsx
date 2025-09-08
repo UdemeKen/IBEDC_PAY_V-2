@@ -295,7 +295,7 @@ export default function ContinuationForm() {
 
         {/* Title Section */}
         <div className='font-bold text-base sm:text-lg mt-4 sm:mt-8 mx-4 sm:mx-20 -mb-2'>
-          <h1>PART 2: CUSTOMER DETAILS CONTINUATION</h1>
+          <h1>PART 2: LANDLORD INFORMATION</h1>
         </div>
 
         {/* Form Section */}
@@ -378,7 +378,19 @@ export default function ContinuationForm() {
                             const res = await axiosClient.post(`/V4IBEDC_new_account_setup_sync/initiate/nin-validation?nin=${encodeURIComponent(form.nin_number)}`);
                             if (res.data.success && res.data.payload && res.data.payload.customer) {
                               const c = res.data.payload.customer;
-                              const p = c.payload || {}; // most fields live under customer.payload
+                              // Handle both response structures dynamically
+                              let p = {};
+                              if (c.data) {
+                                // Structure 1: payload.customer.data
+                                p = c.data;
+                              } else if (c.payload && c.payload.data) {
+                                // Structure 2: payload.customer.payload.data
+                                p = c.payload.data;
+                              } else {
+                                // Fallback: try to use customer object directly
+                                p = c;
+                              }
+                              
                               // Convert birthdate from DD-MM-YYYY to YYYY-MM-DD
                               let dob = '';
                               if (p.birthdate && p.birthdate.includes('-')) {
@@ -387,7 +399,7 @@ export default function ContinuationForm() {
                               }
                               setForm(prev => ({
                                 ...prev,
-                                nin_number: c.nin || p.nin || prev.nin_number,
+                                nin_number: p.nin || prev.nin_number,
                                 landlord_surname: p.surname || prev.landlord_surname,
                                 landlord_othernames: [p.firstname, p.middlename].filter(Boolean).join(' '),
                                 landlord_dob: dob || prev.landlord_dob,
@@ -556,41 +568,13 @@ export default function ContinuationForm() {
                     <h3 className="font-semibold text-sm sm:text-base mb-2">NIN Details (Read-only)</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs sm:text-sm">
                       <div>
-                        <span className="font-medium">Birth State:</span> {ninData.birthstate || '—'}
-                      </div>
-                      <div>
-                        <span className="font-medium">Birth LGA:</span> {ninData.birthlga || '—'}
-                      </div>
-                      <div>
                         <span className="font-medium">Gender:</span> {ninData.gender?.toUpperCase() || '—'}
-                      </div>
-                      <div>
-                        <span className="font-medium">Residence State:</span> {ninData.residence_state || '—'}
-                      </div>
-                      <div>
-                        <span className="font-medium">Residence LGA:</span> {ninData.residence_lga || '—'}
                       </div>
                       <div>
                         <span className="font-medium">Residence Town:</span> {ninData.residence_town || '—'}
                       </div>
                       <div className="sm:col-span-3">
                         <span className="font-medium">Residence Address:</span> {ninData.residence_adressline1 || '—'}
-                      </div>
-                      <div className="sm:col-span-3">
-                        <span className="font-medium">Next of Kin:</span> {[
-                          ninData.nok_surname,
-                          ninData.nok_firstname,
-                          ninData.nok_middlename
-                        ].filter(Boolean).join(' ')}
-                      </div>
-                      <div>
-                        <span className="font-medium">NOK State:</span> {ninData.nok_state || '—'}
-                      </div>
-                      <div>
-                        <span className="font-medium">NOK LGA:</span> {ninData.nok_lga || '—'}
-                      </div>
-                      <div className="sm:col-span-3">
-                        <span className="font-medium">NOK Address:</span> {ninData.nok_address1 || '—'}
                       </div>
                     </div>
                   </div>
