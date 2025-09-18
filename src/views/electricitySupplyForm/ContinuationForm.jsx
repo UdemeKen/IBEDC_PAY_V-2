@@ -295,7 +295,7 @@ export default function ContinuationForm() {
 
         {/* Title Section */}
         <div className='font-bold text-base sm:text-lg mt-4 sm:mt-8 mx-4 sm:mx-20 -mb-2'>
-          <h1>PART 2: LANDLORD INFORMATION</h1>
+          <h1>PART 2: LANDLORD'S INFORMATION</h1>
         </div>
 
         {/* Form Section */}
@@ -303,10 +303,10 @@ export default function ContinuationForm() {
           <div className="bg-white p-4 sm:p-6 border rounded shadow-sm">
             {/* Landlord Information Section */}
             <div className="mb-6">
-              <h2 className="text-base sm:text-lg font-bold mb-4">Landlord Information</h2>
+              <h2 className="text-base sm:text-lg font-bold mb-4">Landlord's Information</h2>
               
               {/* NIN Service Status Toggle */}
-              <div className={`mb-4 p-3 border rounded ${
+              {/* <div className={`mb-4 p-3 border rounded ${
                 ninServiceDown ? 'bg-red-50 border-red-200' : 'bg-yellow-50 border-yellow-200'
               }`}>
                 <div className="flex items-center justify-between">
@@ -314,7 +314,7 @@ export default function ContinuationForm() {
                     <span className={`text-sm ${
                       ninServiceDown ? 'text-red-800' : 'text-yellow-800'
                     }`}>
-                      {ninServiceDown ? 'NIN Service is currently down' : 'NIN Service is available'}
+                      {ninServiceDown ? 'NIN Service is available' : 'NIN Service is currently down'}
                     </span>
                     <button
                       type="button"
@@ -349,7 +349,7 @@ export default function ContinuationForm() {
                     You can now manually fill in the landlord information below. All fields marked with * are required.
                   </p>
                 )}
-              </div>
+              </div> */}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
@@ -505,7 +505,7 @@ export default function ContinuationForm() {
                     name="landlord_email"
                     value={form.landlord_email}
                     onChange={handleChange}
-                    readOnly={ninValidated && !manualMode}
+                    // readOnly={ninValidated && !manualMode}
                     className={`w-full border rounded px-2 py-1 text-sm sm:text-base ${
                       ninValidated && !manualMode ? 'bg-gray-100' : ''
                     }`}

@@ -120,7 +120,7 @@ export default function LecanUploadPage() {
             </div>
             <div className='flex flex-col justify-center items-center text-base sm:text-xl w-full sm:w-1/2 h-auto sm:h-40 text-center px-2 sm:px-0'>
               <h2 className='font-bold text-lg sm:text-xl'>IBADAN ELECTRICITY DISTRIBUTION COMPANY PLC</h2>
-              <h4 className='text-base sm:text-lg'>New Customer Account Creation Form - LECAN Upload</h4>
+              <h4 className='text-base sm:text-lg'>New Customer Account Creation Form - License Electrical Contractor Form Upload</h4>
               <p className='text-sm sm:text-base text-center'>Tracking ID: {trackingId}</p>
             </div>
             <div className='text-gray-200 hidden sm:block'>
@@ -131,7 +131,7 @@ export default function LecanUploadPage() {
 
         {/* Title Section */}
         <div className='font-bold text-base sm:text-lg mt-4 sm:mt-8 mx-4 sm:mx-20 -mb-2'>
-          <h1>LECAN Form Information</h1>
+          <h1>License Electrical Contractor Form Information</h1>
         </div>
 
         {/* Form Section */}
@@ -154,14 +154,14 @@ export default function LecanUploadPage() {
           {buildingsNeedingLecan.length > 0 ? (
             <>
               <h2 className="text-base sm:text-lg font-bold mt-6 sm:mt-8 mb-4">
-                Upload LECAN Forms for Pending Buildings
+                Upload License Electrical Contractor Forms for Pending Buildings
               </h2>
 
               <form onSubmit={handleSubmit}>
                 {buildingsNeedingLecan.map((building, index) => (
                   <div key={building.id || index} className="mb-4">
                     <label className="font-semibold text-sm sm:text-base">
-                      Building {building.house_no || (index + 1)} ({building.full_address}) LECAN Form:
+                      Building {building.house_no || (index + 1)} ({building.full_address}) License Electrical Contractor Form:
                     </label>
                     <input
                       type="file"
@@ -197,7 +197,7 @@ export default function LecanUploadPage() {
           ) : ( 
             <div className="mt-6 p-4 bg-green-50 rounded-lg"> 
               <p className="text-center text-sm sm:text-base text-green-700 font-semibold"> 
-                All required LECAN forms have been uploaded. 
+                All required License Electrical Contractor forms have been uploaded. 
               </p> 
             </div> 
           )} 

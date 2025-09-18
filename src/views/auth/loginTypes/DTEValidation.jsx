@@ -58,9 +58,9 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }
     const filteredHubs = allBusinessHubs.filter(hub => 
       hub.Region && hub.Region.replace(/region/i, '').trim().toLowerCase() === selectedRegion.toLowerCase()
     );
-    setBusinessHubsForRegion(filteredHubs.map(hub => hub.Business_Hub));
+    setBusinessHubsForRegion(filteredHubs.map(hub => hub.businesshub));
     // Only reset if the current business hub is not in the new filtered list
-    if (selectedBusinessHub && !filteredHubs.some(hub => hub.Business_Hub === selectedBusinessHub)) {
+    if (selectedBusinessHub && !filteredHubs.some(hub => hub.businesshub === selectedBusinessHub)) {
       setSelectedBusinessHub('');
       setSelectedServiceCenter('');
     }
@@ -69,7 +69,7 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }
   useEffect(() => {
     if (allBusinessHubs.length > 0 && selectedBusinessHub) {
       const found = allBusinessHubs.find(
-        hub => hub.Business_Hub.trim().toLowerCase() === selectedBusinessHub.trim().toLowerCase()
+        hub => hub.businesshub.trim().toLowerCase() === selectedBusinessHub.trim().toLowerCase()
       );
       if (found) {
         const cleanRegion = (found.Region || selectedRegion || '').replace(/region/i, '').trim();
@@ -454,7 +454,7 @@ export default function DTEValidation() {
                     // Find the business hub in allBusinessHubs to get its region
                     if (allBusinessHubs.length > 0 && viewAccount.business_hub) {
                       const found = allBusinessHubs.find(
-                        hub => hub.Business_Hub.trim().toLowerCase() === viewAccount.business_hub.trim().toLowerCase()
+                        hub => hub.businesshub.trim().toLowerCase() === viewAccount.business_hub.trim().toLowerCase()
                       );
                       if (found && found.Region) {
                         return found.Region.replace(/region/i, '').trim();

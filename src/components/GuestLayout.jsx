@@ -118,15 +118,16 @@ export default function GuestLayout() {
                     />
                 </Link>
             </div> 
-            {/* <div className='flex flex-row justify-center items-center space-x-10'>
+            <div className='flex flex-row justify-center items-center space-x-10'>
                 <Link
                     className='bg-blue-950 opacity-75 hover:bg-orange-500 duration-300 ease-in-out text-white font-bold py-2 px-4 rounded'
                     to={'/newaccount'}
                 >
                     New Customer Account Creation
                 </Link>
-            </div> */}
+            </div>
         </div>
+        
       </div>
       {/* New account flows handled on /newaccount */}
     </section>

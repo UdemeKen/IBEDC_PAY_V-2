@@ -102,10 +102,7 @@ export default function CustomerDashboard() {
   const [rejectComment, setRejectComment] = useState('');
   const [rejecting, setRejecting] = useState(false);
 
-  // Add final approval modal state for DTM final validation
-  const [approveModalOpen, setApproveModalOpen] = useState(false);
-  const [approvingAccount, setApprovingAccount] = useState(null);
-  const [approveComment, setApproveComment] = useState('');
+  // DTM final approval processing state
   const [approving, setApproving] = useState(false);
 
   useEffect(() => {
@@ -411,34 +408,26 @@ export default function CustomerDashboard() {
     }
   };
 
-  const handleApprove = (account) => {
-    setApprovingAccount(account);
-    setApproveModalOpen(true);
-  };
-
-  const handleApproveSubmit = async () => {
-    // approveComment is optional; backend may accept empty comment
+  const handleApprove = async (account) => {
     setApproving(true);
     try {
       const payload = {
-        tracking_id: approvingAccount.tracking_id,
+        tracking_id: account.tracking_id,
         type: 'approve',
-        comment: approveComment.trim(),
-        id: String(approvingAccount.id)
+        comment: 'approve',
+        id: String(account.id)
       };
       await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/approve_request', payload);
-      // After final approval, remove from list
-      setDtmPendingAccounts(prev => prev.filter(acc => acc.id !== approvingAccount.id));
+      setDtmPendingAccounts(prev => prev.filter(acc => acc.id !== account.id));
       toast.success('Application approved successfully.');
-      setApproveModalOpen(false);
-      setApproveComment('');
-      setApprovingAccount(null);
     } catch (e) {
-      toast.error('Failed to approve application: ' + (e.response?.data?.payload?.comment || e.payload?.comment));
+      toast.error('Failed to approve application: ' + (e.response?.data?.payload?.comment || e.payload?.comment || e.message));
     } finally {
       setApproving(false);
     }
   };
+
+  // Removed approve modal submission; approval happens immediately in handleApprove
 
   const handleValidate = (id) => {
     // Placeholder for validation logic
@@ -615,7 +604,7 @@ export default function CustomerDashboard() {
                     // Find the business hub in allBusinessHubs to get its region
                     if (allBusinessHubs.length > 0 && viewAccount.business_hub) {
                       const found = allBusinessHubs.find(
-                        hub => hub.Business_Hub.trim().toLowerCase() === viewAccount.business_hub.trim().toLowerCase()
+                        hub => hub.businesshub.trim().toLowerCase() === viewAccount.business_hub.trim().toLowerCase()
                       );
                       if (found && found.Region) {
                         return found.Region.replace(/region/i, '').trim();
@@ -647,9 +636,9 @@ export default function CustomerDashboard() {
                       <img src={`https://ipay.ibedc.com:7642/storage/${viewAccount.picture}`} alt="Account" className="w-40 h-40 object-cover rounded border mb-2" />
                     )}
                   </div>
-                  <div className="mb-2"><strong>LECAN Link:</strong><br/>
+                  <div className="mb-2"><strong>License Electrical Contractor Link:</strong><br/>
                     {viewAccount.lecan_link && (
-                      <a href={`https://ipay.ibedc.com:7642/storage/${viewAccount.lecan_link}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View LECAN Document</a>
+                      <a href={`https://ipay.ibedc.com:7642/storage/${viewAccount.lecan_link}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View License Electrical Contractor Document</a>
                     )}
                   </div>
                 </div>
@@ -661,57 +650,7 @@ export default function CustomerDashboard() {
           </div>
         )}
         
-        {/* Final Approval Modal */}
-        {approveModalOpen && approvingAccount && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded shadow-lg w-full max-w-md mx-4">
-              <h2 className="font-bold mb-4 text-lg text-green-700">Final Approval</h2>
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-2">
-                  <strong>Tracking ID:</strong> {approvingAccount.tracking_id}
-                </p>
-                <p className="text-sm text-gray-600 mb-2">
-                  <strong>Customer:</strong> {approvingAccount.account?.surname} {approvingAccount.account?.firstname} {approvingAccount.account?.other_name}
-                </p>
-                <p className="text-sm text-gray-600 mb-2">
-                  <strong>Address:</strong> {approvingAccount.full_address}
-                </p>
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-semibold mb-2 text-gray-700">
-                  Comment (required)
-                </label>
-                <textarea
-                  value={approveComment}
-                  onChange={(e) => setApproveComment(e.target.value)}
-                  placeholder="Add a note for approval (optional)"
-                  className="w-full border rounded px-3 py-2 text-sm resize-none"
-                  rows={4}
-                />
-              </div>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => {
-                    setApproveModalOpen(false);
-                    setApproveComment('');
-                    setApprovingAccount(null);
-                  }}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-                  disabled={approving}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleApproveSubmit}
-                  disabled={approving}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
-                >
-                  {approving ? 'Approving...' : 'Approve'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Final Approval Modal removed per requirement — approval processes immediately on click */}
 
         {/* Rejection Modal */}
         {rejectModalOpen && rejectingAccount && (
@@ -1250,7 +1189,7 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }
     const filteredHubs = allBusinessHubs.filter(hub => 
       hub.Region && hub.Region.replace(/region/i, '').trim().toLowerCase() === selectedRegion.toLowerCase()
     );
-    setBusinessHubsForRegion(filteredHubs.map(hub => hub.Business_Hub));
+    setBusinessHubsForRegion(filteredHubs.map(hub => hub.businesshub));
     // Reset business hub and service center when region changes
     setSelectedBusinessHub('');
     setSelectedServiceCenter('');
@@ -1262,7 +1201,7 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }
   useEffect(() => {
     if (allBusinessHubs.length > 0 && selectedBusinessHub) {
       const found = allBusinessHubs.find(
-        hub => hub.Business_Hub.trim().toLowerCase() === selectedBusinessHub.trim().toLowerCase()
+        hub => hub.businesshub.trim().toLowerCase() === selectedBusinessHub.trim().toLowerCase()
       );
       if (found) {
         // Remove 'REGION' (case-insensitive) and trim whitespace

@@ -473,7 +473,7 @@ export default function FinalFormPage() {
                   >
                     <option value="" disabled>Select business hub</option>
                     {businessHubs.map((hub) => (
-                      <option key={hub.BuzhubCode} value={hub.Business_Hub}>{hub.Business_Hub}</option>
+                      <option key={hub.BuzhubCode} value={hub.businesshub}>{hub.businesshub}</option>
                     ))}
                   </select>
                   {loadingServiceCenters[index] && <span className="text-xs sm:text-sm text-gray-500">Loading service centers...</span>}
@@ -671,7 +671,7 @@ export default function FinalFormPage() {
               <div className="bg-blue-50 p-4 rounded-lg">
                 <p className="font-semibold text-blue-900 mb-2">Your Tracking ID:</p>
                 <p className="font-mono text-lg text-blue-700 break-all">{successData.trackingId}</p>
-                <p className="text-sm text-blue-600 mt-2">Please save this tracking ID - you'll need it to upload your completed LECAN forms.</p>
+                <p className="text-sm text-blue-600 mt-2">Please save this tracking ID - you'll need it to upload your completed License Electrical Contractor forms.</p>
               </div>
               
               <div className="bg-gray-50 p-4 rounded-lg">
@@ -684,10 +684,10 @@ export default function FinalFormPage() {
                   <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                   </svg>
-                  <p className="font-semibold text-green-900">LECAN Forms Downloaded</p>
+                  <p className="font-semibold text-green-900">License Electrical Contractor Forms Downloaded</p>
                 </div>
                 <p className="text-green-800 text-sm">
-                  {successData.numBuildings} LECAN form(s) have been automatically downloaded to your device. 
+                  {successData.numBuildings} License Electrical Contractor form(s) have been automatically downloaded to your device. 
                   Please fill out each form completely and return with your tracking ID to upload them.
                 </p>
               </div>
@@ -706,7 +706,7 @@ export default function FinalFormPage() {
                 <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
                   <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold mt-0.5">1</div>
                   <div>
-                    <p className="font-medium text-blue-900">Fill out the downloaded LECAN forms</p>
+                    <p className="font-medium text-blue-900">Fill out the downloaded License Electrical Contractor forms</p>
                     <p className="text-sm text-blue-700">Complete all required fields in each form for your buildings</p>
                   </div>
                 </div>
@@ -721,7 +721,7 @@ export default function FinalFormPage() {
                   <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold mt-0.5">3</div>
                   <div>
                     <p className="font-medium text-blue-900">Upload completed forms</p>
-                    <p className="text-sm text-blue-700">Submit the filled LECAN forms for each building</p>
+                    <p className="text-sm text-blue-700">Submit the filled License Electrical Contractor forms for each building</p>
                   </div>
                 </div>
               </div>
@@ -744,7 +744,7 @@ export default function FinalFormPage() {
                 }}
                 className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
               >
-                Upload LECAN Forms Now
+                Upload License Electrical Contractor Forms Now
               </button> */}
               <button
                 onClick={() => { 
