@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Black_Logo } from '../../assets/images';
+import { IBEDC_logo_Blue } from '../../assets/images';
 import { Ibedc_Approved_Logo } from '../../assets/images';
 import { toast } from 'react-toastify';
 import axiosClient from '../../axios';
@@ -37,8 +37,8 @@ export default function ContinuationForm() {
     prefered_method_of_recieving_bill: '',
     comments: 'Making the user go viral',
     no_of_account_apply_for: '1',
-    latitude: '',
-    longitude: '',
+    latitude: '0.39849',
+    longitude: '1.9849',
   });
   const [picturePreview, setPicturePreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -143,8 +143,8 @@ export default function ContinuationForm() {
       prefered_method_of_recieving_bill: form.prefered_method_of_recieving_bill ? `Bill Sent ${form.prefered_method_of_recieving_bill}` : '',
       comments: form.comments,
       no_of_account_apply_for: form.no_of_account_apply_for,
-      latitude: localStorage.getItem('LATITUDE') || '',
-      longitude: localStorage.getItem('LONGITUDE') || '',
+      latitude: localStorage.getItem('LATITUDE') || '0.00000',
+      longitude: localStorage.getItem('LONGITUDE') || '0.00000',
     };
 
     // If file, handle FormData
@@ -167,7 +167,12 @@ export default function ContinuationForm() {
       const data = response.data;
       if (data.success) {
         toast.success(data.message || 'Continuation submitted successfully!');
-        navigate('/finalForm');
+        navigate('/finalForm', {
+          state: {
+            numAccounts: parseInt(form.no_of_account_apply_for) || 1,
+            trackingId: form.tracking_id
+          }
+        });
       } else {
         toast.error(data.payload?.nin_number || data.message || 'An error occurred.');
       }
@@ -211,9 +216,11 @@ export default function ContinuationForm() {
       prefered_method_of_recieving_bill: form.prefered_method_of_recieving_bill ? `Bill Sent ${form.prefered_method_of_recieving_bill}` : '',
       comments: form.comments,
       no_of_account_apply_for: form.no_of_account_apply_for,
-      latitude: localStorage.getItem('LATITUDE') || '',
-      longitude: localStorage.getItem('LONGITUDE') || '',
+      latitude: localStorage.getItem('LATITUDE') || '0.00000',
+      longitude: localStorage.getItem('LONGITUDE') || '0.00000',
     };
+    console.log(payload);
+    
 
     let dataToSend = payload;
     let config = {};
@@ -279,12 +286,12 @@ export default function ContinuationForm() {
         <div className='flex flex-col sm:flex-row bg-gray-200 rounded-lg px-2 sm:px-4 mx-2 sm:mx-10 mt-5'>
           <div className='flex flex-col sm:flex-row justify-center items-center w-full gap-4 sm:gap-72'>
             <div className='w-full sm:w-auto flex justify-center sm:justify-start'>
-              <img src={Black_Logo} alt="logo" className='w-16 sm:w-20 h-8 sm:h-10' />
+            <img src={IBEDC_logo_Blue} alt="logo" className='w-20 sm:w-40 h-10 sm:h-20' />
             </div>
             <div className='flex flex-col justify-center items-center text-base sm:text-xl w-full sm:w-1/2 h-auto sm:h-40 text-center px-2 sm:px-0'>
               <h2 className='font-bold text-lg sm:text-xl'>IBADAN ELECTRICITY DISTRIBUTION COMPANY PLC</h2>
               <h4 className='text-base sm:text-lg'>New Customer Account Creation Form</h4>
-              <p className='text-sm sm:text-base text-center'>Application for electricity supply and agreement form (To be completed in duplicate by the applicant after studying the conditions and regulations of supply specified overleaf)</p>
+              <p className='text-sm sm:text-base text-center'>Application for electricity supply and agreement form</p>
               <p className='text-sm sm:text-base text-center'>Tracking ID: {form.tracking_id}</p>
             </div>
             <div className='text-gray-200 hidden sm:block'>
@@ -672,7 +679,7 @@ export default function ContinuationForm() {
                 className="w-full sm:w-auto px-4 sm:px-6 py-2 text-sm sm:text-base bg-gray-400 text-white font-semibold rounded-lg shadow hover:bg-gray-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
                 disabled={loadingExit}
               >
-                {loadingExit ? 'Saving...' : 'Save and Exist'}
+                {loadingExit ? 'Saving...' : 'Save and Exit'}
               </button>
             </div>
           </div>

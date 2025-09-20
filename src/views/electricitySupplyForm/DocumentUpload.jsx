@@ -225,7 +225,7 @@ export default function DocumentUpload() {
             <div className='flex flex-col justify-center items-center text-base sm:text-xl w-full sm:w-1/2 h-auto sm:h-40 text-center px-2 sm:px-0'>
               <h2 className='font-bold text-lg sm:text-xl'>IBADAN ELECTRICITY DISTRIBUTION COMPANY PLC</h2>
               <h4 className='text-base sm:text-lg'>New Customer Account Creation Form</h4>
-              <p className='text-sm sm:text-base text-center'>Application for electricity supply and agreement form (To be completed in duplicate by the applicant after studying the conditions and regulations of supply specified overleaf)</p>
+              <p className='text-sm sm:text-base text-center'>Application for electricity supply and agreement form</p>
               <p className='text-sm sm:text-base text-center'>Tracking ID: {form.tracking_id}</p>
             </div>
             <div className='text-gray-200 hidden sm:block'>

@@ -127,7 +127,6 @@ export default function GuestLayout() {
                 </Link>
             </div>
         </div>
-        
       </div>
       {/* New account flows handled on /newaccount */}
     </section>

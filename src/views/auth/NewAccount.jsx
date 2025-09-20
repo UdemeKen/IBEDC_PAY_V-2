@@ -113,10 +113,10 @@ export default function NewAccount() {
             <div className='mt-4 p-4 bg-blue-50 border border-blue-200 rounded'>
               <h2 className='text-blue-900 font-semibold mb-2'>Checklist: What You Need to Start</h2>
               <ul className='list-disc list-inside text-sm text-gray-800'>
-                <li>Valid phone number and email address</li>
-                <li>Address and closest landmark of Building</li>
-                <li>Landlord's full name, phone number, and email(NIN)</li>
-                <li>Business hub and Service Center of the area- your building is located in</li>
+                <li>Valid phone number and email address.</li>
+                <li>Address and closest landmark of Building.</li>
+                <li>Landlord's full name, phone number, and email(NIN).</li>
+                <li>Business hub and Service Center of the area your building is located.</li>
                 <li>Complete Licenced Electrical Contractor form (Form will be downloaded to your device after putting in building information)</li>
               </ul>
               <button

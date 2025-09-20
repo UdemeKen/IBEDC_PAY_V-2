@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Black_Logo } from '../../assets/images'
+import { IBEDC_logo_Blue } from '../../assets/images'
 import { Ibedc_Approved_Logo, } from '../../assets/images'
 import { toast } from 'react-toastify';
 import axiosClient from '../../axios';
@@ -162,12 +162,12 @@ export default function ElectricitySupplyForm() {
         <div className='flex flex-col sm:flex-row bg-gray-200 rounded-lg px-2 sm:px-4 mx-2 sm:mx-10 mt-5'>
           <div className='flex flex-col sm:flex-row justify-center items-center w-full gap-4 sm:gap-72'>
             <div className='w-full sm:w-auto flex justify-center sm:justify-start'>
-              <img src={Black_Logo} alt="logo" className='w-16 sm:w-20 h-8 sm:h-10' />
+              <img src={IBEDC_logo_Blue} alt="logo" className='w-20 sm:w-40 h-10 sm:h-20' />
             </div>
             <div className='flex flex-col justify-center items-center text-base sm:text-xl w-full sm:w-1/2 h-auto sm:h-40 text-center px-2 sm:px-0'>
               <h2 className='font-bold text-lg sm:text-xl'>IBADAN ELECTRICITY DISTRIBUTION COMPANY PLC</h2>
               <h4 className='text-base sm:text-lg'>New Customer Account Creation Form</h4>
-              <p className='text-sm sm:text-base text-center'>Application for electricity supply and agreement form (To be completed in duplicate by the applicant after studying the conditions and regulations of supply specified overleaf)</p>
+              <p className='text-sm sm:text-base text-center'>Application for electricity supply and agreement form</p>
             </div>
             <div className='text-gray-200 hidden sm:block'>
               <p>Kendrick</p>
