@@ -34,6 +34,7 @@ export default function ContinuationForm() {
     previous_meter_number: '',
     landlord_personal_identification: 'NIN',
     landloard_picture: null,
+    nin_slip: null,
     prefered_method_of_recieving_bill: '',
     comments: 'Making the user go viral',
     no_of_account_apply_for: '1',
@@ -45,11 +46,7 @@ export default function ContinuationForm() {
   const [loadingExit, setLoadingExit] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalTrackingId, setModalTrackingId] = useState('');
-  const [ninLoading, setNinLoading] = useState(false);
-  const [ninValidated, setNinValidated] = useState(false);
-  const [ninServiceDown, setNinServiceDown] = useState(false);
-  const [manualMode, setManualMode] = useState(false);
-  const [ninData, setNinData] = useState(null); // holds full NIN payload for display
+  
   const navigate = useNavigate();
 
   // Set tracking_id from location.state if available
@@ -74,44 +71,35 @@ export default function ContinuationForm() {
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
     if (type === 'file') {
-      setForm((prev) => ({ ...prev, [name]: files[0] }));
-      if (files[0]) {
-        const reader = new FileReader();
-        reader.onloadend = () => setPicturePreview(reader.result);
-        reader.readAsDataURL(files[0]);
-      } else {
-        setPicturePreview(null);
+      const file = files && files[0] ? files[0] : null;
+      setForm((prev) => ({ ...prev, [name]: file }));
+      if (name === 'landloard_picture') {
+        if (file) {
+          const reader = new FileReader();
+          reader.onloadend = () => setPicturePreview(reader.result);
+          reader.readAsDataURL(file);
+        } else {
+          setPicturePreview(null);
+        }
       }
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  // Helper: Validate required fields (customize as needed)
+  // Helper: Validate required fields (manual mode only)
   const requiredFields = [
     'tracking_id',
     'nin_number',
-    // Add other required fields here as per your business logic
+    'landlord_surname',
+    'landlord_othernames',
+    'landlord_dob',
+    'landlord_telephone',
+    'landlord_email',
   ];
-  
-  // Additional validation for manual mode
-  const getManualModeRequiredFields = () => {
-    if (manualMode) {
-      return [
-        'landlord_surname',
-        'landlord_othernames', 
-        'landlord_dob',
-        'landlord_telephone',
-        'landlord_email'
-      ];
-    }
-    return [];
-  };
-  
+
   const validateForm = () => {
-    const basicRequired = requiredFields.filter(field => !form[field] || form[field].toString().trim() === '');
-    const manualRequired = getManualModeRequiredFields().filter(field => !form[field] || form[field].toString().trim() === '');
-    return [...basicRequired, ...manualRequired];
+    return requiredFields.filter(field => !form[field] || form[field].toString().trim() === '');
   };
 
   // API submit logic
@@ -150,15 +138,13 @@ export default function ContinuationForm() {
     // If file, handle FormData
     let dataToSend = payload;
     let config = {};
-    if (form.landloard_picture) {
+    if (form.landloard_picture || form.nin_slip) {
       dataToSend = new FormData();
       Object.entries(payload).forEach(([key, value]) => {
-        if (key === 'landloard_picture' && value) {
-          dataToSend.append(key, value);
-        } else {
-          dataToSend.append(key, value || '');
-        }
+        dataToSend.append(key, value || '');
       });
+      if (form.landloard_picture) dataToSend.append('landloard_picture', form.landloard_picture);
+      if (form.nin_slip) dataToSend.append('nin_slip', form.nin_slip);
       config = { headers: { 'Content-Type': 'multipart/form-data' } };
     }
 
@@ -224,15 +210,13 @@ export default function ContinuationForm() {
 
     let dataToSend = payload;
     let config = {};
-    if (form.landloard_picture) {
+    if (form.landloard_picture || form.nin_slip) {
       dataToSend = new FormData();
       Object.entries(payload).forEach(([key, value]) => {
-        if (key === 'landloard_picture' && value) {
-          dataToSend.append(key, value);
-        } else {
-          dataToSend.append(key, value || '');
-        }
+        dataToSend.append(key, value || '');
       });
+      if (form.landloard_picture) dataToSend.append('landloard_picture', form.landloard_picture);
+      if (form.nin_slip) dataToSend.append('nin_slip', form.nin_slip);
       config = { headers: { 'Content-Type': 'multipart/form-data' } };
     }
 
@@ -312,51 +296,7 @@ export default function ContinuationForm() {
             <div className="mb-6">
               <h2 className="text-base sm:text-lg font-bold mb-4">Landlord's Information</h2>
               
-              {/* NIN Service Status Toggle */}
-              {/* <div className={`mb-4 p-3 border rounded ${
-                ninServiceDown ? 'bg-red-50 border-red-200' : 'bg-yellow-50 border-yellow-200'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-sm ${
-                      ninServiceDown ? 'text-red-800' : 'text-yellow-800'
-                    }`}>
-                      {ninServiceDown ? 'NIN Service is available' : 'NIN Service is currently down'}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setNinServiceDown(!ninServiceDown);
-                        setManualMode(!ninServiceDown);
-                        if (!ninServiceDown) {
-                          // Clear NIN validation when switching to manual mode
-                          setNinValidated(false);
-                          setForm(prev => ({
-                            ...prev,
-                            landlord_surname: '',
-                            landlord_othernames: '',
-                            landlord_dob: '',
-                            landlord_telephone: '',
-                            landlord_email: ''
-                          }));
-                        }
-                      }}
-                      className={`px-3 py-1 text-xs rounded font-semibold ${
-                        ninServiceDown 
-                          ? 'bg-green-500 text-white hover:bg-green-600' 
-                          : 'bg-red-500 text-white hover:bg-red-600'
-                      }`}
-                    >
-                      {ninServiceDown ? 'Switch to NIN Mode' : 'Switch to Manual Mode'}
-                    </button>
-                  </div>
-                </div>
-                {ninServiceDown && (
-                  <p className="text-xs text-red-700 mt-2">
-                    You can now manually fill in the landlord information below. All fields marked with * are required.
-                  </p>
-                )}
-              </div> */}
+              {/* Manual Mode Only */}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
@@ -368,76 +308,10 @@ export default function ContinuationForm() {
                       value={form.nin_number}
                       onChange={handleChange}
                       className="w-full border rounded px-2 py-1 text-sm sm:text-base"
-                      disabled={ninLoading || (ninValidated && !manualMode)}
                     />
-                    {!manualMode && (
-                      <button
-                        type="button"
-                        className={`px-2 py-1 text-xs rounded ${ninValidated ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'} ${ninLoading ? 'opacity-50' : ''}`}
-                        onClick={async () => {
-                          if (!form.nin_number) {
-                            toast.error('Please enter a NIN number');
-                            return;
-                          }
-                          setNinLoading(true);
-                          setNinValidated(false);
-                          try {
-                            const res = await axiosClient.post(`/V4IBEDC_new_account_setup_sync/initiate/nin-validation?nin=${encodeURIComponent(form.nin_number)}`);
-                            if (res.data.success && res.data.payload && res.data.payload.customer) {
-                              const c = res.data.payload.customer;
-                              // Handle both response structures dynamically
-                              let p = {};
-                              if (c.data) {
-                                // Structure 1: payload.customer.data
-                                p = c.data;
-                              } else if (c.payload && c.payload.data) {
-                                // Structure 2: payload.customer.payload.data
-                                p = c.payload.data;
-                              } else {
-                                // Fallback: try to use customer object directly
-                                p = c;
-                              }
-                              
-                              // Convert birthdate from DD-MM-YYYY to YYYY-MM-DD
-                              let dob = '';
-                              if (p.birthdate && p.birthdate.includes('-')) {
-                                const [d, m, y] = p.birthdate.split('-');
-                                dob = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-                              }
-                              setForm(prev => ({
-                                ...prev,
-                                nin_number: p.nin || prev.nin_number,
-                                landlord_surname: p.surname || prev.landlord_surname,
-                                landlord_othernames: [p.firstname, p.middlename].filter(Boolean).join(' '),
-                                landlord_dob: dob || prev.landlord_dob,
-                                landlord_telephone: p.telephoneno || prev.landlord_telephone,
-                                landlord_email: p.email || prev.landlord_email,
-                              }));
-                              // persist NIN payload for display-only section
-                              setNinData(p);
-                              // Do NOT auto-set photo from NIN; user must upload manually
-                              setNinValidated(true);
-                              toast.success('NIN validated and fields prefilled!');
-                            } else {
-                              toast.error(res.data.message || 'NIN validation failed');
-                            }
-                          } catch (e) {
-                            toast.error('NIN validation failed');
-                            setNinServiceDown(true);
-                            setManualMode(true);
-                          } finally {
-                            setNinLoading(false);
-                          }
-                        }}
-                        disabled={ninLoading || !form.nin_number || ninValidated}
-                      >
-                        {ninLoading ? 'Validating...' : ninValidated ? 'Validated' : 'Validate NIN'}
-                      </button>
-                    )}
                   </div>
                 </div>
-                {/* Show landlord fields after NIN is validated OR when in manual mode */}
-                {(ninValidated || manualMode) && <>
+                <>
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Landlord Surname:</label>
                   <input
@@ -445,11 +319,8 @@ export default function ContinuationForm() {
                     name="landlord_surname"
                     value={form.landlord_surname}
                     onChange={handleChange}
-                    readOnly={ninValidated && !manualMode}
-                    className={`w-full border rounded px-2 py-1 text-sm sm:text-base ${
-                      ninValidated && !manualMode ? 'bg-gray-100' : ''
-                    }`}
-                    placeholder={manualMode ? "Enter landlord surname" : ""}
+                    className="w-full border rounded px-2 py-1 text-sm sm:text-base"
+                    // placeholder={manualMode ? "Enter landlord surname" : ""}
                   />
                 </div>
                 <div>
@@ -459,11 +330,8 @@ export default function ContinuationForm() {
                     name="landlord_othernames"
                     value={form.landlord_othernames}
                     onChange={handleChange}
-                    readOnly={ninValidated && !manualMode}
-                    className={`w-full border rounded px-2 py-1 text-sm sm:text-base ${
-                      ninValidated && !manualMode ? 'bg-gray-100' : ''
-                    }`}
-                    placeholder={manualMode ? "Enter landlord other names" : ""}
+                    className="w-full border rounded px-2 py-1 text-sm sm:text-base"
+                    // placeholder={manualMode ? "Enter landlord other names" : ""}
                   />
                 </div>
                 <div>
@@ -473,10 +341,7 @@ export default function ContinuationForm() {
                     name="landlord_dob"
                     value={form.landlord_dob}
                     onChange={handleChange}
-                    readOnly={ninValidated && !manualMode}
-                    className={`w-full border rounded px-2 py-1 text-sm sm:text-base ${
-                      ninValidated && !manualMode ? 'bg-gray-100' : ''
-                    }`}
+                    className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                     max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
                   />
                 </div>
@@ -487,11 +352,8 @@ export default function ContinuationForm() {
                     name="landlord_telephone"
                     value={form.landlord_telephone}
                     onChange={handleChange}
-                    readOnly={ninValidated && !manualMode}
-                    className={`w-full border rounded px-2 py-1 text-sm sm:text-base ${
-                      ninValidated && !manualMode ? 'bg-gray-100' : ''
-                    }`}
-                    placeholder={manualMode ? "Enter landlord phone number" : ""}
+                    className="w-full border rounded px-2 py-1 text-sm sm:text-base"
+                    // placeholder={manualMode ? "Enter landlord phone number" : ""}
                   />
                 </div>
                 {/* <div>
@@ -512,16 +374,28 @@ export default function ContinuationForm() {
                     name="landlord_email"
                     value={form.landlord_email}
                     onChange={handleChange}
-                    // readOnly={ninValidated && !manualMode}
-                    className={`w-full border rounded px-2 py-1 text-sm sm:text-base ${
-                      ninValidated && !manualMode ? 'bg-gray-100' : ''
-                    }`}
-                    placeholder={manualMode ? "Enter landlord email" : ""}
+                    className="w-full border rounded px-2 py-1 text-sm sm:text-base"
+                    // placeholder={manualMode ? "Enter landlord email" : ""}
                   />
                 </div>
-                </>}
+                <div>
+                  <label className="block text-sm sm:text-base font-semibold mb-2">NIN Slip:</label>
+                  <input
+                    type="file"
+                    name="nin_slip"
+                    onChange={handleChange}
+                    accept="image/*,application/pdf"
+                    className="w-full text-xs sm:text-sm text-gray-500
+                      file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4
+                      file:rounded-full file:border-0
+                      file:text-xs sm:file:text-sm file:font-semibold
+                      file:bg-blue-50 file:text-blue-700
+                      hover:file:bg-blue-100"
+                  />
+                </div>
+                </>
                 {/* End landlord fields */}
-                {(ninValidated || manualMode) && <>
+                <>
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Number of Accounts to Apply For:</label>
                   <input
@@ -568,24 +442,7 @@ export default function ContinuationForm() {
                     />
                   )}
                 </div>
-                </>}
-                {/* NIN extra details (read-only) */}
-                {ninValidated && ninData && (
-                  <div className="sm:col-span-2 mt-2 p-3 border rounded bg-gray-50">
-                    <h3 className="font-semibold text-sm sm:text-base mb-2">NIN Details (Read-only)</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs sm:text-sm">
-                      <div>
-                        <span className="font-medium">Gender:</span> {ninData.gender?.toUpperCase() || '—'}
-                      </div>
-                      <div>
-                        <span className="font-medium">Residence Town:</span> {ninData.residence_town || '—'}
-                      </div>
-                      <div className="sm:col-span-3">
-                        <span className="font-medium">Residence Address:</span> {ninData.residence_adressline1 || '—'}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                </>
               </div>
             </div>
 
