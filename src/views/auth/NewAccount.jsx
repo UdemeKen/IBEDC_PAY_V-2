@@ -115,7 +115,7 @@ export default function NewAccount() {
               <ul className='list-disc list-inside text-sm text-gray-800'>
                 <li>Valid phone number and email address.</li>
                 <li>Address and closest landmark of Building.</li>
-                <li>Landlord's full name, phone number, and email(NIN).</li>
+                <li>Landlord's full name, phone number, email and NIN.</li>
                 <li>Business hub and Service Center of the area your building is located.</li>
                 <li>Complete Licenced Electrical Contractor form (Form will be downloaded to your device after putting in building information)</li>
               </ul>

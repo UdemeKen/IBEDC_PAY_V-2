@@ -3,7 +3,7 @@ import { IBEDC_logo_Blue } from '../../assets/images';
 import { Ibedc_Approved_Logo } from '../../assets/images';
 import { toast } from 'react-toastify';
 import axiosClient from '../../axios';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 const landlordIdOptions = [
   'NIN',
@@ -42,6 +42,8 @@ export default function ContinuationForm() {
     longitude: '1.9849',
   });
   const [picturePreview, setPicturePreview] = useState(null);
+  const [ninPreviewUrl, setNinPreviewUrl] = useState(null);
+  const [ninIsPdf, setNinIsPdf] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingExit, setLoadingExit] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -81,11 +83,34 @@ export default function ContinuationForm() {
         } else {
           setPicturePreview(null);
         }
+      } else if (name === 'nin_slip') {
+        // Revoke previous preview URL if exists
+        if (ninPreviewUrl) {
+          URL.revokeObjectURL(ninPreviewUrl);
+        }
+        if (file) {
+          const isPdf = file.type === 'application/pdf' || (file.name && file.name.toLowerCase().endsWith('.pdf'));
+          setNinIsPdf(isPdf);
+          const objectUrl = URL.createObjectURL(file);
+          setNinPreviewUrl(objectUrl);
+        } else {
+          setNinIsPdf(false);
+          setNinPreviewUrl(null);
+        }
       }
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
   };
+
+  // Cleanup preview URL on unmount or when it changes
+  useEffect(() => {
+    return () => {
+      if (ninPreviewUrl) {
+        URL.revokeObjectURL(ninPreviewUrl);
+      }
+    };
+  }, [ninPreviewUrl]);
 
   // Helper: Validate required fields (manual mode only)
   const requiredFields = [
@@ -269,9 +294,9 @@ export default function ContinuationForm() {
         {/* Header Section */}
         <div className='flex flex-col sm:flex-row bg-gray-200 rounded-lg px-2 sm:px-4 mx-2 sm:mx-10 mt-5'>
           <div className='flex flex-col sm:flex-row justify-center items-center w-full gap-4 sm:gap-72'>
-            <div className='w-full sm:w-auto flex justify-center sm:justify-start'>
+            <Link to={'/'} className='w-full sm:w-auto flex justify-center sm:justify-start'>
             <img src={IBEDC_logo_Blue} alt="logo" className='w-20 sm:w-40 h-10 sm:h-20' />
-            </div>
+            </Link>
             <div className='flex flex-col justify-center items-center text-base sm:text-xl w-full sm:w-1/2 h-auto sm:h-40 text-center px-2 sm:px-0'>
               <h2 className='font-bold text-lg sm:text-xl'>IBADAN ELECTRICITY DISTRIBUTION COMPANY PLC</h2>
               <h4 className='text-base sm:text-lg'>New Customer Account Creation Form</h4>
@@ -307,6 +332,9 @@ export default function ContinuationForm() {
                       name="nin_number"
                       value={form.nin_number}
                       onChange={handleChange}
+                      required
+                      pattern="[0-9]{11}"
+                      title="Please enter a valid 11-digit NIN number"
                       className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                     />
                   </div>
@@ -319,6 +347,7 @@ export default function ContinuationForm() {
                     name="landlord_surname"
                     value={form.landlord_surname}
                     onChange={handleChange}
+                    required
                     className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                     // placeholder={manualMode ? "Enter landlord surname" : ""}
                   />
@@ -330,6 +359,7 @@ export default function ContinuationForm() {
                     name="landlord_othernames"
                     value={form.landlord_othernames}
                     onChange={handleChange}
+                    required
                     className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                     // placeholder={manualMode ? "Enter landlord other names" : ""}
                   />
@@ -341,6 +371,7 @@ export default function ContinuationForm() {
                     name="landlord_dob"
                     value={form.landlord_dob}
                     onChange={handleChange}
+                    required
                     className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                     max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
                   />
@@ -352,6 +383,9 @@ export default function ContinuationForm() {
                     name="landlord_telephone"
                     value={form.landlord_telephone}
                     onChange={handleChange}
+                    required
+                    pattern="[0-9]{11}"
+                    title="Please enter a valid 11-digit phone number"
                     className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                     // placeholder={manualMode ? "Enter landlord phone number" : ""}
                   />
@@ -374,6 +408,9 @@ export default function ContinuationForm() {
                     name="landlord_email"
                     value={form.landlord_email}
                     onChange={handleChange}
+                    required
+                    pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                    title="Please enter a valid email address"
                     className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                     // placeholder={manualMode ? "Enter landlord email" : ""}
                   />
@@ -384,6 +421,7 @@ export default function ContinuationForm() {
                     type="file"
                     name="nin_slip"
                     onChange={handleChange}
+                    required
                     accept="image/*,application/pdf"
                     className="w-full text-xs sm:text-sm text-gray-500
                       file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4
@@ -392,6 +430,26 @@ export default function ContinuationForm() {
                       file:bg-blue-50 file:text-blue-700
                       hover:file:bg-blue-100"
                   />
+                  {ninPreviewUrl && (
+                    <div className="mt-2">
+                      {ninIsPdf ? (
+                        <a
+                          href={ninPreviewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline text-sm"
+                        >
+                          Open PDF preview
+                        </a>
+                      ) : (
+                        <img
+                          src={ninPreviewUrl}
+                          alt="NIN Slip Preview"
+                          className="mt-2 w-32 h-32 object-cover border rounded"
+                        />
+                      )}
+                    </div>
+                  )}
                 </div>
                 </>
                 {/* End landlord fields */}
@@ -402,6 +460,7 @@ export default function ContinuationForm() {
                     type="number"
                     name="no_of_account_apply_for"
                     value={form.no_of_account_apply_for}
+                    required
                     onChange={handleChange}
                     className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                   />
@@ -426,6 +485,7 @@ export default function ContinuationForm() {
                     type="file"
                     name="landloard_picture"
                     onChange={handleChange}
+                    required
                     accept="image/*"
                     className="w-full text-xs sm:text-sm text-gray-500
                       file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4
@@ -510,6 +570,7 @@ export default function ContinuationForm() {
                     name="prefered_method_of_recieving_bill"
                     value={form.prefered_method_of_recieving_bill}
                     onChange={handleChange}
+                    required
                     className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                   >
                     <option value="">Select Method</option>

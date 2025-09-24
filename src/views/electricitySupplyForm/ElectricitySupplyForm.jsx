@@ -3,7 +3,7 @@ import { IBEDC_logo_Blue } from '../../assets/images'
 import { Ibedc_Approved_Logo, } from '../../assets/images'
 import { toast } from 'react-toastify';
 import axiosClient from '../../axios';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 export default function ElectricitySupplyForm() {
   const location = useLocation();
@@ -161,9 +161,9 @@ export default function ElectricitySupplyForm() {
         {/* Header Section */}
         <div className='flex flex-col sm:flex-row bg-gray-200 rounded-lg px-2 sm:px-4 mx-2 sm:mx-10 mt-5'>
           <div className='flex flex-col sm:flex-row justify-center items-center w-full gap-4 sm:gap-72'>
-            <div className='w-full sm:w-auto flex justify-center sm:justify-start'>
+            <Link to={'/'} className='w-full sm:w-auto flex justify-center sm:justify-start'>
               <img src={IBEDC_logo_Blue} alt="logo" className='w-20 sm:w-40 h-10 sm:h-20' />
-            </div>
+            </Link>
             <div className='flex flex-col justify-center items-center text-base sm:text-xl w-full sm:w-1/2 h-auto sm:h-40 text-center px-2 sm:px-0'>
               <h2 className='font-bold text-lg sm:text-xl'>IBADAN ELECTRICITY DISTRIBUTION COMPANY PLC</h2>
               <h4 className='text-base sm:text-lg'>New Customer Account Creation Form</h4>
@@ -235,7 +235,6 @@ export default function ElectricitySupplyForm() {
                     value={form.other_name}
                     onChange={handleChange}
                     className="w-full border rounded px-2 py-1 text-sm sm:text-base"
-                    required
                   />
                 </div>
 
@@ -262,6 +261,8 @@ export default function ElectricitySupplyForm() {
                     onChange={handleChange}
                     className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                     required
+                    pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                    title="Please enter a valid email address"
                   />
                 </div>
               </div>
