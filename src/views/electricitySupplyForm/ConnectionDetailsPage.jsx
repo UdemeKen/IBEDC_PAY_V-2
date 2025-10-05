@@ -3,11 +3,12 @@ import { IBEDC_logo_Blue } from '../../assets/images';
 import { Ibedc_Approved_Logo } from '../../assets/images';
 import { toast } from 'react-toastify';
 import axiosClient from '../../axios';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 
 export default function ConnectionDetailsPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [form, setForm] = useState({
     tracking_id: '',
     comment: '',
@@ -19,13 +20,13 @@ export default function ConnectionDetailsPage() {
   const [showModal, setShowModal] = useState(false);
   const [modalTrackingId, setModalTrackingId] = useState('');
 
-  // Set tracking_id from localStorage
+  // Set tracking_id from URL
   useEffect(() => {
-    const storedTrackingId = localStorage.getItem('TRACKING_ID');
-    if (storedTrackingId) {
-      setForm((prev) => ({ ...prev, tracking_id: storedTrackingId }));
+    const urlTrackingId = searchParams.get('trackingId');
+    if (urlTrackingId) {
+      setForm((prev) => ({ ...prev, tracking_id: urlTrackingId }));
     }
-  }, []);
+  }, [searchParams]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -59,7 +60,7 @@ export default function ConnectionDetailsPage() {
       const data = response.data;
       if (data.success) {
         toast.success(data.message || 'Connection details submitted successfully!');
-        navigate('/finalForm');
+        navigate(`/finalForm?trackingId=${encodeURIComponent(form.tracking_id)}`);
       } else {
         toast.error(data.message || 'An error occurred.');
       }
@@ -166,7 +167,7 @@ export default function ConnectionDetailsPage() {
           <div className="bg-white p-4 sm:p-6 border rounded shadow-sm">
             {/* Connection Information Section */}
             <div className="mb-6">
-              <h2 className="text-base sm:text-lg font-bold mb-4">Connection Information</h2>
+              <h2 className="text-base sm:text-lg font-bold mb-4">Connection Informtion</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Connection Type:</label>

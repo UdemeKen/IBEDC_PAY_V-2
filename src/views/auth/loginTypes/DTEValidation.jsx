@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 const isPending = (acc) => acc.picture === "0" || acc.latitude === "0" || acc.longitude === "0";
 const isValidated = (acc) => acc.picture !== "0" && acc.latitude !== "0" && acc.longitude !== "0";
 
-function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }) {
+function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs, allRegions }) {
   const [picture, setPicture] = useState(null);
   const [latitude, setLatitude] = useState(account.latitude);
   const [longitude, setLongitude] = useState(account.longitude);
@@ -22,7 +22,6 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }
   const [selectedServiceCenter, setSelectedServiceCenter] = useState('');
   
   // New state for editable region and business hub
-  const [allRegions, setAllRegions] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState(account.region);
   const [businessHubsForRegion, setBusinessHubsForRegion] = useState([]);
   const [selectedBusinessHub, setSelectedBusinessHub] = useState(account.business_hub);
@@ -42,41 +41,31 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }
     }
   }, [account.service_center, account.region, account.business_hub]);
 
-  // Extract regions from business hubs data
+  // Fetch business hubs when region changes
   useEffect(() => {
-    if (allBusinessHubs.length > 0) {
-      const regions = [...new Set(allBusinessHubs.map(hub => 
-        hub.Region ? hub.Region.replace(/region/i, '').trim() : ''
-      ).filter(region => region))];
-      setAllRegions(regions);
-    }
-  }, [allBusinessHubs]);
-
-  // Filter business hubs when region changes
-  useEffect(() => {
-    if (!selectedRegion || allBusinessHubs.length === 0) return;
-    const filteredHubs = allBusinessHubs.filter(hub => 
-      hub.Region && hub.Region.replace(/region/i, '').trim().toLowerCase() === selectedRegion.toLowerCase()
-    );
-    setBusinessHubsForRegion(filteredHubs.map(hub => hub.businesshub));
-    // Only reset if the current business hub is not in the new filtered list
-    if (selectedBusinessHub && !filteredHubs.some(hub => hub.businesshub === selectedBusinessHub)) {
-      setSelectedBusinessHub('');
-      setSelectedServiceCenter('');
-    }
-  }, [selectedRegion, allBusinessHubs, selectedBusinessHub]);
-
-  useEffect(() => {
-    if (allBusinessHubs.length > 0 && selectedBusinessHub) {
-      const found = allBusinessHubs.find(
-        hub => hub.businesshub.trim().toLowerCase() === selectedBusinessHub.trim().toLowerCase()
-      );
-      if (found) {
-        const cleanRegion = (found.Region || selectedRegion || '').replace(/region/i, '').trim();
-        setRegionForHub(cleanRegion);
+    if (!selectedRegion) return;
+    const fetchBusinessHubsForRegion = async () => {
+      try {
+        const res = await axiosClient.get(`/V4IBEDC_new_account_setup_sync/initiate/new/business_hub/${selectedRegion}`);
+        const hubs = Array.isArray(res.data) ? res.data.map(h => h.bhub) : [];
+        setBusinessHubsForRegion(hubs);
+        // Only reset if the current business hub is not in the new list
+        if (selectedBusinessHub && !hubs.includes(selectedBusinessHub)) {
+          setSelectedBusinessHub('');
+          setSelectedServiceCenter('');
+        }
+      } catch (e) {
+        setBusinessHubsForRegion([]);
       }
+    };
+    fetchBusinessHubsForRegion();
+  }, [selectedRegion, selectedBusinessHub]);
+
+  useEffect(() => {
+    if (selectedRegion && selectedBusinessHub) {
+      setRegionForHub(selectedRegion);
     }
-  }, [allBusinessHubs, selectedBusinessHub, selectedRegion]);
+  }, [selectedRegion, selectedBusinessHub]);
 
   // Fetch DSS when business hub and service center are selected
   useEffect(() => {
@@ -98,7 +87,10 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }
     const fetchTariff = async () => {
       try {
         const res = await axiosClient.get('/V4IBEDC_new_account_setup_sync/initiate/get_tarriff');
-        setTariffList(res.data.payload.tarriff || []);
+        const allTariffs = res.data.payload.tarriff || [];
+        // Filter to only show NMD tariff codes
+        const nmdTariffs = allTariffs.filter(tariff => tariff.TariffCode === 'NMD');
+        setTariffList(nmdTariffs);
       } catch (e) {
         setTariffList([]);
       }
@@ -110,11 +102,12 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }
     if (!selectedBusinessHub) return;
     const fetchServiceCenters = async () => {
       try {
-        const url = `/V4IBEDC_new_account_setup_sync/initiate/service_centers/${encodeURIComponent(selectedBusinessHub)}`;
+        const url = `/V4IBEDC_new_account_setup_sync/initiate/new/service_centers/${encodeURIComponent(selectedBusinessHub)}`;
         const res = await axiosClient.get(url);
-        setServiceCenters(res.data.payload.service_center || []);
+        const centers = Array.isArray(res.data) ? res.data.map(c => c.service_center) : [];
+        setServiceCenters(centers);
         // Only reset service center if current one is not in the new list
-        if (selectedServiceCenter && !res.data.payload.service_center?.some(sc => sc.DSS_11KV_415V_Owner === selectedServiceCenter)) {
+        if (selectedServiceCenter && !centers.includes(selectedServiceCenter)) {
           setSelectedServiceCenter('');
         }
       } catch (e) {
@@ -221,7 +214,7 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }
               >
                 <option value="">Select Service Center</option>
                 {serviceCenters.map(sc => (
-                  <option key={sc.DSS_11KV_415V_Owner} value={sc.DSS_11KV_415V_Owner}>{sc.DSS_11KV_415V_Owner}</option>
+                  <option key={sc} value={sc}>{sc}</option>
                 ))}
               </select>
             </div>
@@ -341,8 +334,22 @@ export default function DTEValidation() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [viewAccount, setViewAccount] = useState(null);
   
-  // Add allBusinessHubs state for region derivation
+  // Add allBusinessHubs and allRegions state for region derivation
   const [allBusinessHubs, setAllBusinessHubs] = useState([]);
+  const [allRegions, setAllRegions] = useState([]);
+
+  // Fetch all regions
+  useEffect(() => {
+    const fetchAllRegions = async () => {
+      try {
+        const res = await axiosClient.get('/V4IBEDC_new_account_setup_sync/initiate/new/regions');
+        setAllRegions(res.data || []);
+      } catch (e) {
+        setAllRegions([]);
+      }
+    };
+    fetchAllRegions();
+  }, []);
 
   // Fetch all business hubs for region derivation
   useEffect(() => {
@@ -437,6 +444,7 @@ export default function DTEValidation() {
               // Optionally refresh or update the accounts list here
             }}
             allBusinessHubs={allBusinessHubs}
+            allRegions={allRegions}
           />
         )}
         {viewModalOpen && viewAccount && (

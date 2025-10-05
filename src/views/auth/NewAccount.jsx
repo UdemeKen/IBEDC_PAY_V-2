@@ -18,7 +18,6 @@ export default function NewAccount() {
       const data = response.data;
       if (data.success && data.payload && data.payload.customer) {
         const customer = data.payload.customer;
-        localStorage.setItem('TRACKING_ID', customer.tracking_id);
         if (customer.no_of_account_apply_for) {
           localStorage.setItem('no_of_account_apply_for', customer.no_of_account_apply_for);
         }
@@ -53,13 +52,13 @@ export default function NewAccount() {
         }
 
         if (!customer.continuation) {
-          navigate('/continuationForm', { state: { prefill: customer } });
+          navigate(`/continuationForm?trackingId=${encodeURIComponent(String(customer.tracking_id))}`, { state: { prefill: customer } });
         } else if (!customer.uploadinformation) {
-          navigate('/finalForm', { state: { prefill: customer.continuation } });
+          navigate(`/finalForm?trackingId=${encodeURIComponent(String(customer.tracking_id))}`, { state: { prefill: customer.continuation } });
         } else if (!customer.uploaded_pictures || customer.uploaded_pictures.length === 0) {
-          navigate('/finalForm', { state: { prefill: customer.uploaded_pictures } });
+          navigate(`/finalForm?trackingId=${encodeURIComponent(String(customer.tracking_id))}`, { state: { prefill: customer.uploaded_pictures } });
         } else {
-          navigate('/finalForm', { state: { prefill: customer.uploaded_pictures } });
+          navigate(`/finalForm?trackingId=${encodeURIComponent(String(customer.tracking_id))}`, { state: { prefill: customer.uploaded_pictures } });
         }
       } else {
         toast.error(data.message || 'Invalid tracking ID.');

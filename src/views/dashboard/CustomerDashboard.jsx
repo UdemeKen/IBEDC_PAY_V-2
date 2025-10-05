@@ -96,6 +96,9 @@ export default function CustomerDashboard() {
   // Add allBusinessHubs state for both validation modal and view modal
   const [allBusinessHubs, setAllBusinessHubs] = useState([]);
   
+  // Add allRegions state
+  const [allRegions, setAllRegions] = useState([]);
+  
   // Add rejection modal state
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectingAccount, setRejectingAccount] = useState(null);
@@ -325,12 +328,28 @@ export default function CustomerDashboard() {
 
   // console.log(  displayAccountType  );
 
+  // Fetch all regions
+  useEffect(() => {
+    const fetchAllRegions = async () => {
+      try {
+        const res = await axiosClient.get('/V4IBEDC_new_account_setup_sync/initiate/new/regions');
+        console.log("Regions response:", res.data);
+        setAllRegions(res.data || []);
+      } catch (e) {
+        console.error("Error fetching regions:", e);
+        setAllRegions([]);
+      }
+    };
+    fetchAllRegions();
+  }, []);
+
   // Fetch all business hubs for region derivation
   useEffect(() => {
     const fetchAllBusinessHubs = async () => {
       try {
-        const res = await axiosClient.get('/V4IBEDC_new_account_setup_sync/initiate/all_business_hub');
-        setAllBusinessHubs(res.data.payload.business_hubs || []);
+        const res = await axiosClient.get('/V4IBEDC_new_account_setup_sync/initiate/new/business_hub');
+        console.log("Business hubs response:", res.data);
+        setAllBusinessHubs(res.data || []);
       } catch (e) {
         setAllBusinessHubs([]);
       }
@@ -500,8 +519,14 @@ export default function CustomerDashboard() {
                       {isPending(acc) && <button className="bg-green-500 text-white px-3 py-1 rounded font-semibold text-xs" onClick={() => { setSelectedAccount(acc); setValidateModalOpen(true); }}>Validate</button>}
                       {isPending(acc) && (
                         <button
-                          className="bg-red-500 text-white px-3 py-1 rounded font-semibold text-xs flex items-center justify-center min-w-[70px]"
-                          onClick={() => handleReject(acc)}
+                          className={`px-3 py-1 rounded font-semibold text-xs flex items-center justify-center min-w-[70px] ${
+                            acc.lecan_link && acc.lecan_link !== "0" 
+                              ? "bg-red-500 text-white" 
+                              : "bg-gray-400 text-gray-600 cursor-not-allowed"
+                          }`}
+                          onClick={() => acc.lecan_link && acc.lecan_link !== "0" ? handleReject(acc) : null}
+                          disabled={!acc.lecan_link || acc.lecan_link === "0"}
+                          title={!acc.lecan_link || acc.lecan_link === "0" ? "Cannot reject: Licensed contractor form missing" : ""}
                         >
                           Reject
                         </button>
@@ -517,8 +542,14 @@ export default function CustomerDashboard() {
                             Final Approve
                           </button>
                           <button
-                            className="bg-red-600 text-white px-3 py-1 rounded font-semibold text-xs"
-                            onClick={() => handleReject(acc)}
+                            className={`px-3 py-1 rounded font-semibold text-xs ${
+                              acc.lecan_link && acc.lecan_link !== "0" 
+                                ? "bg-red-600 text-white" 
+                                : "bg-gray-400 text-gray-600 cursor-not-allowed"
+                            }`}
+                            onClick={() => acc.lecan_link && acc.lecan_link !== "0" ? handleReject(acc) : null}
+                            disabled={!acc.lecan_link || acc.lecan_link === "0"}
+                            title={!acc.lecan_link || acc.lecan_link === "0" ? "Cannot reject: Licensed contractor form missing" : ""}
                           >
                             Reject
                           </button>
@@ -587,6 +618,7 @@ export default function CustomerDashboard() {
               setDtmPendingAccounts((prev) => prev.filter(acc => acc.id !== selectedAccount.id));
             }}
             allBusinessHubs={allBusinessHubs}
+            allRegions={allRegions}
           />
         )}
         {viewModalOpen && viewAccount && (
@@ -1150,7 +1182,9 @@ export default function CustomerDashboard() {
 const isPending = (acc) => acc.picture === "0" || acc.latitude === "0" || acc.longitude === "0";
 const isValidated = (acc) => acc.picture !== "0" && acc.latitude !== "0" && acc.longitude !== "0";
 
-function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }) {
+function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs, allRegions }) {
+  console.log("ValidateAccountModal received allRegions:", allRegions);
+  
   const [picture, setPicture] = useState(null);
   const [latitude, setLatitude] = useState(account.latitude);
   const [longitude, setLongitude] = useState(account.longitude);
@@ -1165,7 +1199,6 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }
   const [selectedServiceCenter, setSelectedServiceCenter] = useState('');
   
   // New state for editable region and business hub
-  const [allRegions, setAllRegions] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState(account.region);
   const [businessHubsForRegion, setBusinessHubsForRegion] = useState([]);
   const [selectedBusinessHub, setSelectedBusinessHub] = useState(account.business_hub);
@@ -1173,43 +1206,33 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }
   
   const webcamRef = React.useRef(null);
 
-  // Extract regions from business hubs data
+  // Fetch business hubs when region changes
   useEffect(() => {
-    if (allBusinessHubs.length > 0) {
-      const regions = [...new Set(allBusinessHubs.map(hub => 
-        hub.Region ? hub.Region.replace(/region/i, '').trim() : ''
-      ).filter(region => region))];
-      setAllRegions(regions);
-    }
-  }, [allBusinessHubs]);
-
-  // Filter business hubs when region changes
-  useEffect(() => {
-    if (!selectedRegion || allBusinessHubs.length === 0) return;
-    const filteredHubs = allBusinessHubs.filter(hub => 
-      hub.Region && hub.Region.replace(/region/i, '').trim().toLowerCase() === selectedRegion.toLowerCase()
-    );
-    setBusinessHubsForRegion(filteredHubs.map(hub => hub.businesshub));
-    // Reset business hub and service center when region changes
-    setSelectedBusinessHub('');
-    setSelectedServiceCenter('');
-  }, [selectedRegion, allBusinessHubs]);
+    if (!selectedRegion) return;
+    const fetchBusinessHubsForRegion = async () => {
+      try {
+        const res = await axiosClient.get(`/V4IBEDC_new_account_setup_sync/initiate/new/business_hub/${selectedRegion}`);
+        console.log("Business hubs response for region", selectedRegion, ":", res.data);
+        setBusinessHubsForRegion(Array.isArray(res.data) ? res.data.map(h => h.bhub) : []);
+        // Reset business hub and service center when region changes
+        setSelectedBusinessHub('');
+        setSelectedServiceCenter('');
+      } catch (e) {
+        console.error("Error fetching business hubs for region", selectedRegion, ":", e);
+        setBusinessHubsForRegion([]);
+      }
+    };
+    fetchBusinessHubsForRegion();
+  }, [selectedRegion]);
 
 
 
   // Set region for selected business hub
   useEffect(() => {
-    if (allBusinessHubs.length > 0 && selectedBusinessHub) {
-      const found = allBusinessHubs.find(
-        hub => hub.businesshub.trim().toLowerCase() === selectedBusinessHub.trim().toLowerCase()
-      );
-      if (found) {
-        // Remove 'REGION' (case-insensitive) and trim whitespace
-        const cleanRegion = (found.Region || selectedRegion || '').replace(/region/i, '').trim();
-        setRegionForHub(cleanRegion);
-      }
+    if (selectedRegion && selectedBusinessHub) {
+      setRegionForHub(selectedRegion);
     }
-  }, [allBusinessHubs, selectedBusinessHub, selectedRegion]);
+  }, [selectedRegion, selectedBusinessHub]);
 
   // Fetch DSS and Tariff only after regionForHub is set
   useEffect(() => {
@@ -1228,7 +1251,10 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }
     const fetchTariff = async () => {
       try {
         const res = await axiosClient.get('/V4IBEDC_new_account_setup_sync/initiate/get_tarriff');
-        setTariffList(res.data.payload.tarriff || []);
+        const allTariffs = res.data.payload.tarriff || [];
+        // Filter to only show NMD tariff codes
+        const nmdTariffs = allTariffs.filter(tariff => tariff.TariffCode === 'NMD');
+        setTariffList(nmdTariffs);
       } catch (e) {
         setTariffList([]);
       }
@@ -1242,12 +1268,14 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }
     if (!selectedBusinessHub) return;
     const fetchServiceCenters = async () => {
       try {
-        const url = `/V4IBEDC_new_account_setup_sync/initiate/service_centers/${encodeURIComponent(selectedBusinessHub)}`;
+        const url = `/V4IBEDC_new_account_setup_sync/initiate/new/service_centers/${encodeURIComponent(selectedBusinessHub)}`;
         const res = await axiosClient.get(url);
-        setServiceCenters(res.data.payload.service_center || []);
+        console.log("Service centers response for business hub", selectedBusinessHub, ":", res.data);
+        setServiceCenters(Array.isArray(res.data) ? res.data.map(c => c.service_center) : []);
         // Reset service center when business hub changes
         setSelectedServiceCenter('');
       } catch (e) {
+        console.error("Error fetching service centers for business hub", selectedBusinessHub, ":", e);
         setServiceCenters([]);
       }
     };
@@ -1379,7 +1407,7 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs }
               >
                 <option value="">Select Service Center</option>
                 {serviceCenters.map(sc => (
-                  <option key={sc.DSS_11KV_415V_Owner} value={sc.DSS_11KV_415V_Owner}>{sc.DSS_11KV_415V_Owner}</option>
+                  <option key={sc} value={sc}>{sc}</option>
                 ))}
               </select>
             </div>

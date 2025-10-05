@@ -3,7 +3,7 @@ import { IBEDC_logo_Blue } from '../../assets/images';
 import { Ibedc_Approved_Logo } from '../../assets/images';
 import { toast } from 'react-toastify';
 import axiosClient from '../../axios';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link, useSearchParams } from 'react-router-dom';
 
 const landlordIdOptions = [
   'NIN',
@@ -19,6 +19,7 @@ const billMethods = [
 
 export default function ContinuationForm() {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [form, setForm] = useState({
     tracking_id: '',
     nin_number: '',
@@ -51,7 +52,7 @@ export default function ContinuationForm() {
   
   const navigate = useNavigate();
 
-  // Set tracking_id from location.state if available
+  // Set tracking_id from URL or location.state
   useEffect(() => {
     if (location.state && location.state.prefill) {
       setForm(prev => ({
@@ -59,16 +60,13 @@ export default function ContinuationForm() {
         ...location.state.prefill,
         tracking_id: location.state.prefill.tracking_id || prev.tracking_id,
       }));
-    } else if (location.state && location.state.trackingId) {
-      setForm((prev) => ({ ...prev, tracking_id: location.state.trackingId }));
     } else {
-      // Check localStorage if not in location state
-      const storedTrackingId = localStorage.getItem('TRACKING_ID');
-      if (storedTrackingId) {
-        setForm((prev) => ({ ...prev, tracking_id: storedTrackingId }));
+      const urlTrackingId = searchParams.get('trackingId');
+      if (urlTrackingId) {
+        setForm((prev) => ({ ...prev, tracking_id: urlTrackingId }));
       }
     }
-  }, [location.state]);
+  }, [location.state, searchParams]);
 
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
@@ -176,15 +174,12 @@ export default function ContinuationForm() {
     try {
       const response = await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/continue-application', dataToSend, config);
       const data = response.data;
-      if (data.success) {
+      if (data.success || response.response.data.success) {
         toast.success(data.message || 'Continuation submitted successfully!');
-        navigate('/finalForm', {
-          state: {
-            numAccounts: parseInt(form.no_of_account_apply_for) || 1,
-            trackingId: form.tracking_id
-          }
-        });
+        const numAccounts = parseInt(form.no_of_account_apply_for) || 1;
+        navigate(`/finalForm?trackingId=${encodeURIComponent(form.tracking_id)}${Number.isFinite(numAccounts) ? `&numAccounts=${numAccounts}` : ''}`);
       } else {
+        toast.error(response.response.data.payload?.nin_number || response.response.data.payload || 'An error occurred.');
         toast.error(data.payload?.nin_number || data.message || 'An error occurred.');
       }
     } catch (error) {

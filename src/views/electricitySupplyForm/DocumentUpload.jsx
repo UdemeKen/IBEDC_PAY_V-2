@@ -3,7 +3,7 @@ import { Black_Logo } from '../../assets/images';
 import { Ibedc_Approved_Logo } from '../../assets/images';
 import { toast } from 'react-toastify';
 import axiosClient from '../../axios';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 
 const identificationOptions = [
   'NIN',
@@ -15,6 +15,7 @@ const identificationOptions = [
 export default function DocumentUpload() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [form, setForm] = useState({
     tracking_id: '',
     means_of_identification: '',
@@ -30,7 +31,7 @@ export default function DocumentUpload() {
   const [showModal, setShowModal] = useState(false);
   const [modalTrackingId, setModalTrackingId] = useState('');
 
-  // Set tracking_id from localStorage
+  // Set tracking_id from URL or prefill
   useEffect(() => {
     if (location.state && location.state.prefill) {
       setForm(prev => ({
@@ -39,12 +40,12 @@ export default function DocumentUpload() {
         tracking_id: location.state.prefill.tracking_id || prev.tracking_id,
       }));
     } else {
-      const storedTrackingId = localStorage.getItem('TRACKING_ID');
-      if (storedTrackingId) {
-        setForm((prev) => ({ ...prev, tracking_id: storedTrackingId }));
+      const urlTrackingId = searchParams.get('trackingId');
+      if (urlTrackingId) {
+        setForm((prev) => ({ ...prev, tracking_id: urlTrackingId }));
       }
     }
-  }, []);
+  }, [location.state, searchParams]);
 
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
@@ -116,7 +117,7 @@ export default function DocumentUpload() {
       const data = response.data;
       if (data.success) {
         toast.success(data.message || 'Document upload successful!');
-        navigate('/finalForm');
+        navigate(`/finalForm?trackingId=${encodeURIComponent(form.tracking_id)}`);
       } else {
         toast.error(data.message || 'An error occurred.');
       }

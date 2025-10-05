@@ -65,36 +65,23 @@ export default function ElectricitySupplyForm() {
     }
     try {
       const response = await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/register-customer', form);
-      const data = response.data;7
-      setLastResponse(data);
-      // if (data.success) {
+      console.log(response.data);
+      if (response.data.success || response.response.data.success) {
+        const data = response.data;
+        setLastResponse(data);
         setTrackingId(data.payload.customer.tracking_id);
-        localStorage.setItem('TRACKING_ID', data.payload.customer.tracking_id);
         toast.success(data.message || 'Customer created successfully!');
-        navigate('/continuationForm', { state: { trackingId: data.payload.customer.tracking_id } });
-      // } else {
-      //   toast.error(data.message || 'An error occurred.');
-      // }
+        navigate(`/continuationForm?trackingId=${encodeURIComponent(data.payload.customer.tracking_id)}`);
+      } else if (response.response.data.message === 'Validation error') {
+        toast.error(response.response.data.payload.phone || 'An error occurred.');
+        toast.error(response.response.data.payload.email || 'An error occurred.');
+      } else {
+        toast.error(response.response.data.payload || 'An error occurred.');
+      }
     } catch (error) {
-      console.log(error);
-      
-      // const msg = error.response?.data?.message;
-      // console.log(error);
-      
-      // toast.error(msg);
-      // const emailError = msg === 'The email has already been taken.';
-      // const phoneError = msg === 'The phone has already been taken.';
-      // const bothError = msg && msg.includes('The email has already been taken.') && msg.includes('The phone has already been taken.');
-      // const validationError = msg === 'Validation error';
-      // if (emailError || phoneError || bothError || validationError) {
-      //   let id = '';
-      //   if (error.response?.data?.payload?.customer?.tracking_id) {
-      //     id = error.response.data.payload.customer.tracking_id;
-      //   } else if (trackingId) {
-      //     id = trackingId;
-      //   }
-      //   navigate('/continuationForm', { state: { trackingId: id } });
-      // }
+      console.log(error.response.data.success);
+      toast.error(error.response.data.payload.phone || 'An error occurred.');
+      toast.error(error.response.data.payload.email || 'An error occurred.');
     } finally {
       setLoading(false);
     }
@@ -112,18 +99,17 @@ export default function ElectricitySupplyForm() {
     }
     try {
       const response = await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/register-customer', form);
-      const data = response.data;
-      setLastResponse(data);
-      if (data.success && data.payload?.customer?.tracking_id) {
+      console.log(response.response.data.success);
+      if (response.response.data.success) {
+        const data = response.data;
+        setLastResponse(data);
         setTrackingId(data.payload.customer.tracking_id);
-        localStorage.setItem('TRACKING_ID', data.payload.customer.tracking_id);
         setShowModal(true);
       } else {
-        toast.error(data.message || 'An error occurred.');
+        toast.error(response.response.data.payload || 'An error occurred.');
       }
     } catch (error) {
-      toast.error(error.response?.data?.payload.phone || 'Network error. Please try again.');
-      toast.error(error.response?.data?.payload.email || 'Network error. Please try again.');
+      console.log(error);
     } 
     finally {
       setLoading01(false);
