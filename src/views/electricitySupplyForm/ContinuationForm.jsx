@@ -505,7 +505,7 @@ export default function ContinuationForm() {
             <div className="mb-6">
               <h2 className="text-base sm:text-lg font-bold mb-4">Previous Information</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                <div>
+                {/* <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Name/Address of Previous Employer:</label>
                   <input
                     type="text"
@@ -527,7 +527,7 @@ export default function ContinuationForm() {
                     placeholder="Enter previous customer address (optional)"
                     className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                   />
-                </div>
+                </div> */}
 
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Previous Account Number:</label>
