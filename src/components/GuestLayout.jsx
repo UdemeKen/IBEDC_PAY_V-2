@@ -99,6 +99,14 @@ export default function GuestLayout() {
                     <p>By clicking on Sign up, you agree to our <span className='text-orange-500'><Link to={"https://www.ibedc.com/terms-of-service"} target='_blank'>terms & conditions</Link></span> and <span className='text-orange-500'><Link to={"/privacypolicy"} target='_blank'>privacy policy</Link></span></p>
                 </div>
             </div>
+            <div className='flex flex-row justify-center items-center space-x-10 mt-5'>
+                <Link
+                    className='bg-blue-950 opacity-75 hover:bg-orange-500 duration-300 ease-in-out text-white font-bold py-2 px-4 rounded'
+                    to={'/newaccount'}
+                >
+                    New Customer Account Creation
+                </Link>
+            </div>
             <div className='flex flex-row justify-center items-center space-x-10 my-5'>
                 <Link to={"https://play.google.com/store/apps/details?id=com.ibedc.ibedcpay"} target='_blank'>
                     <img 
@@ -118,14 +126,6 @@ export default function GuestLayout() {
                     />
                 </Link>
             </div> 
-            <div className='flex flex-row justify-center items-center space-x-10'>
-                <Link
-                    className='bg-blue-950 opacity-75 hover:bg-orange-500 duration-300 ease-in-out text-white font-bold py-2 px-4 rounded'
-                    to={'/newaccount'}
-                >
-                    New Customer Account Creation
-                </Link>
-            </div>
         </div>
       </div>
       {/* New account flows handled on /newaccount */}
