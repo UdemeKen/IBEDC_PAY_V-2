@@ -3,12 +3,13 @@ import { IBEDC_logo_Blue } from '../../assets/images';
 import { Ibedc_Approved_Logo } from '../../assets/images';
 import { toast } from 'react-toastify';
 import axiosClient from '../../axios';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link, useSearchParams } from 'react-router-dom';
 import statesData from '../../variants/states.json';
 
 export default function FinalFormPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // Initialize buildings state with empty array
   const [buildings, setBuildings] = useState([]);
@@ -61,12 +62,13 @@ export default function FinalFormPage() {
   // Initialize buildings with previously uploaded data
   useEffect(() => {
     const initializeBuildings = async () => {
-      const storedTrackingId = localStorage.getItem('TRACKING_ID');
-      if (storedTrackingId) {
-        setTrackingId(storedTrackingId);
+      // Try multiple URL parameter names for tracking_id
+      const urlTrackingId = searchParams.get('trackingId') || searchParams.get('tracking_id') || searchParams.get('id');
+      if (urlTrackingId) {
+        setTrackingId(urlTrackingId);
       }
 
-      console.log(businessHubs);
+      console.log(trackingId);
       
       // Get number of accounts from navigation state or default to 1
       const numAccounts = location.state?.numAccounts || 1;
