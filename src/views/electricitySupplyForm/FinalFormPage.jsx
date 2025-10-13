@@ -20,6 +20,13 @@ export default function FinalFormPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successData, setSuccessData] = useState(null);
   const [downloadsTriggered, setDownloadsTriggered] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editFormData, setEditFormData] = useState({});
+  const [editLoading, setEditLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [summaryData, setSummaryData] = useState({});
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
   // State for dropdown options
   const [businessHubs, setBusinessHubs] = useState([]);
@@ -193,11 +200,12 @@ export default function FinalFormPage() {
     }
     setLoadingServiceCenters(prev => ({ ...prev, [index]: true }));
     try {
-      const response = await axiosClient.get(`/V4IBEDC_new_account_setup_sync/initiate/service_centers/${businessHub}`);
-      if (response.data.success) {
-        setServiceCenters(prev => ({ ...prev, [index]: response.data.payload.service_center.map(item => item.DSS_11KV_415V_Owner) }));
+      const response = await axiosClient.get(`/V4IBEDC_new_account_setup_sync/initiate/new/service_centers/${businessHub}`);
+      if (response.data && Array.isArray(response.data)) {
+        setServiceCenters(prev => ({ ...prev, [index]: response.data.map(item => item.service_center) }));
       } else {
-        toast.error(response.data.message || `Failed to load service centers for business hub ${businessHub}`);
+        console.error('Service centers response structure:', response.data);
+        toast.error(`Failed to load service centers for business hub ${businessHub}`);
       }
     } catch (error) {
       toast.error(`Failed to load service centers for business hub ${businessHub}`);
@@ -239,13 +247,19 @@ export default function FinalFormPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     const missingFields = validateForm();
     if (missingFields.length > 0) {
       toast.error(`Please fill in the following field(s): ${missingFields.join(', ')}`);
-      setLoading(false);
       return;
     }
+    
+    // Show summary modal before final submission
+    await fetchExistingData();
+  };
+
+  const handleFinalSubmit = async () => {
+    setLoading(true);
+    setShowSummaryModal(false);
 
     const formData = new FormData();
     formData.append('tracking_id', trackingId);
@@ -329,6 +343,178 @@ export default function FinalFormPage() {
       }, 1000);
     }
   }, [showSuccessModal, successData, downloadsTriggered]);
+
+  // Fetch all existing data for summary
+  const fetchExistingData = async () => {
+    if (!trackingId) {
+      toast.error('Tracking ID not found');
+      return;
+    }
+    
+    setSummaryLoading(true);
+    try {
+      const response = await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/track-application', {
+        tracking_id: trackingId
+      });
+      
+      if (response.data.success && response.data.payload?.customer) {
+        const customer = response.data.payload.customer;
+        const continuation = customer.continuation;
+        
+        setSummaryData({
+          // Part 1 - Customer Information
+          customer: {
+            tracking_id: customer.tracking_id,
+            phone: customer.phone,
+            email: customer.email,
+            title: customer.title,
+            surname: customer.surname,
+            firstname: customer.firstname,
+            other_name: customer.other_name,
+            status: customer.status,
+            status_name: customer.status_name,
+            no_of_account_apply_for: customer.no_of_account_apply_for,
+            region: customer.region,
+            default_house_no: customer.default_house_no
+          },
+          // Part 2 - Landlord Information
+          landlord: continuation ? {
+            nin_number: continuation.nin_number,
+            landlord_surname: continuation.landlord_surname,
+            landlord_othernames: continuation.landlord_othernames,
+            landlord_dob: continuation.landlord_dob,
+            landlord_telephone: continuation.landlord_telephone,
+            landlord_email: continuation.landlord_email,
+            name_address_of_previous_employer: continuation.name_address_of_previous_employer,
+            previous_customer_address: continuation.previous_customer_address,
+            previous_account_number: continuation.previous_account_number,
+            previous_meter_number: continuation.previous_meter_number,
+            landlord_personal_identification: continuation.landlord_personal_identification,
+            prefered_method_of_recieving_bill: continuation.prefered_method_of_recieving_bill,
+            comments: continuation.comments,
+            organisational_name: continuation.organisational_name,
+            is_organizational: !!continuation.organisational_name,
+            no_of_account_apply_for: continuation.no_of_account_apply_for,
+            // Uploaded Documents
+            landloard_picture: continuation.landloard_picture,
+            nin_slip: continuation.nin_slip,
+            cac_slip: continuation.cac_slip
+          } : null,
+          // Part 3 - Building Information
+          buildings: buildings
+        });
+        setShowSummaryModal(true);
+      } else {
+        toast.error('No data found for this tracking ID');
+      }
+    } catch (error) {
+      console.error('Error fetching existing data:', error);
+      toast.error('Failed to fetch existing data');
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
+  // Fetch tracking data for editing
+  const fetchTrackingData = async () => {
+    if (!trackingId) {
+      toast.error('Tracking ID not found');
+      return;
+    }
+    
+    setFetchLoading(true);
+    try {
+      const response = await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/track-application', {
+        tracking_id: trackingId
+      });
+      if (response.data.success && response.data.payload?.customer?.continuation) {
+        const continuation = response.data.payload.customer.continuation;
+        setEditFormData({
+          nin_number: continuation.nin_number || '',
+          landlord_surname: continuation.landlord_surname || '',
+          landlord_othernames: continuation.landlord_othernames || '',
+          landlord_dob: continuation.landlord_dob || '',
+          landlord_telephone: continuation.landlord_telephone || '',
+          landlord_email: continuation.landlord_email || '',
+          name_address_of_previous_employer: continuation.name_address_of_previous_employer || '',
+          previous_customer_address: continuation.previous_customer_address || '',
+          previous_account_number: continuation.previous_account_number || '',
+          previous_meter_number: continuation.previous_meter_number || '',
+          landlord_personal_identification: continuation.landlord_personal_identification || 'NIN',
+          prefered_method_of_recieving_bill: continuation.prefered_method_of_recieving_bill?.replace('Bill Sent ', '') || '',
+          comments: continuation.comments || '',
+          no_of_account_apply_for: continuation.no_of_account_apply_for || '1',
+          organisational_name: continuation.organisational_name || '',
+          is_organizational_account: !!continuation.organisational_name
+        });
+        setShowEditModal(true);
+      } else {
+        toast.error('No continuation data found for this tracking ID');
+      }
+    } catch (error) {
+      console.error('Error fetching tracking data:', error);
+      toast.error('Failed to fetch tracking data');
+    } finally {
+      setFetchLoading(false);
+    }
+  };
+
+  // Handle edit form changes
+  const handleEditChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    if (type === 'checkbox') {
+      setEditFormData(prev => ({ ...prev, [name]: checked }));
+    } else {
+      setEditFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  // Handle edit form submission
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setEditLoading(true);
+    
+    try {
+      const payload = {
+        tracking_id: trackingId,
+        nin_number: editFormData.nin_number,
+        landlord_surname: editFormData.landlord_surname,
+        landlord_othernames: editFormData.landlord_othernames,
+        landlord_dob: editFormData.landlord_dob,
+        landlord_telephone: editFormData.landlord_telephone,
+        landlord_email: editFormData.landlord_email,
+        name_address_of_previous_employer: editFormData.name_address_of_previous_employer,
+        previous_customer_address: editFormData.previous_customer_address,
+        previous_account_number: editFormData.previous_account_number,
+        previous_meter_number: editFormData.previous_meter_number,
+        landlord_personal_identification: editFormData.landlord_personal_identification,
+        ...(editFormData.is_organizational_account && { organisational_name: editFormData.organisational_name }),
+        prefered_method_of_recieving_bill: editFormData.prefered_method_of_recieving_bill ? `Bill Sent ${editFormData.prefered_method_of_recieving_bill}` : '',
+        comments: editFormData.comments,
+        no_of_account_apply_for: editFormData.no_of_account_apply_for,
+        latitude: localStorage.getItem('LATITUDE') || '0.00000',
+        longitude: localStorage.getItem('LONGITUDE') || '0.00000',
+      };
+
+      const response = await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/edit_landlord_information', payload);
+      
+      if (response.data.success) {
+        toast.success('Landlord information updated successfully!');
+        setShowEditModal(false);
+      } else {
+        toast.error(response.data.message || 'Failed to update landlord information');
+      }
+    } catch (error) {
+      console.error('Error updating landlord information:', error);
+      if (error.response?.data?.success === false) {
+        toast.error(error.response?.data?.payload?.nin_number || error.response.data.message);
+      } else {
+        toast.error('Network error. Please try again.');
+      }
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
   const handleSaveAndExit = async (e) => {
     e.preventDefault();
@@ -431,8 +617,25 @@ export default function FinalFormPage() {
         </div>
 
         {/* Title Section */}
-        <div className='font-bold text-base sm:text-lg mt-4 sm:mt-8 mx-4 sm:mx-20 -mb-2'>
+        <div className='flex justify-between items-center font-bold text-base sm:text-lg mt-4 sm:mt-8 mx-4 sm:mx-20 -mb-2'>
           <h1>PART 3: BUILDING DETAILS</h1>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => navigate(`/continuationForm?trackingId=${trackingId}&update=true`)}
+              className="px-4 py-2 text-sm bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-400"
+            >
+              Edit Landlord Information
+            </button>
+            <button
+              type="button"
+              onClick={fetchTrackingData}
+              disabled={fetchLoading}
+              className="px-4 py-2 text-sm bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-400"
+            >
+              {fetchLoading ? 'Loading...' : 'Quick Edit Modal'}
+            </button>
+          </div>
         </div>
 
         {/* Form Section */}
@@ -765,6 +968,411 @@ export default function FinalFormPage() {
                 Return Home
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Landlord Information Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
+          <div className="bg-white p-4 sm:p-8 rounded shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg sm:text-xl font-bold text-blue-700">Edit Landlord Information</h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+              >
+                ×
+              </button>
+            </div>
+            
+            <form onSubmit={handleEditSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2">NIN Number:</label>
+                  <input
+                    type="text"
+                    name="nin_number"
+                    value={editFormData.nin_number || ''}
+                    onChange={handleEditChange}
+                    required
+                    pattern="[0-9]{11}"
+                    title="Please enter a valid 11-digit NIN number"
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Landlord Surname:</label>
+                  <input
+                    type="text"
+                    name="landlord_surname"
+                    value={editFormData.landlord_surname || ''}
+                    onChange={handleEditChange}
+                    required
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Landlord Other Names:</label>
+                  <input
+                    type="text"
+                    name="landlord_othernames"
+                    value={editFormData.landlord_othernames || ''}
+                    onChange={handleEditChange}
+                    required
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Date of Birth:</label>
+                  <input
+                    type="date"
+                    name="landlord_dob"
+                    value={editFormData.landlord_dob || ''}
+                    onChange={handleEditChange}
+                    required
+                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Telephone:</label>
+                  <input
+                    type="tel"
+                    name="landlord_telephone"
+                    value={editFormData.landlord_telephone || ''}
+                    onChange={handleEditChange}
+                    required
+                    pattern="[0-9]{11}"
+                    title="Please enter a valid 11-digit phone number"
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Email:</label>
+                  <input
+                    type="email"
+                    name="landlord_email"
+                    value={editFormData.landlord_email || ''}
+                    onChange={handleEditChange}
+                    required
+                    pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                    title="Please enter a valid email address"
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Previous Account Number:</label>
+                  <input
+                    type="text"
+                    name="previous_account_number"
+                    value={editFormData.previous_account_number || ''}
+                    onChange={handleEditChange}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Previous Meter Number:</label>
+                  <input
+                    type="text"
+                    name="previous_meter_number"
+                    value={editFormData.previous_meter_number || ''}
+                    onChange={handleEditChange}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Preferred Method of Receiving Bill:</label>
+                  <select
+                    name="prefered_method_of_recieving_bill"
+                    value={editFormData.prefered_method_of_recieving_bill || ''}
+                    onChange={handleEditChange}
+                    required
+                    className="w-full border rounded px-3 py-2"
+                  >
+                    <option value="">Select Method</option>
+                    <option value="By Email">By Email</option>
+                    <option value="By SMS">By SMS</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Number of Accounts:</label>
+                  <input
+                    type="number"
+                    name="no_of_account_apply_for"
+                    value={editFormData.no_of_account_apply_for || '1'}
+                    onChange={handleEditChange}
+                    required
+                    min="1"
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+              </div>
+              
+              {/* Organizational Account Checkbox */}
+              <div className="flex items-center mb-4">
+                <input
+                  type="checkbox"
+                  name="is_organizational_account"
+                  checked={editFormData.is_organizational_account || false}
+                  onChange={handleEditChange}
+                  className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label className="text-sm font-semibold text-gray-700">
+                  Is this account for an organization?
+                </label>
+              </div>
+
+              {/* Organizational Fields - Only show if checkbox is checked */}
+              {editFormData.is_organizational_account && (
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Organizational Name:</label>
+                  <input
+                    type="text"
+                    name="organisational_name"
+                    value={editFormData.organisational_name || ''}
+                    onChange={handleEditChange}
+                    placeholder="Enter organizational name"
+                    required={editFormData.is_organizational_account}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+              )}
+              
+              {/* <div>
+                <label className="block text-sm font-semibold mb-2">Comments:</label>
+                <textarea
+                  name="comments"
+                  value={editFormData.comments || ''}
+                  onChange={handleEditChange}
+                  rows={3}
+                  className="w-full border rounded px-3 py-2"
+                />
+              </div> */}
+              
+              <div className="flex justify-end gap-4 pt-6 border-t">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-6 py-2 bg-gray-500 text-white font-semibold rounded-lg shadow hover:bg-gray-600 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editLoading}
+                  className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 disabled:bg-gray-400"
+                >
+                  {editLoading ? 'Updating...' : 'Update'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Summary Modal */}
+      {showSummaryModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
+          <div className="bg-white p-4 sm:p-8 rounded shadow-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg sm:text-xl font-bold text-blue-700">Application Summary - Review Before Submission</h2>
+              <button
+                onClick={() => setShowSummaryModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+              >
+                ×
+              </button>
+            </div>
+            
+            {summaryLoading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="text-blue-600">Loading summary...</div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Part 1 - Customer Information */}
+                {summaryData.customer && (
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-bold text-blue-900 mb-4">Part 1: Customer Information</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div><strong>Tracking ID:</strong> {summaryData.customer.tracking_id}</div>
+                      <div><strong>Phone:</strong> {summaryData.customer.phone}</div>
+                      <div><strong>Email:</strong> {summaryData.customer.email}</div>
+                      <div><strong>Title:</strong> {summaryData.customer.title}</div>
+                      <div><strong>Name:</strong> {summaryData.customer.surname} {summaryData.customer.firstname} {summaryData.customer.other_name}</div>
+                      <div><strong>Status:</strong> {summaryData.customer.status_name}</div>
+                      {/* <div><strong>Region:</strong> {summaryData.customer.region}</div> */}
+                    </div>
+                  </div>
+                )}
+
+                {/* Part 2 - Landlord Information */}
+                {summaryData.landlord && (
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-bold text-green-900 mb-4">Part 2: Landlord Information</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div><strong>NIN Number:</strong> {summaryData.landlord.nin_number}</div>
+                      <div><strong>Landlord Name:</strong> {summaryData.landlord.landlord_surname} {summaryData.landlord.landlord_othernames}</div>
+                      <div><strong>Date of Birth:</strong> {summaryData.landlord.landlord_dob}</div>
+                      <div><strong>Telephone:</strong> {summaryData.landlord.landlord_telephone}</div>
+                      <div><strong>Email:</strong> {summaryData.landlord.landlord_email}</div>
+                      {/* <div><strong>ID Type:</strong> {summaryData.landlord.landlord_personal_identification}</div> */}
+                      <div><strong>Bill Method:</strong> {summaryData.landlord.prefered_method_of_recieving_bill}</div>
+                      <div><strong>Accounts Applied For:</strong> {summaryData.landlord.no_of_account_apply_for}</div>
+                      <div><strong>Previous Account:</strong> {summaryData.landlord.previous_account_number || 'N/A'}</div>
+                      <div><strong>Previous Meter:</strong> {summaryData.landlord.previous_meter_number || 'N/A'}</div>
+                      {summaryData.landlord.is_organizational && (
+                        <div className="sm:col-span-2"><strong>Organizational Name:</strong> {summaryData.landlord.organisational_name}</div>
+                      )}
+                      
+                      {/* Uploaded Documents */}
+                      <div className="sm:col-span-2">
+                        <strong>Uploaded Documents:</strong>
+                        <div className="mt-2 flex flex-wrap gap-4">
+                          {summaryData.landlord.landloard_picture && (
+                            <div>
+                              <div className="text-sm font-semibold text-gray-700 mb-1">Landlord Picture:</div>
+                              <img 
+                                src={`https://ipay.ibedc.com:7642/storage/${summaryData.landlord.landloard_picture}`}
+                                alt="Landlord Picture"
+                                className="w-32 h-32 object-cover border rounded shadow-sm"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.nextSibling.style.display = 'block';
+                                }}
+                              />
+                              <div className="text-xs text-gray-500 mt-1" style={{display: 'none'}}>
+                                Image not available: {summaryData.landlord.landloard_picture}
+                              </div>
+                            </div>
+                          )}
+                          {summaryData.landlord.nin_slip && (
+                            <div>
+                              <div className="text-sm font-semibold text-gray-700 mb-1">NIN Slip:</div>
+                              {summaryData.landlord.nin_slip.toLowerCase().endsWith('.pdf') ? (
+                                <div className="text-sm text-blue-600">
+                                  <a 
+                                    href={`https://ipay.ibedc.com:7642/storage/${summaryData.landlord.nin_slip}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="underline"
+                                  >
+                                    📄 View PDF Document
+                                  </a>
+                                </div>
+                              ) : (
+                                <img 
+                                  src={`https://ipay.ibedc.com:7642/storage/${summaryData.landlord.nin_slip}`}
+                                  alt="NIN Slip"
+                                  className="w-32 h-32 object-cover border rounded shadow-sm"
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'block';
+                                  }}
+                                />
+                              )}
+                              <div className="text-xs text-gray-500 mt-1" style={{display: 'none'}}>
+                                Document not available: {summaryData.landlord.nin_slip}
+                              </div>
+                            </div>
+                          )}
+                          {summaryData.landlord.cac_slip && (
+                            <div>
+                              <div className="text-sm font-semibold text-gray-700 mb-1">CAC Slip:</div>
+                              {summaryData.landlord.cac_slip.toLowerCase().endsWith('.pdf') ? (
+                                <div className="text-sm text-blue-600">
+                                  <a 
+                                    href={`https://ipay.ibedc.com:7642/storage/${summaryData.landlord.cac_slip}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="underline"
+                                  >
+                                    📄 View PDF Document
+                                  </a>
+                                </div>
+                              ) : (
+                                <img 
+                                  src={`https://ipay.ibedc.com:7642/storage/${summaryData.landlord.cac_slip}`}
+                                  alt="CAC Slip"
+                                  className="w-32 h-32 object-cover border rounded shadow-sm"
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'block';
+                                  }}
+                                />
+                              )}
+                              <div className="text-xs text-gray-500 mt-1" style={{display: 'none'}}>
+                                Document not available: {summaryData.landlord.cac_slip}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* {summaryData.landlord.comments && (
+                        <div className="sm:col-span-2"><strong>Comments:</strong> {summaryData.landlord.comments}</div>
+                      )} */}
+                    </div>
+                  </div>
+                )}
+
+                {/* Part 3 - Building Information */}
+                {summaryData.buildings && summaryData.buildings.length > 0 && (
+                  <div className="bg-yellow-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-bold text-yellow-900 mb-4">Part 3: Building Information ({summaryData.buildings.length} building{summaryData.buildings.length > 1 ? 's' : ''})</h3>
+                    <div className="space-y-4">
+                      {summaryData.buildings.map((building, index) => (
+                        <div key={index} className="bg-white p-4 rounded border">
+                          <h4 className="font-bold text-gray-800 mb-2">Building {index + 1}</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                            <div><strong>House No:</strong> {building.house_no}</div>
+                            <div><strong>Address:</strong> {building.full_address}</div>
+                            <div><strong>Business Hub:</strong> {building.business_hub}</div>
+                            <div><strong>Service Center:</strong> {building.service_center}</div>
+                            <div><strong>Nearest Bus Stop:</strong> {building.nearest_bustop}</div>
+                            <div><strong>LGA:</strong> {building.tga}</div>
+                            <div><strong>Landmark:</strong> {building.landmark}</div>
+                            <div><strong>Premise Type:</strong> {building.type_of_premise}</div>
+                            <div><strong>Premise Use:</strong> {building.use_of_premise}</div>
+                            <div><strong>State:</strong> {building.state}</div>
+                            {building.others_in_type_of_premise && (
+                              <div className="sm:col-span-2"><strong>Other Premise Type:</strong> {building.others_in_type_of_premise}</div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-4 pt-6 border-t">
+                  <button
+                    onClick={() => setShowSummaryModal(false)}
+                    className="px-6 py-2 bg-gray-500 text-white font-semibold rounded-lg shadow hover:bg-gray-600 transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleFinalSubmit}
+                    disabled={loading}
+                    className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 transition-colors duration-200 disabled:bg-gray-400"
+                  >
+                    {loading ? 'Submitting...' : 'Confirm & Submit'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

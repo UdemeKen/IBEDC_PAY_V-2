@@ -81,7 +81,14 @@ export default function CustomerDashboard() {
   const [dtmLoading, setDtmLoading] = useState(false);
   const [dtmRecentActivity, setDtmRecentActivity] = useState([]);
   const [dtmPage, setDtmPage] = useState(1);
-  const dtmPerPage = 4;
+  const [dtmPagination, setDtmPagination] = useState({
+    current_page: 1,
+    last_page: 1,
+    total: 0,
+    per_page: 10,
+    from: 0,
+    to: 0
+  });
   const navigate = useNavigate();
 
   const [validateModalOpen, setValidateModalOpen] = useState(false);
@@ -359,12 +366,25 @@ export default function CustomerDashboard() {
 
   useEffect(() => {
     if (authority === 'dtm') {
-      const fetchPendingAccounts = async () => {
+      const fetchPendingAccounts = async (page = 1) => {
         setDtmLoading(true);
         try {
-          const response = await axiosClient.get('/V4IBEDC_new_account_setup_sync/initiate/get_pending_account');
-          const accounts = response?.data?.payload?.accounts?.data || [];
+          const response = await axiosClient.get(`/V4IBEDC_new_account_setup_sync/initiate/get_pending_account?page=${page}`);
+          const accountsData = response?.data?.payload?.accounts;
+          const accounts = accountsData?.data || [];
+          
           setDtmPendingAccounts(accounts);
+          
+          // Set pagination info
+          setDtmPagination({
+            current_page: accountsData?.current_page || 1,
+            last_page: accountsData?.last_page || 1,
+            total: accountsData?.total || 0,
+            per_page: accountsData?.per_page || 10,
+            from: accountsData?.from || 0,
+            to: accountsData?.to || 0
+          });
+          
           // Calculate stats
           let pending = 0, validated = 0, photos = 0;
           let recent = [];
@@ -389,9 +409,14 @@ export default function CustomerDashboard() {
           setDtmLoading(false);
         }
       };
-      fetchPendingAccounts();
+      fetchPendingAccounts(dtmPage);
     }
-  }, [authority]);
+  }, [authority, dtmPage]);
+
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    setDtmPage(newPage);
+  };
 
   // DTM action handlers
   const handleReject = (account) => {
@@ -455,8 +480,9 @@ export default function CustomerDashboard() {
 
   // DTM Dashboard rendering
   if (authority === 'dtm') {
-    const dtmTotalPages = Math.ceil(dtmPendingAccounts.length / dtmPerPage);
-    const dtmPaginatedAccounts = dtmPendingAccounts.slice((dtmPage - 1) * dtmPerPage, dtmPage * dtmPerPage);
+    // Use pagination from API response
+    const dtmTotalPages = dtmPagination.last_page;
+    const dtmPaginatedAccounts = dtmPendingAccounts; // Already paginated by API
     return (
       <div className="bg-[#f5f7fa] min-h-screen p-4">
         <div className="flex flex-col md:flex-row justify-between items-center mb-6">
@@ -563,16 +589,19 @@ export default function CustomerDashboard() {
                 {dtmTotalPages > 1 && (
                   <div className="flex justify-center items-center gap-2 mt-4">
                     <button
-                      onClick={() => setDtmPage((prev) => Math.max(prev - 1, 1))}
+                      onClick={() => handlePageChange(Math.max(dtmPage - 1, 1))}
                       disabled={dtmPage === 1}
                       className="px-3 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
                     >
                       Prev
                     </button>
-                    <span className="font-semibold">{dtmPage} / {dtmTotalPages}</span>
+                    <span className="font-semibold">
+                      Page {dtmPagination.current_page} of {dtmPagination.last_page} 
+                      ({dtmPagination.from}-{dtmPagination.to} of {dtmPagination.total} total)
+                    </span>
                     <button
-                      onClick={() => setDtmPage((prev) => Math.min(prev + 1, dtmTotalPages))}
-                      disabled={dtmPage === dtmTotalPages}
+                      onClick={() => handlePageChange(Math.min(dtmPage + 1, dtmPagination.last_page))}
+                      disabled={dtmPage === dtmPagination.last_page}
                       className="px-3 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
                     >
                       Next

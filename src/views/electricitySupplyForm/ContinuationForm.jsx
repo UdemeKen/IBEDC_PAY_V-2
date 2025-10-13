@@ -36,6 +36,9 @@ export default function ContinuationForm() {
     landlord_personal_identification: 'NIN',
     landloard_picture: null,
     nin_slip: null,
+    cac_slip: null,
+    organisational_name: '',
+    is_organizational_account: false,
     prefered_method_of_recieving_bill: '',
     comments: 'Making the user go viral',
     no_of_account_apply_for: '1',
@@ -49,8 +52,53 @@ export default function ContinuationForm() {
   const [loadingExit, setLoadingExit] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalTrackingId, setModalTrackingId] = useState('');
+  const [isUpdateMode, setIsUpdateMode] = useState(false);
+  const [fetchingData, setFetchingData] = useState(false);
   
   const navigate = useNavigate();
+
+  // Fetch existing data for update mode
+  const fetchExistingData = async (trackingId) => {
+    setFetchingData(true);
+    try {
+      const response = await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/track-application', {
+        tracking_id: trackingId
+      });
+      
+      if (response.data.success && response.data.payload?.customer?.continuation) {
+        const continuation = response.data.payload.customer.continuation;
+        setForm(prev => ({
+          ...prev,
+          tracking_id: trackingId,
+          nin_number: continuation.nin_number || '',
+          landlord_surname: continuation.landlord_surname || '',
+          landlord_othernames: continuation.landlord_othernames || '',
+          landlord_dob: continuation.landlord_dob || '',
+          landlord_telephone: continuation.landlord_telephone || '',
+          landlord_email: continuation.landlord_email || '',
+          name_address_of_previous_employer: continuation.name_address_of_previous_employer || '',
+          previous_customer_address: continuation.previous_customer_address || '',
+          previous_account_number: continuation.previous_account_number || '',
+          previous_meter_number: continuation.previous_meter_number || '',
+          landlord_personal_identification: continuation.landlord_personal_identification || 'NIN',
+          prefered_method_of_recieving_bill: continuation.prefered_method_of_recieving_bill?.replace('Bill Sent ', '') || '',
+          comments: continuation.comments || '',
+          no_of_account_apply_for: continuation.no_of_account_apply_for || '1',
+          organisational_name: continuation.organisational_name || '',
+          is_organizational_account: !!continuation.organisational_name
+        }));
+        setIsUpdateMode(true);
+        toast.success('Existing data loaded. You can now make updates.');
+      } else {
+        toast.error('No existing data found for this tracking ID');
+      }
+    } catch (error) {
+      console.error('Error fetching existing data:', error);
+      toast.error('Failed to load existing data');
+    } finally {
+      setFetchingData(false);
+    }
+  };
 
   // Set tracking_id from URL or location.state
   useEffect(() => {
@@ -61,15 +109,22 @@ export default function ContinuationForm() {
         tracking_id: location.state.prefill.tracking_id || prev.tracking_id,
       }));
     } else {
-      const urlTrackingId = searchParams.get('trackingId');
+      const urlTrackingId = searchParams.get('trackingId') || searchParams.get('tracking_id') || searchParams.get('id');
+      const isUpdate = searchParams.get('update') === 'true';
+      
       if (urlTrackingId) {
         setForm((prev) => ({ ...prev, tracking_id: urlTrackingId }));
+        
+        // If this is an update scenario, fetch existing data
+        if (isUpdate) {
+          fetchExistingData(urlTrackingId);
+        }
       }
     }
   }, [location.state, searchParams]);
 
   const handleChange = (e) => {
-    const { name, value, type, files } = e.target;
+    const { name, value, type, files, checked } = e.target;
     if (type === 'file') {
       const file = files && files[0] ? files[0] : null;
       setForm((prev) => ({ ...prev, [name]: file }));
@@ -96,6 +151,8 @@ export default function ContinuationForm() {
           setNinPreviewUrl(null);
         }
       }
+    } else if (type === 'checkbox') {
+      setForm((prev) => ({ ...prev, [name]: checked }));
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
@@ -151,6 +208,7 @@ export default function ContinuationForm() {
       previous_account_number: form.previous_account_number,
       previous_meter_number: form.previous_meter_number,
       landlord_personal_identification: form.landlord_personal_identification,
+      ...(form.is_organizational_account && { organisational_name: form.organisational_name }),
       prefered_method_of_recieving_bill: form.prefered_method_of_recieving_bill ? `Bill Sent ${form.prefered_method_of_recieving_bill}` : '',
       comments: form.comments,
       no_of_account_apply_for: form.no_of_account_apply_for,
@@ -161,30 +219,54 @@ export default function ContinuationForm() {
     // If file, handle FormData
     let dataToSend = payload;
     let config = {};
-    if (form.landloard_picture || form.nin_slip) {
+    if (form.landloard_picture || form.nin_slip || (form.is_organizational_account && form.cac_slip)) {
       dataToSend = new FormData();
       Object.entries(payload).forEach(([key, value]) => {
         dataToSend.append(key, value || '');
       });
       if (form.landloard_picture) dataToSend.append('landloard_picture', form.landloard_picture);
       if (form.nin_slip) dataToSend.append('nin_slip', form.nin_slip);
+      if (form.is_organizational_account && form.cac_slip) dataToSend.append('cac_slip', form.cac_slip);
       config = { headers: { 'Content-Type': 'multipart/form-data' } };
     }
 
     try {
-      const response = await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/continue-application', dataToSend, config);
+      // Use update API if in update mode, otherwise use continue-application API
+      const apiEndpoint = isUpdateMode 
+        ? '/V4IBEDC_new_account_setup_sync/initiate/edit_landlord_information'
+        : '/V4IBEDC_new_account_setup_sync/initiate/continue-application';
+      
+      const response = await axiosClient.post(apiEndpoint, dataToSend, config);
+      console.log(response);
+      if (response?.response?.data?.success === false) {
+        toast.error(response.response.data.payload || 'An error occurred.');
+      } else {
       const data = response.data;
+      console.log(data);
       if (data.success || response.response.data.success) {
-        toast.success(data.message || 'Continuation submitted successfully!');
-        const numAccounts = parseInt(form.no_of_account_apply_for) || 1;
-        navigate(`/finalForm?trackingId=${encodeURIComponent(form.tracking_id)}${Number.isFinite(numAccounts) ? `&numAccounts=${numAccounts}` : ''}`);
+        const successMessage = isUpdateMode 
+          ? 'Landlord information updated successfully!' 
+          : 'Continuation submitted successfully!';
+        toast.success(data.message || successMessage);
+        
+        if (isUpdateMode) {
+          // Navigate back to final form after update
+          navigate(`/finalForm?trackingId=${encodeURIComponent(form.tracking_id)}`);
+        } else {
+          const numAccounts = parseInt(form.no_of_account_apply_for) || 1;
+          navigate(`/finalForm?trackingId=${encodeURIComponent(form.tracking_id)}${Number.isFinite(numAccounts) ? `&numAccounts=${numAccounts}` : ''}`);
+        }
       } else {
         toast.error(response.response.data.payload?.nin_number || response.response.data.payload || 'An error occurred.');
         toast.error(data.payload?.nin_number || data.message || 'An error occurred.');
       }
+    }
     } catch (error) {
-      if (error.response?.data?.message) {
-        toast.error(error.response.data.payload?.nin_number || error.response.data.message);
+      console.log(error.response?.data?.success);
+      if (error.response?.data?.success === false) {
+        const errorPayload = error.response?.data?.payload || error.response.data.payload;
+        const firstError = Object.values(errorPayload).find(value => value !== null && value !== undefined);
+        toast.error(firstError || 'An error occurred.');
       } else {
         toast.error('Network error. Please try again.');
       }
@@ -219,6 +301,7 @@ export default function ContinuationForm() {
       previous_account_number: form.previous_account_number,
       previous_meter_number: form.previous_meter_number,
       landlord_personal_identification: form.landlord_personal_identification,
+      ...(form.is_organizational_account && { organisational_name: form.organisational_name }),
       prefered_method_of_recieving_bill: form.prefered_method_of_recieving_bill ? `Bill Sent ${form.prefered_method_of_recieving_bill}` : '',
       comments: form.comments,
       no_of_account_apply_for: form.no_of_account_apply_for,
@@ -230,31 +313,49 @@ export default function ContinuationForm() {
 
     let dataToSend = payload;
     let config = {};
-    if (form.landloard_picture || form.nin_slip) {
+    if (form.landloard_picture || form.nin_slip || (form.is_organizational_account && form.cac_slip)) {
       dataToSend = new FormData();
       Object.entries(payload).forEach(([key, value]) => {
         dataToSend.append(key, value || '');
       });
       if (form.landloard_picture) dataToSend.append('landloard_picture', form.landloard_picture);
       if (form.nin_slip) dataToSend.append('nin_slip', form.nin_slip);
+      if (form.is_organizational_account && form.cac_slip) dataToSend.append('cac_slip', form.cac_slip);
       config = { headers: { 'Content-Type': 'multipart/form-data' } };
     }
 
     try {
-      const response = await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/continue-application', dataToSend, config);
+      // Use update API if in update mode, otherwise use continue-application API
+      const apiEndpoint = isUpdateMode 
+        ? '/V4IBEDC_new_account_setup_sync/initiate/edit_landlord_information'
+        : '/V4IBEDC_new_account_setup_sync/initiate/continue-application';
+      
+      const response = await axiosClient.post(apiEndpoint, dataToSend, config);
+      console.log(response?.response?.data);
+      if (response?.response?.data?.success === false) {
+        toast.error(response.response.data.payload || 'An error occurred.');
+      } else {
       const data = response.data;
       if (data.success && form.tracking_id) {
-        setModalTrackingId(form.tracking_id);
-        setShowModal(true);
+        if (isUpdateMode) {
+          toast.success('Landlord information updated successfully!');
+          navigate('/finalForm?trackingId=' + encodeURIComponent(form.tracking_id));
+        } else {
+          setModalTrackingId(form.tracking_id);
+          setShowModal(true);
+        }
       } else if (data.success) {
         toast.success(data.message || 'Saved and exited successfully!');
         navigate('/');
       } else {
         toast.error(data.payload?.nin_number || data.message || 'An error occurred.');
       }
+    }
     } catch (error) {
       if (error.response?.data?.message) {
-        toast.error(error.response.data.payload?.nin_number || error.response.data.message);
+        const errorPayload = error.response?.data?.payload || error.response.data.payload;
+        const firstError = Object.values(errorPayload).find(value => value !== null && value !== undefined);
+        toast.error(firstError || 'An error occurred.');
       } else {
         toast.error('Network error. Please try again.');
       }
@@ -306,7 +407,8 @@ export default function ContinuationForm() {
 
         {/* Title Section */}
         <div className='font-bold text-base sm:text-lg mt-4 sm:mt-8 mx-4 sm:mx-20 -mb-2'>
-          <h1>PART 2: LANDLORD'S INFORMATION</h1>
+          <h1>PART 2: LANDLORD'S INFORMATION {isUpdateMode && <span className="text-blue-600 text-sm">(Update Mode)</span>}</h1>
+          {fetchingData && <p className="text-sm text-blue-600 mt-2">Loading existing data...</p>}
         </div>
 
         {/* Form Section */}
@@ -446,8 +548,6 @@ export default function ContinuationForm() {
                     </div>
                   )}
                 </div>
-                </>
-                {/* End landlord fields */}
                 <>
                 <div>
                   <label className="block text-sm sm:text-base font-semibold mb-2">Number of Accounts to Apply For:</label>
@@ -498,6 +598,56 @@ export default function ContinuationForm() {
                   )}
                 </div>
                 </>
+                {/* Organizational Account Checkbox */}
+                <div className="col-span-1 sm:col-span-2">
+                  <div className="flex items-center mb-4">
+                    <input
+                      type="checkbox"
+                      name="is_organizational_account"
+                      checked={form.is_organizational_account}
+                      onChange={handleChange}
+                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label className="text-sm sm:text-base font-semibold text-gray-700">
+                      Is this account for an organization?
+                    </label>
+                  </div>
+                </div>
+
+                {/* Organizational Fields - Only show if checkbox is checked */}
+                {form.is_organizational_account && (
+                  <>
+                    <div>
+                      <label className="block text-sm sm:text-base font-semibold mb-2">CAC Slip:</label>
+                      <input
+                        type="file"
+                        name="cac_slip"
+                        onChange={handleChange}
+                        accept="image/*,application/pdf"
+                        className="w-full text-xs sm:text-sm text-gray-500
+                          file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4
+                          file:rounded-full file:border-0
+                          file:text-xs sm:file:text-sm file:font-semibold
+                          file:bg-blue-50 file:text-blue-700
+                          hover:file:bg-blue-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm sm:text-base font-semibold mb-2">Organizational Name:</label>
+                      <input
+                        type="text"
+                        name="organisational_name"
+                        value={form.organisational_name}
+                        onChange={handleChange}
+                        placeholder="Enter organizational name"
+                        required={form.is_organizational_account}
+                        className="w-full border rounded px-2 py-1 text-sm sm:text-base"
+                      />
+                    </div>
+                  </>
+                )}
+                </>
+                {/* End landlord fields */}
               </div>
             </div>
 
