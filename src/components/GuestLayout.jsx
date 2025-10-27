@@ -5,6 +5,10 @@ import { AiOutlineArrowRight, AiOutlineArrowLeft } from 'react-icons/ai';
 import { useStateContext } from '../context/ContextProvider';
 import GoogleStore from '../assets/images/googleStore.png';
 import AppleStore from '../assets/images/appleStore.png';
+import GetTrackingIDModal from './GetTrackingIDModal';
+import TrackingIDResultModal from './TrackingIDResultModal';
+import axiosClient from '../axios';
+import { toast } from 'react-toastify';
 
 export default function GuestLayout() {
 
@@ -13,6 +17,12 @@ export default function GuestLayout() {
   const [ currentSlide, setCurrentSlide ] = useState(0);
   // New Account flow moved to dedicated page `/newaccount`
   const navigate = useNavigate();
+  
+  // State for tracking ID modals
+  const [ showGetTrackingModal, setShowGetTrackingModal ] = useState(false);
+  const [ showResultModal, setShowResultModal ] = useState(false);
+  const [ trackingData, setTrackingData ] = useState(null);
+  const [ emailInput, setEmailInput ] = useState('');
 
   const slideLength = slideData.length;
 
@@ -44,6 +54,76 @@ export default function GuestLayout() {
   const handlePageRefresh = () => {
       window.location.reload();
   };
+
+  // Handler for tracking ID modal
+  const handleGetTrackingID = async () => {
+    if (!emailInput.trim()) {
+      toast.error('Please enter your email address', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+      return;
+    }
+
+    try {
+      const response = await axiosClient.post("/V4IBEDC_new_account_setup_sync/initiate/get_trackingid", {
+        "tracker": emailInput
+      });
+
+      if (response.data.success) {
+        setTrackingData(response.data.payload.customer);
+        setShowResultModal(true);
+        toast.success(response.data.message, {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
+      } else {
+        toast.error('Failed to retrieve tracking ID. Please check your email and try again.', {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
+      }
+    } catch (error) {
+      console.error('Error occurred:', error);
+      toast.error(error.response?.data?.message || 'Something went wrong while retrieving tracking ID.', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+    }
+  };
+
+  const handleTrackingSuccess = (customerData) => {
+    setTrackingData(customerData);
+    setShowResultModal(true);
+  };
+
+  const handleCloseModals = () => {
+    setShowGetTrackingModal(false);
+    setShowResultModal(false);
+    setTrackingData(null);
+    setEmailInput(''); // Clear email input when closing modals
+  };
+
 
   if (userToken) {
     return <Navigate to="/default/customerdashboard" />;
@@ -99,13 +179,32 @@ export default function GuestLayout() {
                     <p>By clicking on Sign up, you agree to our <span className='text-orange-500'><Link to={"https://www.ibedc.com/terms-of-service"} target='_blank'>terms & conditions</Link></span> and <span className='text-orange-500'><Link to={"/privacypolicy"} target='_blank'>privacy policy</Link></span></p>
                 </div>
             </div>
-            <div className='flex flex-row justify-center items-center space-x-10 mt-5'>
+            <div className='flex flex-col justify-center items-center space-y-4 mt-10'>
                 <Link
                     className='bg-blue-950 opacity-75 hover:bg-orange-500 duration-300 ease-in-out text-white font-bold py-2 px-4 rounded'
                     to={'/newaccount'}
                 >
                     New Customer Account Creation
                 </Link>
+                
+                {/* Email Input and Get Tracking ID Section */}
+                <div className='flex flex-col items-center space-y-3 w-full max-w-md'>
+                    <div className='w-full'>
+                        <input
+                            type="email"
+                            placeholder="Enter your email address"
+                            value={emailInput}
+                            onChange={(e) => setEmailInput(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-black text-center"
+                        />
+                    </div>
+                    <button
+                        className='bg-blue-950 opacity-75 hover:bg-orange-500 duration-300 ease-in-out text-white font-bold py-2 px-4 rounded w-full'
+                        onClick={handleGetTrackingID}
+                    >
+                        Get Tracking ID
+                    </button>
+                </div>
             </div>
             <div className='flex flex-row justify-center items-center space-x-10 my-5'>
                 <Link to={"https://play.google.com/store/apps/details?id=com.ibedc.ibedcpay"} target='_blank'>
@@ -128,6 +227,20 @@ export default function GuestLayout() {
             </div> 
         </div>
       </div>
+      
+      {/* Modals */}
+      <GetTrackingIDModal 
+        isOpen={showGetTrackingModal}
+        onClose={handleCloseModals}
+        onSuccess={handleTrackingSuccess}
+      />
+      
+      <TrackingIDResultModal 
+        isOpen={showResultModal}
+        onClose={handleCloseModals}
+        customerData={trackingData}
+      />
+      
       {/* New account flows handled on /newaccount */}
     </section>
   )

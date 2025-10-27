@@ -166,6 +166,32 @@ export default function ElectricitySupplyForm() {
           <h1>PART 1: CUSTOMER DETAILS</h1>
         </div>
 
+        {/* Important Information Notice */}
+        <div className="mx-2 sm:mx-4 md:mx-8 lg:mx-20 xl:mx-52 my-4">
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-lg">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">
+                  Important Notice
+                </h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p className="font-semibold">
+                    ⚠️ All information entered in this Customer Details section cannot be changed once submitted.
+                  </p>
+                  <p className="mt-1">
+                    Please ensure all details are accurate and complete before proceeding.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Form Section */}
         <form onSubmit={handleSubmit} className="mx-2 sm:mx-4 md:mx-8 lg:mx-20 xl:mx-52 my-4 sm:my-10">
           <div className="bg-white p-4 sm:p-6 border rounded shadow-sm">
@@ -251,6 +277,18 @@ export default function ElectricitySupplyForm() {
                     title="Please enter a valid email address"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Final Warning Before Submit */}
+            <div className="mt-6 mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-center">
+                <svg className="h-5 w-5 text-yellow-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <p className="text-sm text-yellow-800 font-medium">
+                  <strong>Final Check:</strong> Please review all information carefully. Once submitted, these details cannot be modified.
+                </p>
               </div>
             </div>
 

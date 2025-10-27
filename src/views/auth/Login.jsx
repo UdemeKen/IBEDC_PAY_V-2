@@ -17,7 +17,7 @@ export default function Login() {
     const [ password, setPassword ] = useState('');
     const [ showPassword, setShowPassword ] = useState(false);
     const [ buttonDisabled, setButtonDisabled ] = useState(false);
-    const [ loading, setLoading ] = useState(false);
+    const [ loading, setLoading ] = useState(false);7
 
     const requestData = {
         email: email,
