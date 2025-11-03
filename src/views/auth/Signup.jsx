@@ -6,9 +6,9 @@ import { toast } from 'react-toastify';
 
 
 const Accept = 'application/json';
-const appSecret = 'SK_161719MDUKDCMEU_45@MUDCaPP0921SDK_VSION11';
-const appToken = 'TK_161719MDUKDCMEU_45@MUDCaPP0921SDK_TK190MD';
-const registerCustomerUrl = 'https://ipay.ibedc.com:7642/api/V2_ibedc_OAUTH_tokenReviwed/registration';
+const appSecret = 'UDCLIVE_168949MDUKDCMEU_45@MUDCaPP0921SDK_ibedc@';
+const appToken = 'TlkDD_161719MFUPDCMEU_45@9023CaPP0921SDK_T2KL90MD';
+const registerCustomerUrl = 'https://ipay.ibedc.com:7642/api/V3_OUTRIBD_iOAUTH_markedxMONITOR/registration';
 
 export default function Signup() {
     const navigate = useNavigate();

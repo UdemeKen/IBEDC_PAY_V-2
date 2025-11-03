@@ -15,14 +15,14 @@ import { heroVariants } from '../../variants';
 import VirtualAccountModal from '../virtualAccountModal/VirtualAccountModal';
 import Webcam from 'react-webcam';
 
-const transactionHistoryUrl = "/V2_ibedc_OAUTH_tokenReviwed/history/other-history";
-// const transactionHistoryUrl = "/V2_ibedc_OAUTH_tokenReviwed/history/get-history";
-const billHistoryOutstandingBalanceUrl = "/V2_ibedc_OAUTH_tokenReviwed/history/get-bill-history";
+// const transactionHistoryUrl = "/V2_ibedc_OAUTH_tokenReviwed/history/other-history";
+const transactionHistoryUrl = "/V3_OUTRIBD_iOAUTH_markedxMONITOR/history/get-history";
+const billHistoryOutstandingBalanceUrl = "/V3_OUTRIBD_iOAUTH_markedxMONITOR/history/get-bill-history";
 // const billHistoryOutstandingBalanceUrl = "/V2_ibedc_OAUTH_agency_sync/customerhistory/bill-history";
 // const getCustomerDetailsUrl = "/dashboard/get-details";
-const getOutstandingBalanceUrl = "/V2_ibedc_OAUTH_tokenReviwed/outstanding/get-balance";
-const showOutstandingBalanceUrl = "/V2_ibedc_OAUTH_tokenReviwed/outstanding/show-balance";
-const getWalletBalance_HistoryUrl = "/V2_ibedc_OAUTH_tokenReviwed/wallet/wallet-balance-history";
+const getOutstandingBalanceUrl = "/V3_OUTRIBD_iOAUTH_markedxMONITOR/outstanding/get-balance";
+const showOutstandingBalanceUrl = "/V3_OUTRIBD_iOAUTH_markedxMONITOR/outstanding/show-balance";
+const getWalletBalance_HistoryUrl = "/V3_OUTRIBD_iOAUTH_markedxMONITOR/wallet/wallet-balance-history";
 const METER_ACCT_NUMBER_REGEX = /^[0-9\-/]{11,16}$/;
 
 
@@ -30,7 +30,7 @@ export default function CustomerDashboard() {
 
   const userEmail = localStorage.getItem("USER_EMAIL");
   const username = localStorage.getItem("USER_NAME");
-  const account_type = localStorage.getItem("LOGIN_ACCOUNT_TYPE");
+  const account_type = localStorage.getItem("LOGIN_ACCOUNT_TYPE") || localStorage.getItem("ACCOUNT_TYPE");
   const meterNumber = localStorage.getItem("USER_METER_NUMBER");
   const wallet_amount = localStorage.getItem("WALLET_BALANCE");
   const cleanedUsername = username ? username.replace(/\./g, '') : '';
@@ -114,6 +114,8 @@ export default function CustomerDashboard() {
 
   // DTM final approval processing state
   const [approving, setApproving] = useState(false);
+
+  const [viewOutstandingModal, setViewOutstandingModal] = useState(false);
 
   useEffect(() => {
     const isValid = METER_ACCT_NUMBER_REGEX.test(user);
@@ -278,30 +280,18 @@ export default function CustomerDashboard() {
     const getTransactionHistory = async () => {
       setLoading(true);
       try {
-        const localHistory = JSON.parse(localStorage.getItem('TRANSACTION_HISTORY')) || [];
-        if (Array.isArray(localHistory) && localHistory.length > 0) {
-          setTransactionHistory(localHistory)
-          console.log(localHistory);
-        } else {
-          const response = await axiosClient.get(transactionHistoryUrl);
-          const fetchedData = response?.data?.data || []; // Ensure fetchedData is an array
-          setTransactionHistory(fetchedData);
-          console.log(fetchedData);
-          // setTransactionHistory(response?.data?.payload?.data);
-          localStorage.setItem('TRANSACTION_HISTORY', JSON.stringify(fetchedData || []));
-          // localStorage.setItem('CUSTOMER_NAME', JSON.stringify(response?.data?.payload?.data?.[0]?.customer_name));
-          // localStorage.setItem('ACCOUNT_TYPE', JSON.stringify(response?.data?.payload?.data?.[0]?.account_type));
-          // localStorage.setItem('METER_NUMBER', JSON.stringify(response?.data?.payload?.data?.[0]?.meter_no));
-          // localStorage.setItem('PHONE_NUMBER', JSON.stringify(response?.data?.payload?.data?.[0]?.phone));
-          // localStorage.setItem('BUSINESS_HUB', JSON.stringify(response?.data?.payload?.data?.[0]?.udertaking));
-          // localStorage.setItem('TARRIF_CODE', JSON.stringify(response?.data?.payload?.data?.[0]?.tariffcode));
-        }
+        // updated API response expects transactions at response.data.payload.data
+        const response = await axiosClient.get(transactionHistoryUrl);
+        const fetchedData = response?.data?.payload?.data || [];
+
+        setTransactionHistory(fetchedData);
+        localStorage.setItem('TRANSACTION_HISTORY', JSON.stringify(fetchedData));
       }catch(error) {
         console.log(error);
       } finally {
         setLoading(false);
       }
-    }
+    };
     getTransactionHistory();
   }, []);
 
@@ -925,7 +915,7 @@ export default function CustomerDashboard() {
         <div className='flex flex-col justify-normal space-y-4 w-full text-xs'>
             <h1 className='flex font-semibold text-lg'>Welcome! <span className='text-blue-950 opacity-80 font-semibold ml-1'>{cleanedUsername}</span></h1>
             <h1 className='flex font-semibold w-full'>Meter/Acct No: <span className='font-normal ml-1'>{meterNumber === null ? "" : meterNumber === "undefined" ? "Not yet available" : meterNumber.replace(/"/g, '')}</span></h1>
-            <h1 className='flex font-semibold w-full'>Account Type: <span className='font-normal ml-1'>{account_type}</span></h1>
+            <h1 className={`flex font-semibold w-full ${account_type === "" ? "hidden" : ""}`}>Account Type: <span className='font-normal ml-1'>{account_type}</span></h1>
             <h1 className='flex font-semibold w-full'>Email: <span className='font-normal text-center ml-1'>{userEmail}</span></h1>
         </div>
         <div className='relative shadow-sm shadow-slate-500 w-full h-52 rounded-lg flex flex-col justify-center items-center'>
@@ -941,7 +931,13 @@ export default function CustomerDashboard() {
               {account_type === "Postpaid" && <p className='sm:text-3xl font-semibold'>{userOutandingBalance === "" ? <span className='text-base'>Loading...</span> : `₦${(Number(userOutandingBalance)).toLocaleString()}`}</p>}
               {outStandingbalance === undefined || outStandingbalance === "" && <p className='text-3xl font-semibold'></p>}
               {outStandingbalance !== undefined && outStandingbalance !== "" && <p className='text-3xl font-semibold'>{`₦${(Number(outStandingbalance)).toLocaleString()}`}</p>}
+              {account_type === "Postpaid" && <button onClick={() => setViewOutstandingModal(true)} className='bg-slate-300 text-slate-600 rounded-md capitalize text-sm transform duration-300 ease-in-out hover:px-2'>
+              <p className='px-2'>view outstanding</p>
+            </button>}
               {account_type === "Prepaid" && <button onClick={handleBlur_01} className='bg-slate-300 text-slate-600 rounded-md capitalize text-sm transform duration-300 ease-in-out hover:px-2'>
+              <p className='px-2'>click to view</p>
+            </button>}
+              {account_type === "" && <button onClick={handleBlur_01} className='bg-slate-300 text-slate-600 rounded-md capitalize text-sm transform duration-300 ease-in-out hover:px-2'>
               <p className='px-2'>click to view</p>
             </button>}
           </div>
@@ -1072,46 +1068,17 @@ export default function CustomerDashboard() {
             </div>
           }
           {!loading && transactionHistory.length > 0 ? transactionHistory.map((transaction) => (
-            <div className={`flex flex-row justify-between items-center rounded-lg px-4 py-2 mx-2 shadow-sm shadow-gray-500 ${blur || blur_02 ? "hidden" : ""}`}>
+            <div className={`flex flex-row justify-between items-center rounded-lg px-4 py-2 mx-2 shadow-sm shadow-gray-500 ${blur || blur_02 ? "hidden" : ""}`} key={transaction.id}>
               <div className='text-blue-900'>
-                {account_type === "Prepaid" && <h4 className='tracking-tighter text-left'>Amount paid: <span className='font-bold md:text-lg'>&#8358;{(Number(transaction.Amount)).toLocaleString()}</span></h4>}
-                {account_type === "Postpaid" && <h4 className='tracking-tighter text-left'>Amount paid: <span className='font-bold md:text-lg'>&#8358;{(Number(transaction.Payments)).toLocaleString()}</span></h4>}
-                {account_type === "Prepaid" && !blur_01 && !isModalOpen && <h4 className={`font-semibold text-sm text-gray-800 ${!blur_01 ? "opacity-75" : ""} tracking-tighter text-left`}>
-                  Date: 
+                <h4 className='tracking-tighter text-left'>Amount paid: <span className='font-bold md:text-lg'>&#8358;{Number(transaction.amount || 0).toLocaleString()}</span></h4>
+                <h4 className={`font-semibold text-sm text-gray-800 ${!blur_01 ? "opacity-75" : ""} tracking-tighter text-left`}>
+                  Date:
                   <span className='font-normal'>
-                  {transaction.TransactionDateTime ? 
-                            `${transaction.TransactionDateTime.slice(8,10)}-${transaction.TransactionDateTime.slice(5,7)}-${transaction.TransactionDateTime.slice(0,4)} | ${transaction.TransactionDateTime.slice(10,16)}` : 
-                            "N/A" // Fallback if date_entered is undefined
-                        }
-                    {/* {`${transaction.date_entered.slice(8,10)}-${transaction.date_entered.slice(5,7)}-${transaction.date_entered.slice(0,4)}`} | {transaction.date_entered.slice(10,16)} */}
-                  </span> 
-                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "failed" && <span className="text-red-500">{transaction.status}</span>}</span>}
-                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "processing" && <span className="text-yellow-500">{transaction.status}</span>}</span>}
-                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "success" && <span className="text-green-500">{transaction.status}</span>}</span>}
-                  {!blur_01 && <span className={`lowercase mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "failed" && <span className="text-red-500">{transaction.status}</span>}</span>}
-                  {!blur_01 && <span className={`lowercase  mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "processing" && <span className="text-yellow-500">{transaction.status}</span>}</span>}
-                  {!blur_01 && <span className={`lowercase  mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "success" && <span className="text-green-500">{transaction.status}</span>}</span>}
-                </h4>}
-                {account_type === "Postpaid" && !blur_01 && !isModalOpen && <h4 className={`font-semibold text-sm text-gray-800 ${!blur_01 ? "opacity-75" : ""} tracking-tighter text-left`}>
-                  Date: 
-                  <span className='font-normal'>
-                  {transaction.PayDate ? 
-                            `${transaction.PayDate.slice(8,10)}-${transaction.PayDate.slice(5,7)}-${transaction.PayDate.slice(0,4)} | ${transaction.PayDate.slice(10,16)}` : 
-                            "N/A" // Fallback if date_entered is undefined
-                        }
-                    {/* {`${transaction.date_entered.slice(8,10)}-${transaction.date_entered.slice(5,7)}-${transaction.date_entered.slice(0,4)}`} | {transaction.date_entered.slice(10,16)} */}
-                  </span> 
-                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "failed" && <span className="text-red-500">{transaction.status}</span>}</span>}
-                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "processing" && <span className="text-yellow-500">{transaction.status}</span>}</span>}
-                  {blur && <span className={`lowercase mx-1 ${!blur ? "opacity-90" : ""}`}>{transaction.status === "success" && <span className="text-green-500">{transaction.status}</span>}</span>}
-                  {!blur_01 && <span className={`lowercase mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "failed" && <span className="text-red-500">{transaction.status}</span>}</span>}
-                  {!blur_01 && <span className={`lowercase  mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "processing" && <span className="text-yellow-500">{transaction.status}</span>}</span>}
-                  {!blur_01 && <span className={`lowercase  mx-1 ${!blur_01 ? "opacity-90" : ""}`}>{transaction.status === "success" && <span className="text-green-500">{transaction.status}</span>}</span>}
-                </h4>}
+                    {transaction.date_entered ? `${transaction.date_entered.slice(8,10)}-${transaction.date_entered.slice(5,7)}-${transaction.date_entered.slice(0,4)} | ${transaction.date_entered.slice(11,16)}` : "N/A"}
+                  </span>
+                  <span className={`${transaction.status === 'failed' ? 'text-red-500' : transaction.status === 'processing' ? 'text-yellow-500' : 'text-green-500'} lowercase mx-2`}>{transaction?.status}</span>
+                </h4>
               </div>
-              {blur &&<Link to={`/default/transactionviewdetails/${transaction.TransactionNo}`} className={`bg-blue-950 ${!blur ? "opacity-75" : ""} rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out`}>view</Link>}
-              {!blur_01 && account_type === "Prepaid" && <Link to={`/default/transactionviewdetails/${transaction.TransactionNo}`} className={`bg-blue-950 ${!blur_01 ? "opacity-75" : ""} rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out`}>view</Link>}
-              {!blur_01 && account_type === "Postpaid" && <Link to={`/default/transactionviewdetails/${transaction.PaymentID}`} className={`bg-blue-950 ${!blur_01 ? "opacity-75" : ""} rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out`}>view</Link>}
             </div>
           )).slice(0,7) : null}
         </div>
@@ -1202,6 +1169,15 @@ export default function CustomerDashboard() {
           </div>
         </div>
       </motion.div>
+      {viewOutstandingModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-full max-w-sm mx-4 text-center">
+            <h2 className="font-bold mb-3 text-lg text-slate-800">Outstanding Balance</h2>
+            <p className="text-2xl font-semibold text-blue-900 mb-4">{userOutandingBalance === "" ? '₦0' : `₦${(Number(userOutandingBalance)).toLocaleString()}`}</p>
+            <button onClick={() => setViewOutstandingModal(false)} className="bg-gray-400 text-white px-4 py-2 rounded">Close</button>
+          </div>
+        </div>
+      )}
     </motion.section>
     </div>
   )

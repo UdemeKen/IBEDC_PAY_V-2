@@ -5,14 +5,14 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import axiosClient from '../../axios';
 
-const completePaymentUrl = '/V2_ibedc_OAUTH_tokenReviwed/payment/complete-payment';
-const walletCompletePaymentUrl = '/V2_ibedc_OAUTH_tokenReviwed/payment/wallet-payment';
+const completePaymentUrl = '/V3_OUTRIBD_iOAUTH_markedxMONITOR/payment/complete-payment';
+const walletCompletePaymentUrl = '/V3_OUTRIBD_iOAUTH_markedxMONITOR/payment/wallet-payment';
 
 export default function PaymentOptions({ handleCompletePayment, blur, setBlur }) {
 
 const navigate = useNavigate();
 
-    const continuePaymentUrl = "/V2_ibedc_OAUTH_tokenReviwed/payment/continue-payment";
+    const continuePaymentUrl = "/V3_OUTRIBD_iOAUTH_markedxMONITOR/payment/continue-payment";
     const meterNumber = (localStorage.getItem('METER_NUMBER')) || '';
     const accountType = (localStorage.getItem('ACCOUNT_TYPE')) || '';
     const uniqueInteger = Math.floor(Date.now() + Math.random() * 1000000000000).toString().substring(0, 12);
@@ -46,7 +46,12 @@ const navigate = useNavigate();
         const customer_name = localStorage.getItem("CUSTOMER_NAME");
         const sub_account = localStorage.getItem("SUB_ACCOUNT");
         const account_type = localStorage.getItem("ACCOUNT_TYPE");
-        const meter_number = localStorage.getItem("USER_METER_NUMBER");
+        // Prefer the value entered in the payment form
+        const entered_meter_number = localStorage.getItem("METER_NUMBER");
+        const profile_meter_number = localStorage.getItem("USER_METER_NUMBER");
+        // Sanitize any string 'null'/'undefined'
+        const sanitize = (v) => (v && v !== 'null' && v !== 'undefined') ? v : '';
+        const meter_number = sanitize(entered_meter_number) || sanitize(profile_meter_number);
         // setTransactionId(transaction_id);
         // setAmount(amount);
         // setEmail(email);
@@ -345,7 +350,7 @@ const navigate = useNavigate();
                             </div>
                             <div className="flex justify-between items-center py-2 border-b border-gray-200">
                                 <span className="text-sm font-medium text-gray-600">Meter/Account No:</span>
-                                <span className="text-sm font-semibold text-gray-900">{meter_number || meterNumber}</span>
+                                <span className="text-sm font-semibold text-gray-900">{meter_number}</span>
                             </div>
                             <div className="flex justify-between items-center py-2 border-b border-gray-200">
                                 <span className="text-sm font-medium text-gray-600">Customer Name:</span>

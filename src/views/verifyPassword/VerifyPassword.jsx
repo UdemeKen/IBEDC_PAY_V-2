@@ -3,7 +3,7 @@ import axiosClient from '../../axios';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 
-const verifyPasswordUrl = '/V2_ibedc_OAUTH_tokenReviwed/verify-password';
+const verifyPasswordUrl = '/V3_OUTRIBD_iOAUTH_markedxMONITOR/verify-password';
 
 export default function VerifyPassword() {
 

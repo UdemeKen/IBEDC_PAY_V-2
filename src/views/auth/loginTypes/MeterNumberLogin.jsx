@@ -102,7 +102,7 @@ export default function MeterNumberLogin() {
     }
 
     try {
-      const response = await axiosClient.post('/V2_ibedc_OAUTH_tokenReviwed/meter_authenticate', requestData);
+      const response = await axiosClient.post('/V3_OUTRIBD_iOAUTH_markedxMONITOR/meter_authenticate', requestData);
       console.log(response);
       localStorage.setItem('USER_METER_NUMBER', response?.data?.payload?.user?.meter_no_primary);
       localStorage.setItem('USER_EMAIL', response?.data?.payload?.user?.email);

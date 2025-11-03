@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axiosClient from '../../axios';
 import { toast } from 'react-toastify';
 
-const virtualAccountUrl = "/V2_ibedc_OAUTH_tokenReviwed/virtual/account";
+const virtualAccountUrl = "/V3_OUTRIBD_iOAUTH_markedxMONITOR/virtual/account";
 
 const VirtualAccountModal = ({ isOpen, onClose }) => {
     const [firstName, setFirstName] = useState('');

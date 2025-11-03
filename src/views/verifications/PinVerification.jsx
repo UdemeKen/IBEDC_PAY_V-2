@@ -3,12 +3,12 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 
-const pinVerificationUrl = 'https://ipay.ibedc.com:7642/api/V2_ibedc_OAUTH_tokenReviwed/verify-pin';
-const retryPinUrl = 'https://ipay.ibedc.com:7642/api/V2_ibedc_OAUTH_tokenReviwed/retry-verification-code';
-const meterNoAccNoConfirmationUrl = 'https://ipay.ibedc.com:7642/api/V2_ibedc_OAUTH_tokenReviwed/add-meter';
+const pinVerificationUrl = 'https://ipay.ibedc.com:7642/api/V3_OUTRIBD_iOAUTH_markedxMONITOR/verify-pin';
+const retryPinUrl = 'https://ipay.ibedc.com:7642/api/V3_OUTRIBD_iOAUTH_markedxMONITOR/retry-verification-code';
+const meterNoAccNoConfirmationUrl = 'https://ipay.ibedc.com:7642/api/V3_OUTRIBD_iOAUTH_markedxMONITOR/add-meter';
 const Accept = 'application/json';
-const appSecret = 'SK_161719MDUKDCMEU_45@MUDCaPP0921SDK_VSION11';
-const appToken = 'TK_161719MDUKDCMEU_45@MUDCaPP0921SDK_TK190MD';
+const appSecret = 'UDCLIVE_168949MDUKDCMEU_45@MUDCaPP0921SDK_ibedc@';
+const appToken = 'TlkDD_161719MFUPDCMEU_45@9023CaPP0921SDK_T2KL90MD';
 const METER_ACCT_NUMBER_REGEX = /^[0-9\-/]{11,16}$/;
 
 export default function PinVerification() {

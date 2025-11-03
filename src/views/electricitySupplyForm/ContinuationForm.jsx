@@ -44,6 +44,7 @@ export default function ContinuationForm() {
     no_of_account_apply_for: '1',
     latitude: '0.39849',
     longitude: '1.9849',
+    cac_number: ''
   });
   const [picturePreview, setPicturePreview] = useState(null);
   const [ninPreviewUrl, setNinPreviewUrl] = useState(null);
@@ -85,7 +86,8 @@ export default function ContinuationForm() {
           comments: continuation.comments || '',
           no_of_account_apply_for: continuation.no_of_account_apply_for || '1',
           organisational_name: continuation.organisational_name || '',
-          is_organizational_account: !!continuation.organisational_name
+          is_organizational_account: !!continuation.organisational_name,
+          cac_number: continuation.cac_number || ''
         }));
         setIsUpdateMode(true);
         toast.success('Existing data loaded. You can now make updates.');
@@ -209,6 +211,7 @@ export default function ContinuationForm() {
       previous_meter_number: form.previous_meter_number,
       landlord_personal_identification: form.landlord_personal_identification,
       ...(form.is_organizational_account && { organisational_name: form.organisational_name }),
+      ...(form.is_organizational_account && { cac_number: form.cac_number }),
       prefered_method_of_recieving_bill: form.prefered_method_of_recieving_bill ? `Bill Sent ${form.prefered_method_of_recieving_bill}` : '',
       comments: form.comments,
       no_of_account_apply_for: form.no_of_account_apply_for,
@@ -302,6 +305,7 @@ export default function ContinuationForm() {
       previous_meter_number: form.previous_meter_number,
       landlord_personal_identification: form.landlord_personal_identification,
       ...(form.is_organizational_account && { organisational_name: form.organisational_name }),
+      ...(form.is_organizational_account && { cac_number: form.cac_number }),
       prefered_method_of_recieving_bill: form.prefered_method_of_recieving_bill ? `Bill Sent ${form.prefered_method_of_recieving_bill}` : '',
       comments: form.comments,
       no_of_account_apply_for: form.no_of_account_apply_for,
@@ -630,6 +634,18 @@ export default function ContinuationForm() {
                           file:text-xs sm:file:text-sm file:font-semibold
                           file:bg-blue-50 file:text-blue-700
                           hover:file:bg-blue-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm sm:text-base font-semibold mb-2">CAC Number:</label>
+                      <input
+                        type="text"
+                        name="cac_number"
+                        value={form.cac_number}
+                        onChange={handleChange}
+                        placeholder="Enter CAC number"
+                        required={form.is_organizational_account}
+                        className="w-full border rounded px-2 py-1 text-sm sm:text-base"
                       />
                     </div>
                     <div>

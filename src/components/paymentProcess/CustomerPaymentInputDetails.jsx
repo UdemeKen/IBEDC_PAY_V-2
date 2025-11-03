@@ -5,7 +5,7 @@ import '../../components/UniversalCss.css';
 import { toast } from 'react-toastify';
 import axiosClient from '../../axios';
 
-const processPaymentUrl = "/V2_ibedc_OAUTH_tokenReviwed/payment/initiate-payment";
+const processPaymentUrl = "/V3_OUTRIBD_iOAUTH_markedxMONITOR/payment/initiate-payment";
 const METER_ACCT_NUMBER_REGEX = /^[0-9\-/]{11,16}$/;
 
 export default function CustomerPaymentInputDetails({ handleNext, blur, blur_01 }) {

@@ -5,8 +5,8 @@ const axiosClient = axios.create({
 });
 
 axiosClient.interceptors.request.use((config) => {
-    const appSecret = "SK_161719MDUKDCMEU_45@MUDCaPP0921SDK_VSION11";
-    const appToken = "TK_161719MDUKDCMEU_45@MUDCaPP0921SDK_TK190MD";
+    const appSecret = "UDCLIVE_168949MDUKDCMEU_45@MUDCaPP0921SDK_ibedc@";
+    const appToken = "TlkDD_161719MFUPDCMEU_45@9023CaPP0921SDK_T2KL90MD";
     
     config.headers.Authorization = `Bearer ${localStorage.getItem('TOKEN')}`;
     config.headers.Accept = 'application/json';

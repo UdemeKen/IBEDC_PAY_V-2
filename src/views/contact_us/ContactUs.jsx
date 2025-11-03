@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
 import { PhoneIcon } from '@heroicons/react/24/outline';
 
 const METER_ACCT_NUMBER_REGEX = /^[0-9\-/]{11,16}$/;
-const contactUsUrl = '/V2_ibedc_OAUTH_tokenReviwed/contact/help';
+const contactUsUrl = '/V3_OUTRIBD_iOAUTH_markedxMONITOR/contact/help';
 
 export default function ContactUs() {
 

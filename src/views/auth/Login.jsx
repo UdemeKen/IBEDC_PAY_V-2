@@ -5,7 +5,7 @@ import axiosClient from '../../axios';
 import { toast } from 'react-toastify';
 import { useStateContext } from '../../context/ContextProvider';
 
-const loginUrl = '/V2_ibedc_OAUTH_tokenReviwed/authenticate';
+const loginUrl = '/V3_OUTRIBD_iOAUTH_markedxMONITOR/authenticate';
 
 export default function Login() {
 
@@ -17,7 +17,7 @@ export default function Login() {
     const [ password, setPassword ] = useState('');
     const [ showPassword, setShowPassword ] = useState(false);
     const [ buttonDisabled, setButtonDisabled ] = useState(false);
-    const [ loading, setLoading ] = useState(false);7
+    const [ loading, setLoading ] = useState(false);
 
     const requestData = {
         email: email,
@@ -32,18 +32,47 @@ export default function Login() {
         try {
             const response = await axiosClient.post(loginUrl, requestData);
             console.log(response);
-            localStorage.setItem('USER_NAME', response?.data?.payload?.user?.name);
-            localStorage.setItem('USER_EMAIL', response?.data?.payload?.user?.email);
-            localStorage.setItem('USER_METER_NUMBER', response?.data?.payload?.user?.meter_no_primary);
-            localStorage.setItem('USER_PHONE', response?.data?.payload?.user?.phone);
-            localStorage.setItem('USER_ID', response?.data?.payload?.user?.id);
-            localStorage.setItem('ACCOUNT_TYPE', response?.data?.payload?.user?.account_type);
-            localStorage.setItem('AUTHORITY', response?.data?.payload?.user?.authority);
-            localStorage.setItem('REGION', response?.data?.payload?.user?.region);
-            localStorage.setItem('BUSINESS_HUB', response?.data?.payload?.user?.business_hub);
-            localStorage.setItem('SERVICE_CENTER', response?.data?.payload?.user?.sc);
-            setUserToken(response?.data?.payload?.token);
-            setCurrentUser(response?.data?.payload?.user?.name);
+            const payload = response?.data?.payload;
+            const user = payload?.user;
+            const wallet = payload?.wallet || user?.wallet;
+            const account = payload?.account || user?.virtual_account;
+
+            localStorage.setItem('USER_NAME', user?.name);
+            localStorage.setItem('USER_EMAIL', user?.email);
+            localStorage.setItem('USER_METER_NUMBER', user?.meter_no_primary);
+            localStorage.setItem('USER_PHONE', user?.phone);
+            localStorage.setItem('USER_ID', user?.id);
+            localStorage.setItem('ACCOUNT_TYPE', user?.account_type);
+            localStorage.setItem('AUTHORITY', user?.authority);
+            localStorage.setItem('REGION', user?.region);
+            localStorage.setItem('BUSINESS_HUB', user?.business_hub);
+            localStorage.setItem('SERVICE_CENTER', user?.sc);
+
+            // Persist wallet info for dashboard/widgets
+            if (wallet?.wallet_amount !== undefined && wallet?.wallet_amount !== null) {
+              localStorage.setItem('WALLET_BALANCE', String(wallet.wallet_amount));
+            }
+
+            // Persist virtual account info if available (align with existing keys used elsewhere)
+            if (account) {
+              if (account.account_name) localStorage.setItem('account_name', account.account_name);
+              if (account.account_no) localStorage.setItem('account_no', account.account_no);
+              if (account.bank_name) localStorage.setItem('bank_name', account.bank_name);
+              if (account.customer_email) localStorage.setItem('customer_email', account.customer_email);
+              if (account.user_id) localStorage.setItem('user_id', account.user_id);
+              if (account.status) localStorage.setItem('STATUS', account.status);
+            } else {
+              // No virtual account: ensure dashboard shows CTA to create one
+              localStorage.setItem('STATUS', 'undefined');
+              localStorage.removeItem('account_name');
+              localStorage.removeItem('account_no');
+              localStorage.removeItem('bank_name');
+              localStorage.removeItem('customer_email');
+              localStorage.removeItem('user_id');
+            }
+
+            setUserToken(payload?.token);
+            setCurrentUser(user?.name);
             toast.success(response?.data?.message);
             navigate('/default/customerdashboard');
             setLoading(false);

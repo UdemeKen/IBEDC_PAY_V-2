@@ -59,7 +59,7 @@ export default function AllTransactions() {
   const calculateMonthlyTotal = (transactions) => {
     return transactions
       .filter(transaction => transaction.status === 'success')
-      .reduce((total, transaction) => total + parseFloat(transaction.amount), 0.0);
+      .reduce((total, transaction) => total + parseFloat(transaction.amount || 0), 0.0);
   };
 
   const currentMonthTransactions = getCurrentMonthTransactions(allTransactions);
@@ -173,27 +173,18 @@ export default function AllTransactions() {
             </div>
           }
           {visibleTransactions.length > 0 ? visibleTransactions.map((transaction, index) => (
-            <div className={`${location.pathname === "/default/alltransactions/billhistory" || location.pathname === "/default/alltransactions/wallethistory" ? "hidden" : ""} hover:bg-slate-100 transform duration-300 ease-in-out opacity-90 w-full p-2 rounded-lg ${index === activeTransaction ? 'bg-slate-200' : ''}`}>
-              <div className={`flex flex-row justify-between items-center rounded-lg p-4 w-full h-full py-2 shadow-sm shadow-gray-500 hover:cursor-pointer`} key={index} onClick={() => handleTransactionSelection(index)}>
+            <div className={`${location.pathname === "/default/alltransactions/billhistory" || location.pathname === "/default/alltransactions/wallethistory" ? "hidden" : ""} hover:bg-slate-100 transform duration-300 ease-in-out opacity-90 w-full p-2 rounded-lg ${index === activeTransaction ? 'bg-slate-200' : ''}`} key={transaction.id}>
+              <div className={`flex flex-row justify-between items-center rounded-lg p-4 w-full h-full py-2 shadow-sm shadow-gray-500 hover:cursor-pointer`} onClick={() => handleTransactionSelection(index)}>
                 <div className='text-blue-900'>
-                  {account_type === "Prepaid" && <h4 className='tracking-tighter text-left'>Amount paid: <span className='font-bold md:text-lg'>&#8358;{(Number(transaction.Amount)).toLocaleString()}</span></h4>}
-                  {account_type === "Postpaid" && <h4 className='tracking-tighter text-left'>Amount paid: <span className='font-bold md:text-lg'>&#8358;{(Number(transaction.Payments)).toLocaleString()}</span></h4>}
-                  {account_type === "Prepaid" && <h4 className={`font-semibold text-sm text-gray-800 tracking-tighter text-left`}>
+                  <h4 className='tracking-tighter text-left'>Amount paid: <span className='font-bold md:text-lg'>&#8358;{Number(transaction.amount || 0).toLocaleString()}</span></h4>
+                  <h4 className={`font-semibold text-sm text-gray-800 tracking-tighter text-left`}>
                     Date: 
                     <span className='font-normal'>
-                        {`${transaction.TransactionDateTime.slice(8,10)}-${transaction.TransactionDateTime.slice(5,7)}-${transaction.TransactionDateTime.slice(0,4)}`} | {transaction.TransactionDateTime.slice(10,16)}
+                      {transaction.date_entered ? `${transaction.date_entered.slice(8,10)}-${transaction.date_entered.slice(5,7)}-${transaction.date_entered.slice(0,4)} | ${transaction.date_entered.slice(11,16)}` : 'N/A'}
                     </span> 
                     <span className={`${transaction.status === 'failed' ? 'text-red-500' : transaction.status === 'processing' ? 'text-yellow-500' : 'text-green-500'} lowercase mx-2`}>{transaction?.status}</span>
-                  </h4>}
-                  {account_type === "Postpaid" && <h4 className={`font-semibold text-sm text-gray-800 tracking-tighter text-left`}>
-                    Date: 
-                    <span className='font-normal'>
-                        {`${transaction.PayDate.slice(8,10)}-${transaction.PayDate.slice(5,7)}-${transaction.PayDate.slice(0,4)}`} | {transaction.PayDate.slice(10,16)}
-                    </span> 
-                    <span className={`${transaction.status === 'failed' ? 'text-red-500' : transaction.status === 'processing' ? 'text-yellow-500' : 'text-green-500'} lowercase mx-2`}>{transaction?.status}</span>
-                  </h4>}
+                  </h4>
                 </div>
-                {/* <Link to={'/default/customerdashboard'} className={`bg-blue-950 rounded-lg text-xs sm:text-sm text-white text-center capitalize px-2 py-1 sm:px-4 sm:py-2 hover:bg-orange-500 duration-300 ease-in-out opacity-75`}>view</Link> */}
               </div>
             </div>
           )).slice(0,5) : null}
@@ -213,27 +204,22 @@ export default function AllTransactions() {
         {selectedTransaction &&
         <div className={`${location.pathname === "/default/alltransactions/billhistory" || location.pathname === "/default/alltransactions/wallethistory" ? "hidden" : ""} shadow-sm shadow-slate-500 sm:w-full h-full rounded-lg my-6 px-5`}>
             <h4 className="text-gray-800 opacity-75 tracking-tighter text-center font-serif font-bold underline my-5">Transaction Details</h4>
-            {/* <div className='text-center my-4'>
-              <label className='text-md font-sans font-semibold'>Customer Name</label>
-              <p>{customer_name}</p>
-            </div> */}
-              <div className='grid grid-cols-1 sm:grid-cols-3 gap-y-4 text-center text-sm'>
-              {selectedTransaction?.account_type === "Prepaid" && <div>
+            <div className='grid grid-cols-1 sm:grid-cols-3 gap-y-4 text-center text-sm'>
+              <div>
                   <label className='text-md font-sans font-semibold'>Meter Number</label>
-                  <p>{selectedTransaction?.meter_no}</p>
-              </div>}
-              {selectedTransaction?.account_type === "Postpaid" && <div>
+                  <p>{selectedTransaction?.meter_no || ''}</p>
+              </div>
+              <div>
                   <label className='text-md font-sans font-semibold'>Account Number</label>
-                  <p>{selectedTransaction?.account_number}</p>
-              </div>}
+                  <p>{selectedTransaction?.account_number || ''}</p>
+              </div>
               <div>
                   <label className='text-md font-sans font-semibold'>Account Type</label>
-                  <p>{account_type}</p>
+                  <p>{selectedTransaction?.account_type || account_type}</p>
               </div>
               <div>
                   <label className='text-md font-sans font-semibold'>Amount Paid</label>
-                  {account_type === "Prepaid" && <p>₦{selectedTransaction?.Amount}</p>}
-                  {account_type === "Postpaid" && <p>₦{selectedTransaction?.Payments}</p>}
+                  <p>₦{selectedTransaction?.amount}</p>
               </div>
               <div>
                   <label className='text-md font-sans font-semibold'>BUID</label>
@@ -241,76 +227,61 @@ export default function AllTransactions() {
               </div>
               <div>
                   <label className='text-md font-sans font-semibold'>Transaction ID</label>
-                  <p>{selectedTransaction?.TransactionNo}</p>
+                  <p>{selectedTransaction?.transaction_id}</p>
               </div>
               <div>
                   <label className='text-md font-sans font-semibold'>Address</label>
                   <p>{selectedTransaction?.Address === null ? "No Address" : selectedTransaction?.Address}</p>
               </div>
-              {/* <div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Transaction Date</label>
+                  <p>{selectedTransaction?.date_entered ? selectedTransaction?.date_entered.slice(0,10) : ''}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Cost of Units</label>
+                  <p>{selectedTransaction?.costOfUnits}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>VAT</label>
+                  <p>{selectedTransaction?.VAT}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Units</label>
+                  <p>{selectedTransaction?.units}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Tariff</label>
+                  <p>{selectedTransaction?.tariff}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Service Band</label>
+                  <p>{selectedTransaction?.serviceBand}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Feeder Name</label>
+                  <p>{selectedTransaction?.feederName}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>DSS Name</label>
+                  <p>{selectedTransaction?.dssName}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Customer Name</label>
+                  <p>{selectedTransaction?.customer_name}</p>
+              </div>
+              <div>
+                  <label className='text-md font-sans font-semibold'>Status</label>
+                  <p>{selectedTransaction?.status}</p>
+              </div>
+              <div>
                   <label className='text-md font-sans font-semibold'>Provider</label>
                   <p>{selectedTransaction?.provider}</p>
               </div>
               <div>
-                  <label className='text-md font-sans font-semibold'>Payment Status</label>
-                  <p className='text-green-700 font-bold italic'>{selectedTransaction?.status === "processing" ? <span className='text-yellow-500'>{selectedTransaction?.status}</span> : selectedTransaction?.status === "failed" ? <span className='text-red-500'>{selectedTransaction?.status}</span> : <span className='text-green-500'>{selectedTransaction?.status}</span>}</p>
-              </div> */}
-              <div>
-                  <label className='text-md font-sans font-semibold'>Transaction Date</label>
-                  {account_type === "Prepaid" && <p>{selectedTransaction?.TransactionDateTime.slice(0, 10)}</p>}
-                  {account_type === "Postpaid" && <p>{selectedTransaction?.PayDate.slice(0, 10)}</p>}
+                  <label className='text-md font-sans font-semibold'>Receipt No</label>
+                  <p>{selectedTransaction?.receiptno}</p>
               </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Cost of Units</label>
-                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xxs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.CostOfUnits}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>VAT</label>
-                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.VAT}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Units</label>
-                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.Units}</p>
-              </div>
-              {/* <div>
-                  <label className='text-md font-sans font-semibold'>Feeder Name</label>
-                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.feederName}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Service Band</label>
-                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.serviceBand}</p>
-              </div> */}
-              {/* <div>
-                  <label className='text-md font-sans font-semibold'>Tarriff Code</label>
-                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.tariffcode}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Undertakings</label>
-                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.udertaking}</p>
-              </div> */}
-              <div>
-                  <label className='text-md font-sans font-semibold'>Transaction Reference</label>
-                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.transref}</p>
-              </div>
-              {/* <div>
-                  <label className='text-md font-sans font-semibold'>DSS Name</label>
-                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.dssName}</p>
-              </div> */}
-              <div className='text-white sm:block hidden'>
-                  <label className='text-md font-sans font-semibold'>Blank</label>
-                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.dssName}</p>
-              </div>
-              {selectedTransaction?.accountType === "Prepaid" && (
-                  <div>
-                      <label className='text-md font-sans font-semibold'>Token</label>
-                      <p>{formatToken(selectedTransaction?.Token)}</p>
-                  </div>
-              )}
-              {/* <div className='text-white sm:block hidden'>
-                  <label className='text-md font-sans font-semibold'>Blank</label>
-                  <p>{selectedTransaction?.status === "processing" ? <span className='text-extra-xs'>Display on payment successful...</span> : selectedTransaction?.status === "failed" ? "no unit" : selectedTransaction?.receiptno}</p>
-              </div> */}
-          </div>
+            </div>
             <div className='flex flex-col justify-center items-center my-4'>
               {account_type === "Prepaid" && <Link to={`/prepaidtransactionreceipt/${selectedTransaction?.TransactionNo}`} target='_blank' className='bg-blue-950 opacity-80 hover:bg-orange-700 transform duration-300 ease-in-out text-white text-center rounded-md py-2 px-2 capitalize w-1/2 sm:w-1/3'>view receipt</Link>}
               {account_type === "Postpaid" && <Link to={`/postpaidtransactionreceipt/${selectedTransaction?.PaymentID}`} target='_blank' className='bg-blue-950 opacity-80 hover:bg-orange-700 transform duration-300 ease-in-out text-white text-center rounded-md py-2 px-2 capitalize w-1/2 sm:w-1/3'>view receipt</Link>}
