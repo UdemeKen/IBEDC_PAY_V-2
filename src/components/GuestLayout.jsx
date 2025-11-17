@@ -132,23 +132,23 @@ export default function GuestLayout() {
   // All logic for new account creation moved to NewAccount page
 
   return (
-    <section className='bg-white border border-black h-screen sm:h-full'>
+    <section className='bg-white border border-black h-screen overflow-hidden'>
       <div className='flex justify-center items-center h-full'>
         {slideData.map((slide, index) => {
             return (
-                <div className={index === currentSlide ? "w-full h-full pageSlide currentPage hidden sm:block" : "hidden sm:block pageSlide"} key={index}>
+                <div className={index === currentSlide ? "w-full h-full pageSlide currentPage hidden sm:block overflow-hidden" : "hidden sm:block pageSlide overflow-hidden"} key={index}>
                 {index === currentSlide && (
-                <div className='relative'>
-                    <div className='absolute inset-0 bg-gradient-to-t from-black from-0%'></div>
-                        <div className='flex flex-row justify-between items-center absolute inset-0 mx-4 opacity-40'>
+                <div className='relative h-full w-full overflow-hidden'>
+                    <div className='absolute inset-0 bg-gradient-to-t from-black from-0% z-10'></div>
+                        <div className='flex flex-row justify-between items-center absolute inset-0 mx-4 opacity-40 z-20'>
                             <AiOutlineArrowLeft className='sm:w-6 sm:h-6 text-white border-2 border-white hover:border-orange-500 rounded-full cursor-pointer prev hover:text-orange-500 transform duration-300 ease-in-out' onClick={prevSlide}/>
                             <AiOutlineArrowRight className='sm:w-6 sm:h-6 text-white border-2 border-white hover:border-orange-500 rounded-full cursor-pointer next hover:text-orange-500 transform duration-300 ease-in-out' onClick={nextSlide}/>
                         </div>
-                    <img src={slide.image} alt='backgroundSlideImage' className='w-full h-screen object-cover bg-Image-slide bg-current'/>
-                    <div className='absolute inset-0 w-1/2 h-1/6 flex justify-start my-4 mx-4' onClick={handlePageRefresh}>
+                    <img src={slide.image} alt='backgroundSlideImage' className='w-full h-full object-cover bg-Image-slide bg-current'/>
+                    <div className='absolute inset-0 w-1/2 h-1/6 flex justify-start my-4 mx-4 z-30' onClick={handlePageRefresh}>
                         <img src={slide.logo} alt='logo' className='w-20 h-20 cursor-pointer'/>
                     </div>
-                    <div className='absolute inset-y-80'>
+                    <div className='absolute inset-y-80 z-30'>
                         <div className='w-68 sm:my-16 mx-10 text-center'>
                             <h1 className='text-white text-4xl font-bold leading-snug'>{slide.title}</h1>
                         </div>
@@ -158,16 +158,18 @@ export default function GuestLayout() {
             </div>
           )
         })}
-        <div className='flex flex-col justify-center items-center px-4 w-full sm:w-1/2'>
-            <Outlet/>
-            <div className='flex flex-col items-center space-y-4 text-slate-500'>
-                {location.pathname == "/" && <div className='text-sm font-semibold text-center my-5'>
-                    <p>Don't have a password? Click <span className='text-orange-500'><Link to={"/meternumber"} className='text-2xl'>(Here)</Link></span> to login with your <span className='capitalize'>meter number</span> and <span className='capitalize'>account type</span></p>
+        <div className='flex flex-col justify-start items-center px-4 w-full sm:w-1/2 overflow-y-auto max-h-screen py-2'>
+            <div className='w-full overflow-x-hidden flex-shrink-0'>
+                <Outlet/>
+            </div>
+            <div className='flex flex-col items-center space-y-2 text-slate-500 flex-shrink-0 mt-2'>
+                {location.pathname == "/" && <div className='text-xs sm:text-sm font-semibold text-center'>
+                    <p>Don't have a password? Click <span className='text-orange-500'><Link to={"/meternumber"} className=''>(Here)</Link></span> to login with your <span className='capitalize'>meter number</span> and <span className='capitalize'>account type</span></p>
                 </div>}
-                {location.pathname == "/meternumber" && <div className='text-sm font-semibold text-center my-5'>
-                    <p>Don't have a meter number? Click <span className='text-orange-500'><Link to={"/"}className='text-2xl'>(Here)</Link></span> to login with your <span className='capitalize'>password</span></p>
+                {location.pathname == "/meternumber" && <div className='text-xs sm:text-sm font-semibold text-center'>
+                    <p>Don't have a meter number? Click <span className='text-orange-500'><Link to={"/"}className=''>(Here)</Link></span> to login with your <span className='capitalize'>password</span></p>
                 </div>}
-                <div className='capitalize text-sm'>
+                <div className='capitalize text-xs sm:text-sm'>
                     <Link to={"/forgotpassword"} className={"text-amber-600 opacity-70 hover:text-orange-500 hover:font-semibold transform duration-300 ease-in-out"}>forgot password</Link>
                 </div>
                 <div className='text-xs font-semibold text-center'>
@@ -175,53 +177,50 @@ export default function GuestLayout() {
                     {location.pathname == "/meternumber" && <p className=''>Not yet an IBEDC Customer? <span className='text-orange-500'><Link to={"/signup"}>Signup</Link></span></p>}
                     {location.pathname == "/signup" && <p className=''>Already an IBEDC Customer? <span className='text-orange-500'><Link to={"/"}>Login</Link></span></p>}
                 </div>
-                <div className='text-xs font-semibold text-slate-500 my-5 text-center'>
+                <div className='text-xs font-semibold text-slate-500 text-center px-2'>
                     <p>By clicking on Sign up, you agree to our <span className='text-orange-500'><Link to={"https://www.ibedc.com/terms-of-service"} target='_blank'>terms & conditions</Link></span> and <span className='text-orange-500'><Link to={"/privacypolicy"} target='_blank'>privacy policy</Link></span></p>
                 </div>
             </div>
-            <div className='flex flex-col justify-center items-center space-y-4 mt-10'>
+            <div className='flex flex-col justify-center items-center space-y-2 mt-3 flex-shrink-0'>
                 <Link
-                    className='bg-blue-950 opacity-75 hover:bg-orange-500 duration-300 ease-in-out text-white font-bold py-2 px-4 rounded'
+                    className='bg-blue-950 opacity-75 hover:bg-orange-500 duration-300 ease-in-out text-white font-bold py-1.5 px-3 rounded text-sm'
                     to={'/newaccount'}
                 >
                     New Customer Account Creation
                 </Link>
                 
                 {/* Email Input and Get Tracking ID Section */}
-                <div className='flex flex-col items-center space-y-3 w-full max-w-md'>
+                <div className='flex flex-col items-center space-y-2 w-full max-w-md'>
                     <div className='w-full'>
                         <input
                             type="email"
                             placeholder="Enter your email address"
                             value={emailInput}
                             onChange={(e) => setEmailInput(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-black text-center"
+                            className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-black text-center text-sm"
                         />
                     </div>
                     <button
-                        className='bg-blue-950 opacity-75 hover:bg-orange-500 duration-300 ease-in-out text-white font-bold py-2 px-4 rounded w-full'
+                        className='bg-blue-950 opacity-75 hover:bg-orange-500 duration-300 ease-in-out text-white font-bold py-1.5 px-3 rounded w-full text-sm'
                         onClick={handleGetTrackingID}
                     >
                         Get Tracking ID
                     </button>
                 </div>
             </div>
-            <div className='flex flex-row justify-center items-center space-x-10 my-5'>
+            <div className='flex flex-row justify-center items-center space-x-4 my-2 flex-shrink-0'>
                 <Link to={"https://play.google.com/store/apps/details?id=com.ibedc.ibedcpay"} target='_blank'>
                     <img 
                         src={GoogleStore}
                         alt="google_playstore-link"
-                        width={150}
-                        height={150}
+                        className='h-12 sm:h-16 w-auto'
                     />
                 </Link>
                 <Link to={"https://apps.apple.com/ng/app/ibedcpay/id6478964557"} target='_blank'>
                     <img 
                         src={AppleStore}
-                        alt="google_playstore-link"
-                        width={150}
-                        height={150}
-                        className='h-[75px]'
+                        alt="apple_playstore-link"
+                        className='h-12 sm:h-16 w-auto'
                     />
                 </Link>
             </div> 

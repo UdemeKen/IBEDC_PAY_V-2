@@ -52,7 +52,7 @@ export default function FinalFormPage() {
     'Single Room',
     'Shop(s)',
     'Boys Qtrs',
-    'Block of flats',
+    'Block of Flats',
     'Duplex',
     'Mansion',
     'Charlet',

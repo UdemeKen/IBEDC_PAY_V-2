@@ -7,6 +7,7 @@ import { CircleQuestion, Contact, CreditCard, Home, Dashboard, DocumentUser, Inf
 import { Cog8ToothIcon, BellIcon, TrashIcon, CubeTransparentIcon, UserIcon, CircleStackIcon, KeyIcon, CommandLineIcon, ClipboardDocumentIcon, TicketIcon, ArrowLeftStartOnRectangleIcon, ChevronRightIcon, ChevronDownIcon, ChevronUpIcon, } from '@heroicons/react/24/outline';
 import axiosClient from '../axios';
 import Modal from 'react-modal';
+import { useAutoLogout } from '../hooks/useAutoLogout';
 
 const deleteAccountUrl = '/V3_OUTRIBD_iOAUTH_markedxMONITOR/delete/remove-account';
 const changePasswordUrl = '/V3_OUTRIBD_iOAUTH_markedxMONITOR/change-password';
@@ -28,6 +29,8 @@ export default function DefaultLayout() {
   const [ isVerifyModalOpen, setIsVerifyModalOpen ] = useState(false);
   const [ pin, setPin ] = useState('');
   const [ enteredPin, setEnteredPin ] = useState('');
+  const [ showWarningModal, setShowWarningModal ] = useState(false);
+  const [ countdown, setCountdown ] = useState(60);
   const [ isSendingPin, setIsSendingPin ] = useState(false);
   const [isVerifyingPin, setIsVerifyingPin] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -128,9 +131,48 @@ export default function DefaultLayout() {
     setUserToggler_02(!userToggler_02);
   };
 
-  if (!userToken) {
-    return <Navigate to="/" />;
-  }
+  const handleLogout = () => {
+    localStorage.clear()
+    setCurrentUser({});
+    setUserToken(null);
+  };
+
+  // Auto-logout after 5 minutes of inactivity with warning
+  // Hooks must be called before any early returns
+  const { resetTimer } = useAutoLogout(5, handleLogout, setShowWarningModal);
+
+  // Countdown timer for warning modal
+  useEffect(() => {
+    let interval = null;
+    if (showWarningModal) {
+      setCountdown(60);
+      interval = setInterval(() => {
+        setCountdown((prevCountdown) => {
+          if (prevCountdown <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prevCountdown - 1;
+        });
+      }, 1000);
+    } else {
+      if (interval) {
+        clearInterval(interval);
+      }
+    }
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [showWarningModal]);
+
+  // Handle extend session
+  const handleExtendSession = () => {
+    setShowWarningModal(false);
+    resetTimer();
+    toast.success('Your session has been extended.');
+  };
 
   const deleteAccount = async (e) => {
     e.preventDefault();
@@ -152,11 +194,9 @@ export default function DefaultLayout() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear()
-    setCurrentUser({});
-    setUserToken(null);
-  };
+  if (!userToken) {
+    return <Navigate to="/" />;
+  }
 
   return (
     <section className=''>
@@ -383,6 +423,49 @@ export default function DefaultLayout() {
             </div>
           </div>
         )}
+
+      {/* Session Warning Modal */}
+      <Modal
+        isOpen={showWarningModal}
+        onRequestClose={() => setShowWarningModal(false)}
+        contentLabel="Session Warning"
+        className="flex justify-center items-center w-full max-w-md mx-auto"
+        overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      >
+        <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
+          <div className="text-center">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+              <svg className="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Session Timeout Warning</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Your session will expire due to inactivity in:
+            </p>
+            <div className="text-3xl font-bold text-orange-600 mb-6">
+              {countdown} {countdown === 1 ? 'second' : 'seconds'}
+            </div>
+            <p className="text-xs text-gray-500 mb-6">
+              Click "Stay Logged In" to extend your session, or you will be automatically logged out.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={handleExtendSession}
+                className="bg-blue-950 hover:bg-orange-600 text-white font-semibold py-2 px-6 rounded-lg transition duration-300 ease-in-out"
+              >
+                Stay Logged In
+              </button>
+              <button
+                onClick={handleLogout}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-lg transition duration-300 ease-in-out"
+              >
+                Logout Now
+              </button>
+            </div>
+          </div>
+        </div>
+      </Modal>
     </section>
   )
 }

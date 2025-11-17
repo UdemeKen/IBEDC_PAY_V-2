@@ -13,7 +13,7 @@ export default function AllTransactions() {
 
 
   const [ allTransactions, setAllTransactions ] = useState(JSON.parse(localStorage.getItem('TRANSACTION_HISTORY')) || []);
-  const [ allTransactionsPerPage, setAllTransactionsPerPage ] = useState(5);
+  const [ allTransactionsPerPage, setAllTransactionsPerPage ] = useState(8);
   const [ currentPage, setCurrentPage ] = useState(1);
   const [ activeTransaction, setActiveTransaction ] = useState(0);
   const [ selectedTransaction, setSelectedTransaction ] = useState(null);
@@ -23,7 +23,8 @@ export default function AllTransactions() {
   const indexOfLastTransaction = currentPage * allTransactionsPerPage;
   const indexOfFirstTransaction = indexOfLastTransaction - allTransactionsPerPage;
 
-  const visibleTransactions = Array.isArray(allTransactions) ? allTransactions.slice(indexOfFirstTransaction, indexOfLastTransaction) : [];
+  const paymentHistoryTransactions = Array.isArray(allTransactions) ? allTransactions : [];
+  const visibleTransactions = paymentHistoryTransactions.slice(indexOfFirstTransaction, indexOfLastTransaction);
   console.log(visibleTransactions);
 
   const prevPageHandler = () => {
@@ -47,12 +48,20 @@ export default function AllTransactions() {
     setSelectedTransaction(visibleTransactions[activeTransaction]);
   }, [visibleTransactions, activeTransaction]);
 
+  const getTransactionDate = (transaction) => {
+    const rawDate = transaction?.date_entered || transaction?.TransactionDateTime;
+    if (!rawDate) return null;
+    const normalized = rawDate.replace(' ', 'T');
+    const parsed = new Date(normalized);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+
   const getCurrentMonthTransactions = (transactions) => {
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
     return transactions.filter(transaction => {
-        const transactionDate = new Date(transaction.date_entered);
-        return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+        const transactionDate = getTransactionDate(transaction);
+        return transactionDate && transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
     });
   };
 
@@ -62,8 +71,14 @@ export default function AllTransactions() {
       .reduce((total, transaction) => total + parseFloat(transaction.amount || 0), 0.0);
   };
 
-  const currentMonthTransactions = getCurrentMonthTransactions(allTransactions);
+  const currentMonthTransactions = getCurrentMonthTransactions(paymentHistoryTransactions);
   const monthlyTotal = calculateMonthlyTotal(currentMonthTransactions);
+
+  const sanitizedWalletBalance = (() => {
+    if (!wallet_amount || wallet_amount === 'undefined' || wallet_amount === 'null') return 0;
+    const numericValue = Number(wallet_amount.toString().replace(/,/g, '').trim());
+    return Number.isFinite(numericValue) ? numericValue : 0;
+  })();
 
 
   const hero_01Variants = {
@@ -109,7 +124,7 @@ export default function AllTransactions() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 1 }}
-      className='mx-4 sm:mx-20 lg:mx-32 mt-5'
+      className='mx-4 sm:mx-10 mt-5'
     >
       <motion.div 
         variants={hero_01Variants}
@@ -144,7 +159,7 @@ export default function AllTransactions() {
                 <div className='absolute flex flex-col justify-center items-center capitalize text-white'>
                   <BanknotesIcon className='w-8 h-8'/>
                   <p>Wallet Balance</p>
-                  <p className='text-4xl font-semibold'>₦ {wallet_amount}</p>
+                  <p className='text-4xl font-semibold'>{`₦${sanitizedWalletBalance.toLocaleString()}`}</p>
                 </div>
               </div>
           </div>
@@ -164,7 +179,7 @@ export default function AllTransactions() {
           {account_type === "Postpaid" && <Link to={"/default/alltransactions/billhistory"} className={`${location.pathname === "/default/alltransactions/billhistory" ? "bg-slate-300 px-4 py-1 rounded-md" : "px-4 py-1"}`}>Bill history</Link>}
           <Link to={"/default/alltransactions/wallethistory"} className={`${location.pathname === "/default/alltransactions/wallethistory" ? "bg-slate-300 px-4 py-1 rounded-md" : "px-4 py-1"}`}>Wallet history</Link>
         </ul>
-        <div className='w-full flex flex-col sm:flex-row justify-center sm:space-x-4 px-4'>
+        <div className='w-full flex flex-col sm:flex-row justify-center sm:space-x-4'>
         <div className='flex flex-col justify-normal sm:space-y-4 w-full py-4'>
           <Outlet />
         {visibleTransactions.length === 0 && 
@@ -187,7 +202,7 @@ export default function AllTransactions() {
                 </div>
               </div>
             </div>
-          )).slice(0,5) : null}
+          )) : null}
           <div className={`${location.pathname === "/default/alltransactions/billhistory" || location.pathname === "/default/alltransactions/wallethistory" ? "hidden" : ""} flex justify-center items-center space-x-5 pt-6 sm:pb-6`}>
             <div className='capitalize'>
               <p onClick={prevPageHandler} className='shadow-sm shadow-slate-500 cursor-pointer bg-blue-950 opacity-75 text-white hover:bg-orange-500 duration-300 ease-in-out px-4 py-2 rounded-lg'>prev</p>
@@ -202,90 +217,175 @@ export default function AllTransactions() {
             </div>
         <>
         {selectedTransaction &&
-        <div className={`${location.pathname === "/default/alltransactions/billhistory" || location.pathname === "/default/alltransactions/wallethistory" ? "hidden" : ""} shadow-sm shadow-slate-500 sm:w-full h-full rounded-lg my-6 px-5`}>
-            <h4 className="text-gray-800 opacity-75 tracking-tighter text-center font-serif font-bold underline my-5">Transaction Details</h4>
-            <div className='grid grid-cols-1 sm:grid-cols-3 gap-y-4 text-center text-sm'>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Meter Number</label>
-                  <p>{selectedTransaction?.meter_no || ''}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Account Number</label>
-                  <p>{selectedTransaction?.account_number || ''}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Account Type</label>
-                  <p>{selectedTransaction?.account_type || account_type}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Amount Paid</label>
-                  <p>₦{selectedTransaction?.amount}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>BUID</label>
-                  <p>{selectedTransaction?.BUID}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Transaction ID</label>
-                  <p>{selectedTransaction?.transaction_id}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Address</label>
-                  <p>{selectedTransaction?.Address === null ? "No Address" : selectedTransaction?.Address}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Transaction Date</label>
-                  <p>{selectedTransaction?.date_entered ? selectedTransaction?.date_entered.slice(0,10) : ''}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Cost of Units</label>
-                  <p>{selectedTransaction?.costOfUnits}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>VAT</label>
-                  <p>{selectedTransaction?.VAT}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Units</label>
-                  <p>{selectedTransaction?.units}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Tariff</label>
-                  <p>{selectedTransaction?.tariff}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Service Band</label>
-                  <p>{selectedTransaction?.serviceBand}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Feeder Name</label>
-                  <p>{selectedTransaction?.feederName}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>DSS Name</label>
-                  <p>{selectedTransaction?.dssName}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Customer Name</label>
-                  <p>{selectedTransaction?.customer_name}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Status</label>
-                  <p>{selectedTransaction?.status}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Provider</label>
-                  <p>{selectedTransaction?.provider}</p>
-              </div>
-              <div>
-                  <label className='text-md font-sans font-semibold'>Receipt No</label>
-                  <p>{selectedTransaction?.receiptno}</p>
-              </div>
+        <div className={`${location.pathname === "/default/alltransactions/billhistory" || location.pathname === "/default/alltransactions/wallethistory" ? "hidden" : ""} bg-white shadow-lg rounded-xl my-6 overflow-hidden border border-gray-200`}>
+            {/* Header Section */}
+            <div className='bg-gradient-to-r from-blue-950 to-blue-800 text-white px-6 py-4'>
+                <h3 className="text-xl font-bold text-center">Transaction Details</h3>
+                <div className='flex flex-col sm:flex-row justify-between items-center mt-3 gap-2'>
+                    <div className='text-center sm:text-left'>
+                        <p className='text-xs text-blue-200'>Transaction ID</p>
+                        <p className='text-sm font-semibold'>{selectedTransaction?.transaction_id || 'N/A'}</p>
+                    </div>
+                    <div className={`px-4 py-1 rounded-full text-xs font-semibold ${
+                        selectedTransaction?.status === 'success' ? 'bg-green-500' : 
+                        selectedTransaction?.status === 'failed' ? 'bg-red-500' : 
+                        'bg-yellow-500'
+                    }`}>
+                        {selectedTransaction?.status ? selectedTransaction.status.toUpperCase() : 'PENDING'}
+                    </div>
+                </div>
             </div>
-            <div className='flex flex-col justify-center items-center my-4'>
-              {account_type === "Prepaid" && <Link to={`/prepaidtransactionreceipt/${selectedTransaction?.TransactionNo}`} target='_blank' className='bg-blue-950 opacity-80 hover:bg-orange-700 transform duration-300 ease-in-out text-white text-center rounded-md py-2 px-2 capitalize w-1/2 sm:w-1/3'>view receipt</Link>}
-              {account_type === "Postpaid" && <Link to={`/postpaidtransactionreceipt/${selectedTransaction?.PaymentID}`} target='_blank' className='bg-blue-950 opacity-80 hover:bg-orange-700 transform duration-300 ease-in-out text-white text-center rounded-md py-2 px-2 capitalize w-1/2 sm:w-1/3'>view receipt</Link>}
-          </div>
+
+            <div className='px-4 sm:px-6 py-5'>
+                {/* Payment Summary Section */}
+                <div className='bg-blue-50 rounded-lg p-4 mb-5 border-2 border-blue-200'>
+                    <h4 className='text-sm font-semibold text-gray-600 mb-3 text-center'>Payment Summary</h4>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                        <div className='text-center'>
+                            <label className='text-xs font-semibold text-gray-600 block mb-1'>Amount Paid</label>
+                            <p className='text-2xl font-bold text-blue-900'>₦{Number(selectedTransaction?.amount || 0).toLocaleString()}</p>
+                        </div>
+                        {selectedTransaction?.costOfUnits && (
+                            <div className='text-center'>
+                                <label className='text-xs font-semibold text-gray-600 block mb-1'>Cost of Units</label>
+                                <p className='text-lg font-semibold text-gray-800'>₦{Number(selectedTransaction?.costOfUnits || 0).toLocaleString()}</p>
+                            </div>
+                        )}
+                        {selectedTransaction?.VAT && (
+                            <div className='text-center'>
+                                <label className='text-xs font-semibold text-gray-600 block mb-1'>VAT</label>
+                                <p className='text-lg font-semibold text-gray-800'>₦{Number(selectedTransaction?.VAT || 0).toLocaleString()}</p>
+                            </div>
+                        )}
+                        {selectedTransaction?.units && (
+                            <div className='text-center'>
+                                <label className='text-xs font-semibold text-gray-600 block mb-1'>Units</label>
+                                <p className='text-lg font-semibold text-gray-800'>{selectedTransaction?.units}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Transaction Information Section */}
+                <div className='mb-5'>
+                    <h4 className='text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200'>Transaction Information</h4>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+                        <div className='bg-gray-50 p-3 rounded-lg'>
+                            <label className='text-xs font-semibold text-gray-600 block mb-1'>Transaction Date</label>
+                            <p className='text-sm font-medium text-gray-900'>{selectedTransaction?.date_entered ? selectedTransaction.date_entered.slice(0,10) : 'N/A'}</p>
+                        </div>
+                        <div className='bg-gray-50 p-3 rounded-lg'>
+                            <label className='text-xs font-semibold text-gray-600 block mb-1'>Receipt / Token</label>
+                            <p className='text-sm font-medium text-gray-900 break-all'>
+                                {formatToken(selectedTransaction?.token || selectedTransaction?.Token || '') ||
+                                 selectedTransaction?.receiptno ||
+                                 selectedTransaction?.TransactionNo ||
+                                 'N/A'}
+                            </p>
+                        </div>
+                        <div className='bg-gray-50 p-3 rounded-lg'>
+                            <label className='text-xs font-semibold text-gray-600 block mb-1'>Provider</label>
+                            <p className='text-sm font-medium text-gray-900'>{selectedTransaction?.provider || 'N/A'}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Account Information Section */}
+                <div className='mb-5'>
+                    <h4 className='text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200'>Account Information</h4>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+                        {selectedTransaction?.meter_no && (
+                            <div className='bg-gray-50 p-3 rounded-lg'>
+                                <label className='text-xs font-semibold text-gray-600 block mb-1'>Meter Number</label>
+                                <p className='text-sm font-medium text-gray-900'>{selectedTransaction.meter_no}</p>
+                            </div>
+                        )}
+                        {selectedTransaction?.account_number && (
+                            <div className='bg-gray-50 p-3 rounded-lg'>
+                                <label className='text-xs font-semibold text-gray-600 block mb-1'>Account Number</label>
+                                <p className='text-sm font-medium text-gray-900'>{selectedTransaction.account_number}</p>
+                            </div>
+                        )}
+                        <div className='bg-gray-50 p-3 rounded-lg'>
+                            <label className='text-xs font-semibold text-gray-600 block mb-1'>Account Type</label>
+                            <p className='text-sm font-medium text-gray-900'>{selectedTransaction?.account_type || account_type || 'N/A'}</p>
+                        </div>
+                        {selectedTransaction?.customer_name && (
+                            <div className='bg-gray-50 p-3 rounded-lg sm:col-span-2 lg:col-span-1'>
+                                <label className='text-xs font-semibold text-gray-600 block mb-1'>Customer Name</label>
+                                <p className='text-sm font-medium text-gray-900'>{selectedTransaction.customer_name}</p>
+                            </div>
+                        )}
+                        {selectedTransaction?.Address && (
+                            <div className='bg-gray-50 p-3 rounded-lg sm:col-span-2'>
+                                <label className='text-xs font-semibold text-gray-600 block mb-1'>Service Address</label>
+                                <p className='text-sm font-medium text-gray-900'>{selectedTransaction.Address === null ? "No Address" : selectedTransaction.Address}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Service Details Section */}
+                {(selectedTransaction?.BUID || selectedTransaction?.tariff || selectedTransaction?.serviceBand || selectedTransaction?.feederName || selectedTransaction?.dssName) && (
+                    <div className='mb-5'>
+                        <h4 className='text-sm font-bold text-gray-700 mb-3 pb-2 border-b border-gray-200'>Service Details</h4>
+                        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+                            {selectedTransaction?.BUID && (
+                                <div className='bg-gray-50 p-3 rounded-lg'>
+                                    <label className='text-xs font-semibold text-gray-600 block mb-1'>BUID</label>
+                                    <p className='text-sm font-medium text-gray-900'>{selectedTransaction.BUID}</p>
+                                </div>
+                            )}
+                            {selectedTransaction?.tariff && (
+                                <div className='bg-gray-50 p-3 rounded-lg'>
+                                    <label className='text-xs font-semibold text-gray-600 block mb-1'>Tariff</label>
+                                    <p className='text-sm font-medium text-gray-900'>{selectedTransaction.tariff}</p>
+                                </div>
+                            )}
+                            {selectedTransaction?.serviceBand && (
+                                <div className='bg-gray-50 p-3 rounded-lg'>
+                                    <label className='text-xs font-semibold text-gray-600 block mb-1'>Service Band</label>
+                                    <p className='text-sm font-medium text-gray-900'>{selectedTransaction.serviceBand}</p>
+                                </div>
+                            )}
+                            {selectedTransaction?.feederName && (
+                                <div className='bg-gray-50 p-3 rounded-lg'>
+                                    <label className='text-xs font-semibold text-gray-600 block mb-1'>Feeder Name</label>
+                                    <p className='text-sm font-medium text-gray-900'>{selectedTransaction.feederName}</p>
+                                </div>
+                            )}
+                            {selectedTransaction?.dssName && (
+                                <div className='bg-gray-50 p-3 rounded-lg'>
+                                    <label className='text-xs font-semibold text-gray-600 block mb-1'>DSS Name</label>
+                                    <p className='text-sm font-medium text-gray-900'>{selectedTransaction.dssName}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* View Receipt Button */}
+                <div className='flex flex-col justify-center items-center pt-4 border-t border-gray-200'>
+                    {(account_type === "Prepaid" || !account_type || account_type === "null") && (
+                        <Link 
+                            to={`/prepaidtransactionreceipt/${selectedTransaction?.transaction_id}`} 
+                            target='_blank' 
+                            className='bg-blue-950 hover:bg-orange-600 transform duration-300 ease-in-out text-white text-center rounded-lg py-3 px-6 capitalize font-semibold shadow-md hover:shadow-lg w-full sm:w-auto min-w-[200px]'
+                        >
+                            View Receipt
+                        </Link>
+                    )}
+                    {account_type === "Postpaid" && (
+                        <Link 
+                            to={`/postpaidtransactionreceipt/${selectedTransaction?.transaction_id}`} 
+                            target='_blank' 
+                            className='bg-blue-950 hover:bg-orange-600 transform duration-300 ease-in-out text-white text-center rounded-lg py-3 px-6 capitalize font-semibold shadow-md hover:shadow-lg w-full sm:w-auto min-w-[200px]'
+                        >
+                            View Receipt
+                        </Link>
+                    )}
+                </div>
+            </div>
         </div>
         }
         </>

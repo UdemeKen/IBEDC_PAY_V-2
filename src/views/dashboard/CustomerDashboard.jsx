@@ -776,7 +776,7 @@ export default function CustomerDashboard() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 1 }}
-    className={`flex flex-col justify-center items-center mt-4 px-2 sm:px-20 ${blur || blur_01 || blur_02 ? "fixed sm:w-full" : ""}`} >
+    className={`flex flex-col justify-center items-center mt-4 ${blur || blur_01 || blur_02 ? "fixed sm:w-full" : ""}`} >
           {blur && <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm'></div>}
           {blur_01 && <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm' onClick={handleBlur_01}></div>}
           {blur_02 && <div className='fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm' onClick={handleBlur_02}></div>}
@@ -912,34 +912,118 @@ export default function CustomerDashboard() {
         initial="hidden"
         animate="visible"
       className={`flex flex-col space-y-4 sm:space-y-0 sm:flex-row justify-normal sm:space-x-4 lg:px-10 -mt-[12px] sm:mt-10 ${blur || blur_01 || blur_02 ? "hidden" : ""}`}>
-        <div className='flex flex-col justify-normal space-y-4 w-full text-xs'>
-            <h1 className='flex font-semibold text-lg'>Welcome! <span className='text-blue-950 opacity-80 font-semibold ml-1'>{cleanedUsername}</span></h1>
-            <h1 className='flex font-semibold w-full'>Meter/Acct No: <span className='font-normal ml-1'>{meterNumber === null ? "" : meterNumber === "undefined" ? "Not yet available" : meterNumber.replace(/"/g, '')}</span></h1>
-            <h1 className={`flex font-semibold w-full ${account_type === "" ? "hidden" : ""}`}>Account Type: <span className='font-normal ml-1'>{account_type}</span></h1>
-            <h1 className='flex font-semibold w-full'>Email: <span className='font-normal text-center ml-1'>{userEmail}</span></h1>
+        <div className='w-full'>
+          <div className='relative w-full rounded-lg shadow-sm shadow-slate-500 overflow-hidden min-h-[15rem] sm:min-h-[16rem]'>
+            <img 
+              src={Frame_01}
+              alt='Frame_01'
+              className='absolute inset-0 w-full h-full object-cover'
+            />
+            <div className='absolute inset-0 bg-gradient-to-br from-white/95 via-white/90 to-blue-50/80' />
+            <div className='relative z-10 flex h-full w-full flex-col justify-between p-5 text-slate-800 min-h-[15rem] sm:min-h-[16rem]'>
+              <div className='flex items-start justify-between gap-3 w-full'>
+                <div className='w-full'>
+                  <div className='flex items-center justify-between gap-3'>
+                    <p className='text-[11px] uppercase tracking-[0.3em] text-slate-500'>Dashboard</p>
+                    <div className='inline-flex items-center gap-2 rounded-full bg-blue-900/10 px-3 py-1 text-[11px] font-semibold text-blue-900'>
+                      <span className='h-2 w-2 rounded-full bg-emerald-500 animate-pulse'></span>
+                      Active
+                    </div>
+                  </div>
+                  <h1 className='text-xl font-semibold text-slate-900 mt-1 w-full'>
+                    Welcome back, <span className='text-blue-900 capitalize'>{(cleanedUsername || 'Customer')}</span>
+                  </h1>
+                </div>
+              </div>
+
+              <div className='mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3 text-[13px]'>
+                <div className='rounded-lg border border-slate-200 bg-white/80 px-3 py-2'>
+                  <p className='text-[10px] uppercase tracking-widest text-slate-400'>Meter / Account</p>
+                  <p className='mt-1 font-semibold text-slate-900 break-all'>
+                    {meterNumber === null ? "" : meterNumber === "undefined" ? "Not yet available" : meterNumber.replace(/"/g, '')}
+                  </p>
+                </div>
+                <div className='rounded-lg border border-slate-200 bg-white/80 px-3 py-2'>
+                  <p className='text-[10px] uppercase tracking-widest text-slate-400'>Account Type</p>
+                  <p className='mt-1 font-semibold text-slate-900'>
+                    {account_type === "" ? "—" : account_type}
+                  </p>
+                </div>
+                <div className='rounded-lg border border-slate-200 bg-white/80 px-3 py-2 sm:col-span-2'>
+                  <p className='text-[10px] uppercase tracking-widest text-slate-400'>Email</p>
+                  <p className='mt-1 font-semibold text-slate-900 break-words'>
+                    {userEmail}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <div className='relative shadow-sm shadow-slate-500 w-full h-52 rounded-lg flex flex-col justify-center items-center'>
           <img 
             src={Frame_01}
             alt={'Frame_01'}
             className='w-full h-full object-cover rounded-lg'
-            />
+          />
+          {/* keep existing primary brand color */}
           <div className="absolute inset-0 rounded-lg bg-blue-950 opacity-70"></div>
-          <div className='absolute flex flex-col justify-center items-center capitalize text-white'>
-              <CreditCardIcon className='w-8 h-8'/>
-            <p className='text-center'>outstanding balance</p>
-              {account_type === "Postpaid" && <p className='sm:text-3xl font-semibold'>{userOutandingBalance === "" ? <span className='text-base'>Loading...</span> : `₦${(Number(userOutandingBalance)).toLocaleString()}`}</p>}
-              {outStandingbalance === undefined || outStandingbalance === "" && <p className='text-3xl font-semibold'></p>}
-              {outStandingbalance !== undefined && outStandingbalance !== "" && <p className='text-3xl font-semibold'>{`₦${(Number(outStandingbalance)).toLocaleString()}`}</p>}
-              {account_type === "Postpaid" && <button onClick={() => setViewOutstandingModal(true)} className='bg-slate-300 text-slate-600 rounded-md capitalize text-sm transform duration-300 ease-in-out hover:px-2'>
-              <p className='px-2'>view outstanding</p>
-            </button>}
-              {account_type === "Prepaid" && <button onClick={handleBlur_01} className='bg-slate-300 text-slate-600 rounded-md capitalize text-sm transform duration-300 ease-in-out hover:px-2'>
-              <p className='px-2'>click to view</p>
-            </button>}
-              {account_type === "" && <button onClick={handleBlur_01} className='bg-slate-300 text-slate-600 rounded-md capitalize text-sm transform duration-300 ease-in-out hover:px-2'>
-              <p className='px-2'>click to view</p>
-            </button>}
+          <div className="absolute inset-0 flex flex-col justify-between px-4 py-4 text-white">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
+                  <CreditCardIcon className='w-5 h-5' />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-blue-100">
+                    Outstanding
+                  </p>
+                  <p className="text-xs font-semibold text-white/90">
+                    Postpaid balance
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-2 mb-2">
+              {account_type === "Postpaid" && (
+                <p className="text-2xl sm:text-3xl font-semibold leading-tight">
+                  {userOutandingBalance === "" ? (
+                    <span className="text-sm font-normal opacity-80">
+                      Loading...
+                    </span>
+                  ) : (
+                    `₦${Number(userOutandingBalance).toLocaleString()}`
+                  )}
+                </p>
+              )}
+              {outStandingbalance !== undefined &&
+                outStandingbalance !== "" && (
+                  <p className="text-lg sm:text-2xl font-semibold mt-1">
+                    {`₦${Number(outStandingbalance).toLocaleString()}`}
+                  </p>
+                )}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] sm:text-[11px] text-blue-100/80">
+                View details securely with a one‑time PIN sent to your email.
+              </p>
+              {account_type === "Postpaid" ? (
+                <button
+                  onClick={() => setViewOutstandingModal(true)}
+                  className="ml-2 inline-flex items-center rounded-md bg-white/90 px-3 py-1.5 text-[10px] sm:text-xs font-semibold text-blue-900 hover:bg-white transition"
+                >
+                  View outstanding
+                </button>
+              ) : (
+                <button
+                  onClick={handleBlur_01}
+                  className="ml-2 inline-flex items-center rounded-md bg-white/90 px-3 py-1.5 text-[10px] sm:text-xs font-semibold text-blue-900 hover:bg-white transition"
+                >
+                  Click to view
+                </button>
+              )}
+            </div>
           </div>
         </div>
         {account_type === "Postpaid" && <div className='relative flex-grow shadow-sm shadow-slate-500 w-full h-52 rounded-lg flex flex-col justify-center items-center'>
@@ -956,71 +1040,143 @@ export default function CustomerDashboard() {
           </div>
         </div>}
         <div className='relative flex-grow shadow-sm shadow-slate-500 w-full h-52 rounded-lg flex flex-col justify-center items-center'>
-        <img 
+          <img 
             src={Frame_01}
             alt={'Frame_01'}
             className='w-full h-full object-cover rounded-lg'
           />
+          {/* keep existing brand color overlay */}
           <div className="absolute inset-0 rounded-lg bg-orange-500 opacity-70"></div>
-          <div className='absolute flex flex-col justify-center items-center capitalize text-white'>
-          <div>
-            <div className='flex flex-col justify-center items-center w-full h-6 mt-2'>
-              <h2 className='font-semibold text-slate-700 opacity-75'>Account details</h2>
-              <hr className='w-4/5 border-1 border-black'/>
+          {/* redesigned account details content */}
+          <div className='absolute inset-0 flex flex-col justify-center items-center px-4 text-white'>
+            <div className="w-full max-w-xs">
+              <div className="mb-2 text-center">
+                <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-orange-100">
+                  Account Details
+                </p>
+                <h2 className="text-sm font-semibold text-white/90">
+                  Virtual Payment Account
+                </h2>
+              </div>
+              <div className="mt-3 space-y-2 text-xs">
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase tracking-wide text-orange-100/90">
+                    Account Number
+                  </span>
+                  <span className="mt-0.5 text-lg sm:text-xl font-semibold tracking-wider">
+                    {accountNo === "undefined" || !accountNo ? "Not yet available" : accountNo}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-4 mt-2">
+                  <div className="flex-1">
+                    <span className="text-[10px] uppercase tracking-wide text-orange-100/90">
+                      Account Name
+                    </span>
+                    <p className="mt-0.5 text-[11px] sm:text-xs font-medium break-words">
+                      {accountName === "undefined" || !accountName ? "Not yet available" : accountName}
+                    </p>
+                  </div>
+                  <div className="flex-1 text-right">
+                    <span className="text-[10px] uppercase tracking-wide text-orange-100/90">
+                      Bank
+                    </span>
+                    <p className="mt-0.5 text-[11px] sm:text-xs font-medium break-words">
+                      {bankName === "undefined" || !bankName ? "Not yet available" : bankName}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
-            {/* <h1 className='mt-10 font-semibold text-xl text-center'>Not yet Available</h1> */}
-            {/* <div className='flex justify-center'>
-              <Link to={""} className='px-4 font-semibold text-lg mt-2 bg-slate-500 text-slate-200 rounded-md capitalize hover:bg-orange-500 opacity-75 transform duration-300 ease-in-out sm:py-2'>
-                fund wallet
-              </Link>
-            </div> */}
-            <ul className='text-sm capitalize mt-4 flex justify-center items-center italic font-semibold mb-2'>
-              <li className='text-center'>account NO:<br /> <span className='text-4xl not-italic font-normal'>{accountNo === "undefined" ? " " : accountNo}</span></li>
-            </ul>
-            <ul className='text-sm capitalize m-2 flex justify-between items-center italic font-semibold mb-2 px-4 gap-4'>
-              <li className='text-center'>account name:<br /> <span className='not-italic font-normal'>{accountName === "undefined" ? " " : accountName}</span></li>
-              <li className='text-center'>bank name:<br /> <span className='not-italic font-normal'>{bankName === "undefined" ? " " : bankName}</span></li>
-            </ul>
-            {/* <ul className='text-sm capitalize flex justify-center items-center italic font-semibold mb-2'>
-              <li className='text-center'>email:<br /> <span className='not-italic font-normal'>{customerEmail === "undefined" ? " " : customerEmail}</span></li>
-            </ul> */}
-          </div>
-            {/* <PhoneIcon className='w-8 h-8'/>
-            <p>need help:</p>
-            <p className='lg:text-2xl font-semibold text-center'>call: 07001239999</p> */}
           </div>
         </div>
         <div className='relative flex-grow shadow-sm shadow-slate-500 w-full h-52 rounded-lg flex flex-col justify-center items-center'>
-        <img 
+          <img 
             src={Frame_01}
             alt={'Frame_01'}
             className='w-full h-full object-cover rounded-lg'
           />
+          {/* keep existing primary brand color */}
           <div className="absolute inset-0 rounded-lg bg-blue-950 opacity-70"></div>
-          <div className='absolute flex flex-col justify-center items-center gap-4 capitalize text-white'>
-            {status === "active" && <WalletIcon className='w-8 h-8'/>}
-            {status === "active" && <p>wallet balance</p>}
-            {status === "undefined" && <p className='text-center'>Click on the button below to create a new virtual account</p>}
-            {status === "active" && loading && 
-            <div className={`flex flex-col justify-center items-center ${blur ? "hidden" : ""}`}>
-                <div>
-                    <svg className={`w-5 h-5 animate-spin  text-white ${blur_01 ? "hidden" : ""}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        {!blur_01 && <circle className={`${!blur_01 ? "opacity-25" : ""}`} cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>}
-                        {blur && <circle className={`${!blur ? "opacity-25" : ""}`} cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>}
-                            {!blur_01 && <path className={`${!blur_01 ? "opacity-75" : ""}`} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>}
-                            {blur && <path className={`${!blur ? "opacity-75" : ""}`} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>}
-                            </svg>
-                        </div>
-                    <div>
+          <div className='absolute inset-0 flex flex-col justify-between px-4 py-4 text-white'>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
+                  <WalletIcon className='w-5 h-5' />
                 </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-blue-100">
+                    Wallet
+                  </p>
+                  <p className="text-xs font-semibold text-white/90">
+                    IBEDC Pay Wallet
+                  </p>
+                </div>
+              </div>
             </div>
-            }
-            {!loading && status === "active" && <p className='font-semibold text-3xl -mt-4'>{`₦${(Number(wallet_amount)).toLocaleString()}`}</p>}
-            {status === "undefined" && <button onClick={handleCreateAccountClick} className='bg-slate-300 text-slate-600 font-bold rounded-md capitalize text-sm transform duration-300 ease-in-out w-2/3 p-4'>
-              <p className='px-2'>Create a new virtual account</p>
-            </button>}
-            <VirtualAccountModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-            {/* {!loading && <p className='text-4xl font-semibold'>₦ {walletBalance}</p>} */}
+
+            <div className="mt-2 mb-2">
+              {status === "active" && (
+                <>
+                  {loading ? (
+                    <div className="flex items-center gap-2 text-xs text-blue-100">
+                      <svg
+                        className="w-4 h-4 animate-spin text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2
+                          5.291A7.962 7.962 0 014 12H0c0 3.042 1.135
+                          5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      <span>Fetching wallet balance...</span>
+                    </div>
+                  ) : (
+                    <p className='text-2xl sm:text-3xl font-semibold'>
+                      {`₦${Number(wallet_amount || 0).toLocaleString()}`}
+                    </p>
+                  )}
+                  <p className="mt-1 text-[10px] sm:text-[11px] text-blue-100/80">
+                    Use your wallet for faster, seamless electricity payments.
+                  </p>
+                </>
+              )}
+
+              {status === "undefined" && (
+                <p className="text-[11px] sm:text-xs text-blue-100/90">
+                  Create a virtual account to enable wallet funding and quicker
+                  payments on this dashboard.
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end">
+              {status === "undefined" && (
+                <button
+                  onClick={handleCreateAccountClick}
+                  className='inline-flex items-center justify-center rounded-md bg-white/90 px-3 py-1.5 text-[10px] sm:text-xs font-semibold text-blue-900 hover:bg-white transition w-2/3 text-center'
+                >
+                  Create a new virtual account
+                </button>
+              )}
+            </div>
+
+            <VirtualAccountModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+            />
           </div>
         </div>
       </motion.div>
@@ -1088,7 +1244,7 @@ export default function CustomerDashboard() {
         initial="hidden"
         animate="visible"
       className={`flex flex-col sm:flex-row justify-center sm:space-x-4 lg:px-10 sm:my-10 w-full ${blur && 'hidden'}`}>
-        <div className='relative shadow-sm shadow-slate-500 w-3/4 rounded-lg flex justify-center items-center hidden sm:block'>
+        <div className='relative shadow-sm shadow-slate-500 w-3/4 rounded-lg hidden sm:flex justify-center items-center'>
           <div className='absolute inset-0 bg-gradient-to-t from-orange-500 opacity-80 rounded-lg from-0%'></div>
           <img
             src={Advert_01}
@@ -1097,27 +1253,51 @@ export default function CustomerDashboard() {
            />
         </div>
         <div className='shadow-sm shadow-slate-500 w-full rounded-lg flex flex-col-reverse sm:flex-row sm:space-x-2 mb-4 sm:mb-0'>
-          <div className='shadow-sm shadow-slate-500 sm:w-3/4 rounded-l-lg flex flex-col  mt-2 sm:mt-0 pb-2 sm:pb-0'>
-            <div className='flex flex-col justify-center items-center w-full h-6 mt-2'>
-              <h2 className='font-semibold text-slate-700 opacity-75'>Account details</h2>
-              <hr className='w-4/5 border-1 border-black'/>
+          <div className='shadow-sm shadow-slate-500 sm:w-3/4 rounded-l-lg flex flex-col mt-2 sm:mt-0 pb-2 sm:pb-0 bg-white'>
+            <div className='flex flex-col justify-center items-start w-full px-4 pt-3'>
+              <p className='text-[10px] uppercase tracking-[0.2em] font-semibold text-slate-500'>
+                Account Details
+              </p>
+              <h2 className='mt-1 text-sm font-semibold text-slate-800'>
+                Virtual Payment Account
+              </h2>
             </div>
-            {/* <h1 className='mt-10 font-semibold text-xl text-center'>Not yet Available</h1> */}
-            {/* <div className='flex justify-center'>
-              <Link to={""} className='px-4 font-semibold text-lg mt-2 bg-slate-500 text-slate-200 rounded-md capitalize hover:bg-orange-500 opacity-75 transform duration-300 ease-in-out sm:py-2'>
-                fund wallet
-              </Link>
-            </div> */}
-            <ul className='text-sm capitalize mt-4 flex justify-center items-center italic font-semibold mb-2'>
-              <li className='text-center'>account name:<br /> <span className='not-italic font-normal'>{accountName === "undefined" ? " " : accountName}</span></li>
-            </ul>
-            <ul className='text-sm capitalize m-2 flex justify-between items-center italic font-semibold mb-2 px-4'>
-              <li className='text-center'>account NO:<br /> <span className='not-italic font-normal'>{accountNo === "undefined" ? " " : accountNo}</span></li>
-              <li className='text-center'>bank name:<br /> <span className='not-italic font-normal'>{bankName === "undefined" ? " " : bankName}</span></li>
-            </ul>
-            <ul className='text-sm capitalize flex justify-center items-center italic font-semibold mb-2'>
-              <li className='text-center'>email:<br /> <span className='not-italic font-normal'>{customerEmail === "undefined" ? " " : customerEmail}</span></li>
-            </ul>
+            <div className="mt-3 px-4 space-y-3 text-xs text-slate-700">
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase tracking-wide text-slate-500">
+                  Account Name
+                </span>
+                <span className="mt-0.5 font-medium break-words">
+                  {accountName === "undefined" || !accountName ? "Not yet available" : accountName}
+                </span>
+              </div>
+              <div className="flex flex-wrap justify-between gap-4">
+                <div className="flex-1 min-w-[40%]">
+                  <span className="text-[10px] uppercase tracking-wide text-slate-500">
+                    Account Number
+                  </span>
+                  <span className="mt-0.5 block font-semibold text-sm tracking-wide">
+                    {accountNo === "undefined" || !accountNo ? "Not yet available" : accountNo}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-[40%]">
+                  <span className="text-[10px] uppercase tracking-wide text-slate-500">
+                    Bank Name
+                  </span>
+                  <span className="mt-0.5 block font-medium break-words">
+                    {bankName === "undefined" || !bankName ? "Not yet available" : bankName}
+                  </span>
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase tracking-wide text-slate-500">
+                  Email
+                </span>
+                <span className="mt-0.5 font-medium break-words">
+                  {customerEmail === "undefined" || !customerEmail ? "Not yet available" : customerEmail}
+                </span>
+              </div>
+            </div>
           </div>
           <div className='shadow-sm shadow-slate-500 w-full rounded-r-lg'>
             <ul className='flex justify-between text-sm p-1 capitalize font-semibold text-slate-600'>

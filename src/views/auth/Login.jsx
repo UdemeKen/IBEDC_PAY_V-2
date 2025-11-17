@@ -107,9 +107,9 @@ export default function Login() {
             <div className='flex justify-center w-full'>
                 <div className='flex flex-col items-center justify-center w-full sm:w-3/4'>
                     <div className='mb-5 text-center'>
-                        <h1 className='font-bold capitalize text-3xl text-blue-900'>customer login</h1>
+                        <h1 className='font-bold capitalize text-xl text-blue-900'>customer login</h1>
                     </div>
-                    <form className='flex flex-col justify-center space-y-3 xs:w-64 w-full' 
+                    <form className='flex flex-col justify-center space-y-2 xs:w-64 w-full' 
                     onSubmit={handleSubmit}
                     >
                         <Outlet />
