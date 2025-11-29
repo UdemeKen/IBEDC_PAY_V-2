@@ -253,8 +253,8 @@ export default function FinalFormPage() {
       return;
     }
     
-    // Show summary modal before final submission
-    await fetchExistingData();
+    // Submit directly without showing summary modal
+    await handleFinalSubmit();
   };
 
   const handleFinalSubmit = async () => {
@@ -293,15 +293,17 @@ export default function FinalFormPage() {
       const data = response.data;
       if (data.success) {
         toast.success(data.message || 'Final form submitted successfully!');
+        // Show LECAN information modal with auto-download
         setSuccessData({
           trackingId: data.payload.customer.tracking_id,
-          lecanMessage: data.payload.lecan,
-          lecanLink: data.payload.link,
+          buildings: buildings,
           numBuildings: buildings.length,
-          uploadedBuildings: buildings
-            .filter(building => building.id)
-            .map((_, index) => index + 1),
-          buildingIds: data.payload.customer?.id
+          uploadedBuildings: data.payload.customer.uploaded_pictures || buildings,
+          buildingIds: data.payload.customer.uploaded_pictures
+            ? data.payload.customer.uploaded_pictures.map((pic) => pic.id)
+            : [],
+          lecanMessage: data.payload.lecan,
+          lecanLink: data.payload.link
         });
         setShowSuccessModal(true);
         setDownloadsTriggered(false); // Reset for new modal
@@ -866,111 +868,6 @@ export default function FinalFormPage() {
         </div>
       )}
 
-      {/* Success Modal */}
-      {showSuccessModal && successData && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
-          <div className="bg-white p-4 sm:p-8 rounded shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="text-center mb-6">
-              <h2 className="text-lg sm:text-xl font-bold mb-4 text-green-700">Application Submitted Successfully!</h2>
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-              </div>
-            </div>
-            
-            <div className="space-y-4 mb-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="font-semibold text-blue-900 mb-2">Your Tracking ID:</p>
-                <p className="font-mono text-lg text-blue-700 break-all">{successData.trackingId}</p>
-                <p className="text-sm text-blue-600 mt-2">Please save this tracking ID - you'll need it to upload your completed License Electrical Contractor forms.</p>
-              </div>
-              
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="font-semibold text-gray-900 mb-2">Buildings Submitted:</p>
-                <p className="text-gray-700">{successData.numBuildings} building(s)</p>
-              </div>
-              
-              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                <div className="flex items-center mb-2">
-                  <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                  </svg>
-                  <p className="font-semibold text-green-900">License Electrical Contractor Forms Downloaded</p>
-                </div>
-                <p className="text-green-800 text-sm">
-                  {successData.numBuildings} License Electrical Contractor form(s) have been automatically downloaded to your device. 
-                  Please fill out each form completely and return with your tracking ID to upload them.
-                </p>
-              </div>
-              
-              {successData.lecanMessage && (
-                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                  <p className="font-semibold text-yellow-900 mb-2">Important Information:</p>
-                  <p className="text-yellow-800">{successData.lecanMessage}</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="border-t pt-6">
-              <h3 className="font-bold text-lg mb-4 text-center">Next Steps</h3>
-              <div className="space-y-3 mb-6">
-                <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
-                  <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold mt-0.5">1</div>
-                  <div>
-                    <p className="font-medium text-blue-900">Fill out the downloaded License Electrical Contractor forms</p>
-                    <p className="text-sm text-blue-700">Complete all required fields in each form for your buildings</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
-                  <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold mt-0.5">2</div>
-                  <div>
-                    <p className="font-medium text-blue-900">Return with your tracking ID</p>
-                    <p className="text-sm text-blue-700">Use the tracking ID above to upload your completed forms</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
-                  <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold mt-0.5">3</div>
-                  <div>
-                    <p className="font-medium text-blue-900">Upload completed forms</p>
-                    <p className="text-sm text-blue-700">Submit the filled License Electrical Contractor forms for each building</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row justify-center gap-3 mt-6 pt-6 border-t">
-              {/* <button
-                onClick={() => { 
-                  setShowSuccessModal(false); 
-                  navigate('/lecanUpload', {
-                    state: {
-                      trackingId: successData.trackingId,
-                      lecanMessage: successData.lecanMessage,
-                      lecanLink: successData.lecanLink,
-                      numBuildings: successData.numBuildings,
-                      uploadedBuildings: successData.uploadedBuildings,
-                      buildingIds: successData.buildingIds
-                    }
-                  });
-                }}
-                className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              >
-                Upload License Electrical Contractor Forms Now
-              </button> */}
-              <button
-                onClick={() => { 
-                  setShowSuccessModal(false); 
-                  navigate('/'); 
-                }}
-                className="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg shadow hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
-              >
-                Return Home
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Edit Landlord Information Modal */}
       {showEditModal && (
@@ -1373,6 +1270,104 @@ export default function FinalFormPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* LECAN Information Modal */}
+      {showSuccessModal && successData && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
+          <div className="bg-white p-4 sm:p-8 rounded shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="text-center mb-6">
+              <h2 className="text-lg sm:text-xl font-bold mb-4 text-green-700">Building Details Submitted Successfully!</h2>
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="font-semibold text-blue-900 mb-2">Your Tracking ID:</p>
+                <p className="font-mono text-lg text-blue-700 break-all">{successData.trackingId}</p>
+                <p className="text-sm text-blue-600 mt-2">Please save this tracking ID - you'll need it to continue your application.</p>
+              </div>
+              
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="font-semibold text-gray-900 mb-2">Buildings Submitted:</p>
+                <p className="text-gray-700">{successData.numBuildings} building(s)</p>
+              </div>
+              
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <div className="flex items-center mb-2">
+                  <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  <p className="font-semibold text-green-900">License Electrical Contractor Forms Downloaded</p>
+                </div>
+                <p className="text-green-800 text-sm">
+                  {successData.numBuildings} License Electrical Contractor form(s) have been automatically downloaded to your device. 
+                  Please fill out each form completely before uploading.
+                </p>
+              </div>
+              
+              {successData.lecanMessage && (
+                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                  <p className="font-semibold text-yellow-900 mb-2">Important Information:</p>
+                  <p className="text-yellow-800">{successData.lecanMessage}</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="border-t pt-6">
+              <h3 className="font-bold text-lg mb-4 text-center">Next Steps</h3>
+              <div className="space-y-3 mb-6">
+                <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
+                  <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold mt-0.5">1</div>
+                  <div>
+                    <p className="font-medium text-blue-900">Fill out the downloaded License Electrical Contractor forms</p>
+                    <p className="text-sm text-blue-700">Complete all required fields in each form for your buildings</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
+                  <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold mt-0.5">2</div>
+                  <div>
+                    <p className="font-medium text-blue-900">Upload completed forms</p>
+                    <p className="text-sm text-blue-700">Submit the filled License Electrical Contractor forms for each building</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
+                  <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold mt-0.5">3</div>
+                  <div>
+                    <p className="font-medium text-blue-900">Capture building images</p>
+                    <p className="text-sm text-blue-700">Take photos of each building with location data</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row justify-center gap-3 mt-6 pt-6 border-t">
+              <button
+                onClick={() => { 
+                  setShowSuccessModal(false); 
+                  navigate('/lecanUpload', {
+                    state: {
+                      trackingId: successData.trackingId,
+                      buildings: successData.buildings,
+                      numBuildings: successData.numBuildings,
+                      uploadedBuildings: successData.uploadedBuildings,
+                      buildingIds: successData.buildingIds,
+                      lecanMessage: successData.lecanMessage,
+                      lecanLink: successData.lecanLink
+                    }
+                  });
+                }}
+                className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                Continue to LECAN Upload
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import '../../components/UniversalCss.css';
 import { Frame_01, Advert_01 } from '../../assets/images';
 import { VectorIcon } from '../../assets/icons';
@@ -410,6 +410,11 @@ export default function CustomerDashboard() {
 
   // DTM action handlers
   const handleReject = (account) => {
+    // Prevent rejection of DTE-validated accounts
+    if (account.dss && account.dss !== null && account.tarrif && account.tarrif !== null) {
+      toast.error("Cannot reject: This application has been validated by DTE and cannot be rejected.");
+      return;
+    }
     setRejectingAccount(account);
     setRejectModalOpen(true);
   };
@@ -417,6 +422,15 @@ export default function CustomerDashboard() {
   const handleRejectSubmit = async () => {
     if (!rejectComment.trim()) {
       toast.error("Please provide a reason for rejection");
+      return;
+    }
+    
+    // Prevent rejection of DTE-validated accounts
+    if (rejectingAccount && rejectingAccount.dss && rejectingAccount.dss !== null && rejectingAccount.tarrif && rejectingAccount.tarrif !== null) {
+      toast.error("Cannot reject: This application has been validated by DTE and cannot be rejected.");
+      setRejectModalOpen(false);
+      setRejectComment('');
+      setRejectingAccount(null);
       return;
     }
     
@@ -532,8 +546,8 @@ export default function CustomerDashboard() {
                       <div className="text-xs text-gray-700 mb-1">Submitted: {acc.created_at?.slice(0,10)}</div>
                     </div>
                     <div className="flex flex-col md:flex-row gap-2 mt-2 md:mt-0">
-                      {isPending(acc) && <button className="bg-green-500 text-white px-3 py-1 rounded font-semibold text-xs" onClick={() => { setSelectedAccount(acc); setValidateModalOpen(true); }}>Validate</button>}
-                      {isPending(acc) && (
+                      {(isPending(acc) || needsCustomerDtmValidation(acc)) && <button className="bg-green-500 text-white px-3 py-1 rounded font-semibold text-xs" onClick={() => { setSelectedAccount(acc); setValidateModalOpen(true); }}>Validate</button>}
+                      {isPending(acc) && !isDteValidated(acc) && (
                         <button
                           className={`px-3 py-1 rounded font-semibold text-xs flex items-center justify-center min-w-[70px] ${
                             acc.lecan_link && acc.lecan_link !== "0" 
@@ -547,7 +561,7 @@ export default function CustomerDashboard() {
                           Reject
                         </button>
                       )}
-                      {isValidated(acc) && (
+                      {isValidated(acc) && !needsCustomerDtmValidation(acc) && (
                         <div className="flex items-center gap-2">
                           <span className="text-green-600 font-semibold">Validated</span>
                           {/* DTM can do final approval or reject */}
@@ -557,18 +571,21 @@ export default function CustomerDashboard() {
                           >
                             Final Approve
                           </button>
-                          <button
-                            className={`px-3 py-1 rounded font-semibold text-xs ${
-                              acc.lecan_link && acc.lecan_link !== "0" 
-                                ? "bg-red-600 text-white" 
-                                : "bg-gray-400 text-gray-600 cursor-not-allowed"
-                            }`}
-                            onClick={() => acc.lecan_link && acc.lecan_link !== "0" ? handleReject(acc) : null}
-                            disabled={!acc.lecan_link || acc.lecan_link === "0"}
-                            title={!acc.lecan_link || acc.lecan_link === "0" ? "Cannot reject: Licensed contractor form missing" : ""}
-                          >
-                            Reject
-                          </button>
+                          {/* Only show reject button if account is NOT DTE-validated */}
+                          {!isDteValidated(acc) && (
+                            <button
+                              className={`px-3 py-1 rounded font-semibold text-xs ${
+                                acc.lecan_link && acc.lecan_link !== "0" 
+                                  ? "bg-red-600 text-white" 
+                                  : "bg-gray-400 text-gray-600 cursor-not-allowed"
+                              }`}
+                              onClick={() => acc.lecan_link && acc.lecan_link !== "0" ? handleReject(acc) : null}
+                              disabled={!acc.lecan_link || acc.lecan_link === "0"}
+                              title={!acc.lecan_link || acc.lecan_link === "0" ? "Cannot reject: Licensed contractor form missing" : ""}
+                            >
+                              Reject
+                            </button>
+                          )}
                         </div>
                       )}
                       <button className="bg-blue-500 text-white px-3 py-1 rounded font-semibold text-xs" onClick={() => { setViewAccount(acc); setViewModalOpen(true); }}>View</button>
@@ -1366,9 +1383,23 @@ export default function CustomerDashboard() {
 // Helper functions for DTM status
 const isPending = (acc) => acc.picture === "0" || acc.latitude === "0" || acc.longitude === "0";
 const isValidated = (acc) => acc.picture !== "0" && acc.latitude !== "0" && acc.longitude !== "0";
+// Check if account is validated by DTE (has both dss and tarrif)
+const isDteValidated = (acc) => acc.dss && acc.dss !== null && acc.tarrif && acc.tarrif !== null;
+// Check if account is customer-submitted (needs DTM validation - dss and tarrif null but picture exists)
+const needsCustomerDtmValidation = (acc) => (!acc.dss || acc.dss === null) && (!acc.tarrif || acc.tarrif === null) && acc.picture && acc.picture !== "0";
 
 function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs, allRegions }) {
   console.log("ValidateAccountModal received allRegions:", allRegions);
+  
+  // Determine account state
+  const accountDss = account.dss;
+  const accountTarrif = account.tarrif;
+  const accountPicture = account.picture;
+  
+  // Determine validation scenario
+  const needsImageCapture = (!accountDss || accountDss === null) && (!accountTarrif || accountTarrif === null) && (accountPicture === "0" || !accountPicture);
+  const needsDtmValidation = (!accountDss || accountDss === null) && (!accountTarrif || accountTarrif === null) && accountPicture && accountPicture !== "0";
+  const needsFinalApprove = accountDss && accountDss !== null && accountTarrif && accountTarrif !== null && accountPicture && accountPicture !== "0";
   
   const [picture, setPicture] = useState(null);
   const [latitude, setLatitude] = useState(account.latitude);
@@ -1376,21 +1407,25 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs, 
   const [submitting, setSubmitting] = useState(false);
   const [captured, setCaptured] = useState(false);
   const [dssList, setDssList] = useState([]);
-  const [selectedDss, setSelectedDss] = useState('');
+  const [selectedDss, setSelectedDss] = useState(accountDss || '');
   const [tariffList, setTariffList] = useState([]);
-  const [selectedTariff, setSelectedTariff] = useState('');
+  const [selectedTariff, setSelectedTariff] = useState(accountTarrif || '');
   const [regionForHub, setRegionForHub] = useState(account.region);
   const [serviceCenters, setServiceCenters] = useState([]);
-  const [selectedServiceCenter, setSelectedServiceCenter] = useState('');
+  const [selectedServiceCenter, setSelectedServiceCenter] = useState(account.service_center || '');
   
   // New state for editable region and business hub
   const [selectedRegion, setSelectedRegion] = useState(account.region);
   const [businessHubsForRegion, setBusinessHubsForRegion] = useState([]);
   const [selectedBusinessHub, setSelectedBusinessHub] = useState(account.business_hub);
   const [redirecting, setRedirecting] = useState(false);
+  const [approving, setApproving] = useState(false);
   
-  const webcamRef = React.useRef(null);
+  const webcamRef = useRef(null);
 
+  // Track previous region to detect changes
+  const prevRegionRef = useRef(account.region);
+  
   // Fetch business hubs when region changes
   useEffect(() => {
     if (!selectedRegion) return;
@@ -1399,9 +1434,12 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs, 
         const res = await axiosClient.get(`/V4IBEDC_new_account_setup_sync/initiate/new/business_hub/${selectedRegion}`);
         console.log("Business hubs response for region", selectedRegion, ":", res.data);
         setBusinessHubsForRegion(Array.isArray(res.data) ? res.data.map(h => h.bhub) : []);
-        // Reset business hub and service center when region changes
-        setSelectedBusinessHub('');
-        setSelectedServiceCenter('');
+        // Only reset business hub and service center when region actually changes (not on initial load)
+        if (prevRegionRef.current && prevRegionRef.current !== selectedRegion) {
+          setSelectedBusinessHub('');
+          setSelectedServiceCenter('');
+        }
+        prevRegionRef.current = selectedRegion;
       } catch (e) {
         console.error("Error fetching business hubs for region", selectedRegion, ":", e);
         setBusinessHubsForRegion([]);
@@ -1448,6 +1486,16 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs, 
     fetchTariff();
   }, [regionForHub, selectedBusinessHub, selectedServiceCenter]);
 
+  // Initialize regionForHub and fetch data if account already has region, business_hub, service_center
+  useEffect(() => {
+    if (account.region && account.business_hub && account.service_center && !regionForHub) {
+      setRegionForHub(account.region);
+      setSelectedRegion(account.region);
+      setSelectedBusinessHub(account.business_hub);
+      setSelectedServiceCenter(account.service_center);
+    }
+  }, [account.region, account.business_hub, account.service_center]);
+
   // Fetch service centers when business hub changes
   useEffect(() => {
     if (!selectedBusinessHub) return;
@@ -1485,6 +1533,54 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs, 
     }
   };
 
+  // Handle DTM validation (when dss and tarrif are null but picture exists)
+  const handleDtmValidation = async () => {
+    setSubmitting(true);
+    try {
+      const payload = {
+        tracking_id: account.tracking_id,
+        region: selectedRegion || account.region,
+        business_hub: selectedBusinessHub || account.business_hub,
+        service_center: selectedServiceCenter || account.service_center,
+        dss: selectedDss,
+        id: String(account.id),
+        tarrif: selectedTariff
+      };
+      
+      await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/v5/dtm_customer_validation', payload);
+      toast.success('Account validated successfully!');
+      if (typeof onValidated === 'function') onValidated();
+      if (typeof onClose === 'function') onClose();
+    } catch (e) {
+      toast.error('Validation failed: ' + (e.response?.data?.message || e.message));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle final approval (from DTE - when dss, tarrif, and picture all exist)
+  const handleFinalApprove = async () => {
+    setApproving(true);
+    try {
+      const payload = {
+        tracking_id: account.tracking_id,
+        type: 'approve',
+        comment: 'approve',
+        id: String(account.id)
+      };
+      
+      await axiosClient.post('/V4IBEDC_new_account_setup_sync/initiate/approve_request', payload);
+      toast.success('Application approved successfully!');
+      if (typeof onValidated === 'function') onValidated();
+      if (typeof onClose === 'function') onClose();
+    } catch (e) {
+      toast.error('Approval failed: ' + (e.response?.data?.payload?.comment || e.payload?.comment || e.message));
+    } finally {
+      setApproving(false);
+    }
+  };
+
+  // Handle image capture validation (original logic)
   const handleSubmit = async () => {
     setSubmitting(true);
     const authority = localStorage.getItem('AUTHORITY');
@@ -1546,163 +1642,340 @@ function ValidateAccountModal({ account, onClose, onValidated, allBusinessHubs, 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded shadow-lg w-full max-w-2xl">
+      <div className="bg-white p-6 rounded shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <h2 className="font-bold mb-4">Validate Account</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Column 1 */}
-          <div>
-            <div className="mb-2">Tracking ID: <span className="font-mono">{account.tracking_id}</span></div>
-            <div className="mb-2">
-              <label>Region:</label>
-              <select
-                value={selectedRegion}
-                onChange={e => setSelectedRegion(e.target.value)}
-                className="block w-full border rounded p-1"
-                required
-              >
-                <option value="">Select Region</option>
-                {allRegions.map(region => (
-                  <option key={region} value={region}>{region}</option>
-                ))}
-              </select>
+        <div className="mb-2">Tracking ID: <span className="font-mono">{account.tracking_id}</span></div>
+        
+        {/* Scenario 1: Final Approve (from DTE - dss, tarrif, and picture all exist) */}
+        {needsFinalApprove && (
+          <div className="space-y-4">
+            <div className="p-4 bg-green-50 border border-green-200 rounded">
+              <p className="text-sm text-green-800">
+                <strong>Account Status:</strong> This account has been validated by DTE with all required information (DSS, Tariff, and Picture). 
+                You can proceed with final approval.
+              </p>
             </div>
-            <div className="mb-2">
-              <label>Business Hub:</label>
-              <select
-                value={selectedBusinessHub}
-                onChange={e => setSelectedBusinessHub(e.target.value)}
-                className="block w-full border rounded p-1"
-                required
-                disabled={businessHubsForRegion.length === 0}
-              >
-                <option value="">Select Business Hub</option>
-                {businessHubsForRegion.map(hub => (
-                  <option key={hub} value={hub}>{hub}</option>
-                ))}
-              </select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="mb-2"><strong>Region:</strong> {account.region || 'N/A'}</div>
+                <div className="mb-2"><strong>Business Hub:</strong> {account.business_hub || 'N/A'}</div>
+                <div className="mb-2"><strong>Service Center:</strong> {account.service_center || 'N/A'}</div>
+                <div className="mb-2"><strong>DSS:</strong> {accountDss || 'N/A'}</div>
+                <div className="mb-2"><strong>Tariff:</strong> {accountTarrif || 'N/A'}</div>
+              </div>
+              <div>
+                {accountPicture && accountPicture !== "0" && (
+                  <div className="mb-2">
+                    <strong>Picture:</strong><br/>
+                    <img 
+                      src={`https://ipay.ibedc.com:7642/storage/${accountPicture}`} 
+                      alt="Building" 
+                      className="w-40 h-40 object-cover rounded border" 
+                    />
+                  </div>
+                )}
+                <div className="mb-2"><strong>Latitude:</strong> {account.latitude || 'N/A'}</div>
+                <div className="mb-2"><strong>Longitude:</strong> {account.longitude || 'N/A'}</div>
+              </div>
             </div>
-            <div className="mb-2">
-              <label>Service Center:</label>
-              <select
-                value={selectedServiceCenter}
-                onChange={e => setSelectedServiceCenter(e.target.value)}
-                className="block w-full border rounded p-1"
-                required
-                disabled={serviceCenters.length === 0}
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={handleFinalApprove}
+                disabled={approving}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
               >
-                <option value="">Select Service Center</option>
-                {serviceCenters.map(sc => (
-                  <option key={sc} value={sc}>{sc}</option>
-                ))}
-              </select>
-            </div>
-            <div className="mb-2">
-              <label>DSS:</label>
-              <select
-                value={selectedDss}
-                onChange={e => setSelectedDss(e.target.value)}
-                className="block w-full border rounded p-1"
-                required
+                {approving ? 'Approving...' : 'Final Approve'}
+              </button>
+              <button
+                onClick={typeof onClose === 'function' ? onClose : undefined}
+                className="bg-gray-300 px-4 py-2 rounded"
               >
-                <option value="">Select DSS</option>
-                {dssList.map(dss => (
-                  <option key={dss.Assetid} value={dss.Assetid}>
-                    {dss.DSS_11KV_415V_Name} ({dss.DSS_11KV_415V_Address})
-                  </option>
-                ))}
-              </select>
+                Cancel
+              </button>
             </div>
-            <div className="mb-2">
-              <label>Tariff:</label>
-              <select
-                value={selectedTariff}
-                onChange={e => setSelectedTariff(e.target.value)}
-                className="block w-full border rounded p-1"
-                required
-              >
-                <option value="">Select Tariff</option>
-                {tariffList.map(tariff => (
-                  <option key={tariff.TariffID} value={tariff.TariffID}>
-                    {tariff.Description}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="mb-2">Email: {account.account.email}</div>
-            <div className="mb-2">ID: {account.id}</div>
           </div>
-          {/* Column 2 */}
-          <div>
-            <div className="mb-2">
-              <label>Picture (real-time capture):</label>
-              {!captured ? (
-                <>
-                  <Webcam
-                    audio={false}
-                    ref={webcamRef}
-                    screenshotFormat="image/jpeg"
-                    width={320}
-                    height={240}
-                    videoConstraints={{ facingMode: 'environment' }}
-                    className="rounded border"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleCapturePhoto}
-                    className="bg-blue-500 text-white px-4 py-2 rounded mt-2"
-                  >
-                    Capture Building
-                  </button>
-                </>
-              ) : (
+        )}
+
+        {/* Scenario 2: DTM Validation (dss and tarrif are null but picture exists - from customers) */}
+        {needsDtmValidation && (
+          <div className="space-y-4">
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
+              <p className="text-sm text-yellow-800">
+                <strong>Account Status:</strong> Customer-submitted application with building image captured. Please select Region, Business Hub, Service Center, DSS, and Tariff to complete validation.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
                 <div className="mb-2">
-                  <img
-                    src={picture}
-                    alt="Preview"
-                    className="w-32 h-32 object-cover rounded"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => { setCaptured(false); setPicture(null); }}
-                    className="bg-gray-400 text-white px-2 py-1 rounded mt-2 ml-2"
+                  <label className="block text-sm font-semibold mb-1">Region:</label>
+                  <select
+                    value={selectedRegion}
+                    onChange={e => setSelectedRegion(e.target.value)}
+                    className="block w-full border rounded p-2"
+                    required
                   >
-                    Retake
-                  </button>
+                    <option value="">Select Region</option>
+                    {allRegions.map(region => (
+                      <option key={region} value={region}>{region}</option>
+                    ))}
+                  </select>
                 </div>
-              )}
+                <div className="mb-2">
+                  <label className="block text-sm font-semibold mb-1">Business Hub:</label>
+                  <select
+                    value={selectedBusinessHub}
+                    onChange={e => setSelectedBusinessHub(e.target.value)}
+                    className="block w-full border rounded p-2"
+                    required
+                    disabled={businessHubsForRegion.length === 0}
+                  >
+                    <option value="">Select Business Hub</option>
+                    {businessHubsForRegion.map(hub => (
+                      <option key={hub} value={hub}>{hub}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-2">
+                  <label className="block text-sm font-semibold mb-1">Service Center:</label>
+                  <select
+                    value={selectedServiceCenter}
+                    onChange={e => setSelectedServiceCenter(e.target.value)}
+                    className="block w-full border rounded p-2"
+                    required
+                    disabled={serviceCenters.length === 0}
+                  >
+                    <option value="">Select Service Center</option>
+                    {serviceCenters.map(sc => (
+                      <option key={sc} value={sc}>{sc}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-2">
+                  <label className="block text-sm font-semibold mb-1">DSS:</label>
+                  <select
+                    value={selectedDss}
+                    onChange={e => setSelectedDss(e.target.value)}
+                    className="block w-full border rounded p-2"
+                    required
+                  >
+                    <option value="">Select DSS</option>
+                    {dssList.map(dss => (
+                      <option key={dss.Assetid} value={dss.Assetid}>
+                        {dss.DSS_11KV_415V_Name} ({dss.DSS_11KV_415V_Address})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-2">
+                  <label className="block text-sm font-semibold mb-1">Tariff:</label>
+                  <select
+                    value={selectedTariff}
+                    onChange={e => setSelectedTariff(e.target.value)}
+                    className="block w-full border rounded p-2"
+                    required
+                  >
+                    <option value="">Select Tariff</option>
+                    {tariffList.map(tariff => (
+                      <option key={tariff.TariffID} value={tariff.TariffID}>
+                        {tariff.Description}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div>
+                {accountPicture && accountPicture !== "0" && (
+                  <div className="mb-4">
+                    <strong className="block text-sm font-semibold mb-2">Building Image:</strong>
+                    <img 
+                      src={`https://ipay.ibedc.com:7642/storage/${accountPicture}`} 
+                      alt="Building" 
+                      className="w-full max-w-xs h-auto object-cover rounded border shadow-sm" 
+                    />
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="mb-2">Latitude: {latitude}</div>
-            <div className="mb-2">Longitude: {longitude}</div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={handleDtmValidation}
+                disabled={submitting || !selectedDss || !selectedTariff || !selectedServiceCenter || !selectedRegion || !selectedBusinessHub}
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? 'Validating...' : 'Validate'}
+              </button>
+              <button
+                onClick={typeof onClose === 'function' ? onClose : undefined}
+                className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
-          <p className="text-sm text-blue-800">
-            <strong>Note:</strong> Use the <strong>Redirect</strong> button if the business hub or service center doesn't match your jurisdiction. 
-            This will redirect the account to the correct DTM for validation.
-          </p>
-        </div>
-        <div className="flex justify-end gap-2 mt-4">
-          <button
-            onClick={handleRedirect}
-            disabled={redirecting || !selectedRegion || !selectedBusinessHub || !selectedServiceCenter}
-            className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
-          >
-            {redirecting ? 'Redirecting...' : 'Redirect'}
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={submitting || !picture || !latitude || !longitude || !selectedDss || !selectedTariff || !selectedServiceCenter || !selectedRegion || !selectedBusinessHub}
-            className="bg-green-500 text-white px-4 py-2 rounded"
-          >
-            {submitting ? 'Submitting...' : 'Submit'}
-          </button>
-          <button
-            onClick={typeof onClose === 'function' ? onClose : undefined}
-            className="bg-gray-300 px-4 py-2 rounded"
-          >
-            Cancel
-          </button>
-        </div>
+        )}
+
+        {/* Scenario 3: Image Capture (original DTM validation logic) */}
+        {needsImageCapture && (
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded">
+              <p className="text-sm text-blue-800">
+                <strong>Account Status:</strong> Please capture building image and provide location details to complete validation.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="mb-2">
+                  <label>Region:</label>
+                  <select
+                    value={selectedRegion}
+                    onChange={e => setSelectedRegion(e.target.value)}
+                    className="block w-full border rounded p-1"
+                    required
+                  >
+                    <option value="">Select Region</option>
+                    {allRegions.map(region => (
+                      <option key={region} value={region}>{region}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-2">
+                  <label>Business Hub:</label>
+                  <select
+                    value={selectedBusinessHub}
+                    onChange={e => setSelectedBusinessHub(e.target.value)}
+                    className="block w-full border rounded p-1"
+                    required
+                    disabled={businessHubsForRegion.length === 0}
+                  >
+                    <option value="">Select Business Hub</option>
+                    {businessHubsForRegion.map(hub => (
+                      <option key={hub} value={hub}>{hub}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-2">
+                  <label>Service Center:</label>
+                  <select
+                    value={selectedServiceCenter}
+                    onChange={e => setSelectedServiceCenter(e.target.value)}
+                    className="block w-full border rounded p-1"
+                    required
+                    disabled={serviceCenters.length === 0}
+                  >
+                    <option value="">Select Service Center</option>
+                    {serviceCenters.map(sc => (
+                      <option key={sc} value={sc}>{sc}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-2">
+                  <label>DSS:</label>
+                  <select
+                    value={selectedDss}
+                    onChange={e => setSelectedDss(e.target.value)}
+                    className="block w-full border rounded p-1"
+                    required
+                  >
+                    <option value="">Select DSS</option>
+                    {dssList.map(dss => (
+                      <option key={dss.Assetid} value={dss.Assetid}>
+                        {dss.DSS_11KV_415V_Name} ({dss.DSS_11KV_415V_Address})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-2">
+                  <label>Tariff:</label>
+                  <select
+                    value={selectedTariff}
+                    onChange={e => setSelectedTariff(e.target.value)}
+                    className="block w-full border rounded p-1"
+                    required
+                  >
+                    <option value="">Select Tariff</option>
+                    {tariffList.map(tariff => (
+                      <option key={tariff.TariffID} value={tariff.TariffID}>
+                        {tariff.Description}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-2">Email: {account.account.email}</div>
+                <div className="mb-2">ID: {account.id}</div>
+              </div>
+              <div>
+                <div className="mb-2">
+                  <label>Picture (real-time capture):</label>
+                  {!captured ? (
+                    <>
+                      <Webcam
+                        audio={false}
+                        ref={webcamRef}
+                        screenshotFormat="image/jpeg"
+                        width={320}
+                        height={240}
+                        videoConstraints={{ facingMode: 'environment' }}
+                        className="rounded border"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleCapturePhoto}
+                        className="bg-blue-500 text-white px-4 py-2 rounded mt-2"
+                      >
+                        Capture Building
+                      </button>
+                    </>
+                  ) : (
+                    <div className="mb-2">
+                      <img
+                        src={picture}
+                        alt="Preview"
+                        className="w-32 h-32 object-cover rounded"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => { setCaptured(false); setPicture(null); }}
+                        className="bg-gray-400 text-white px-2 py-1 rounded mt-2 ml-2"
+                      >
+                        Retake
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="mb-2">Latitude: {latitude}</div>
+                <div className="mb-2">Longitude: {longitude}</div>
+              </div>
+            </div>
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+              <p className="text-sm text-blue-800">
+                <strong>Note:</strong> Use the <strong>Redirect</strong> button if the business hub or service center doesn't match your jurisdiction. 
+                This will redirect the account to the correct DTM for validation.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={handleRedirect}
+                disabled={redirecting || !selectedRegion || !selectedBusinessHub || !selectedServiceCenter}
+                className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
+              >
+                {redirecting ? 'Redirecting...' : 'Redirect'}
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={submitting || !picture || !latitude || !longitude || !selectedDss || !selectedTariff || !selectedServiceCenter || !selectedRegion || !selectedBusinessHub}
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+              >
+                {submitting ? 'Submitting...' : 'Submit'}
+              </button>
+              <button
+                onClick={typeof onClose === 'function' ? onClose : undefined}
+                className="bg-gray-300 px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

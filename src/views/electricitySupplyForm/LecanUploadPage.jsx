@@ -70,7 +70,17 @@ export default function LecanUploadPage() {
       const data = response.data;
       if (data.success) {
         toast.success(data.message || 'LECAN forms uploaded successfully!');
-        navigate('/');
+        // Navigate to BuildingImageCapture (Part 5)
+        navigate('/buildingImageCapture', {
+          state: {
+            trackingId,
+            buildings: uploadedBuildings,
+            numBuildings,
+            buildingIds,
+            lecanMessage: location.state?.lecanMessage,
+            lecanLink: location.state?.lecanLink
+          }
+        });
       } else {
         toast.error(data.message || 'An error occurred during upload.');
       }
@@ -131,7 +141,7 @@ export default function LecanUploadPage() {
 
         {/* Title Section */}
         <div className='font-bold text-base sm:text-lg mt-4 sm:mt-8 mx-4 sm:mx-20 -mb-2'>
-          <h1>License Electrical Contractor Form Information</h1>
+          <h1>PART 4: LICENSE ELECTRICAL CONTRACTOR FORM UPLOAD</h1>
         </div>
 
         {/* Form Section */}

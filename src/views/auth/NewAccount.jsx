@@ -28,23 +28,73 @@ export default function NewAccount() {
           localStorage.setItem('LONGITUDE', customer.continuation.longitude);
         }
 
-        const hasMissingLecan = customer.uploaded_pictures?.some(picture => !picture.lecan_link);
+        // Check if LECAN forms are missing (Part 4 comes before Part 5)
+        // Condition: Building details exist but lecan_link is null
+        const hasMissingLecan = customer.uploaded_pictures?.some(picture => 
+          (picture.house_no || picture.full_address || picture.business_hub || picture.service_center) &&
+          !picture.lecan_link
+        );
+        
+        // Check if building images haven't been captured (Part 5 comes after Part 4)
+        // Condition: LECAN is uploaded but picture/latitude/longitude are missing or "0"
+        const needsBuildingImages = customer.uploaded_pictures?.some(picture => 
+          picture.lecan_link && // LECAN must be uploaded first
+          (
+            !picture.picture || !picture.latitude || !picture.longitude ||
+            (picture.picture === "0" && picture.latitude === "0" && picture.longitude === "0")
+          )
+        );
+        
+        // Navigate to LecanUploadPage (Part 4) if LECAN is missing
         if (hasMissingLecan) {
           const numBuildings = customer.no_of_account_apply_for
             ? Number(customer.no_of_account_apply_for)
             : (customer.uploaded_pictures && customer.uploaded_pictures.length)
               ? customer.uploaded_pictures.length
               : 1;
+          
+          // Get lecan message and link from customer data if available
+          const lecanMessage = customer.lecan || null;
+          const lecanLink = customer.link || null;
+          
           navigate('/lecanUpload', {
             state: {
               trackingId: String(customer.tracking_id),
               numBuildings,
               uploadedBuildings: customer.uploaded_pictures || [],
-              buildingIds: customer.uploaded_pictures ? customer.uploaded_pictures.map(pic => pic.id) : []
+              buildingIds: customer.uploaded_pictures ? customer.uploaded_pictures.map(pic => pic.id) : [],
+              lecanMessage,
+              lecanLink
             }
           });
           return;
         }
+        
+        // Navigate to BuildingImageCapture (Part 5) if images are missing but LECAN is uploaded
+        if (needsBuildingImages) {
+          const numBuildings = customer.no_of_account_apply_for
+            ? Number(customer.no_of_account_apply_for)
+            : (customer.uploaded_pictures && customer.uploaded_pictures.length)
+              ? customer.uploaded_pictures.length
+              : 1;
+          
+          // Get lecan message and link from customer data if available
+          const lecanMessage = customer.lecan || null;
+          const lecanLink = customer.link || null;
+          
+          navigate('/buildingImageCapture', {
+            state: {
+              trackingId: String(customer.tracking_id),
+              buildings: customer.uploaded_pictures || [],
+              numBuildings,
+              buildingIds: customer.uploaded_pictures ? customer.uploaded_pictures.map(pic => pic.id) : [],
+              lecanMessage,
+              lecanLink
+            }
+          });
+          return;
+        }
+
 
         const hasPendingApplications = customer.uploaded_pictures?.some(picture => !picture.account_no);
         if (hasPendingApplications) {

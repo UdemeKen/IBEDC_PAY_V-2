@@ -31,6 +31,7 @@ import ContinuationForm from "./views/electricitySupplyForm/ContinuationForm";
 import DocumentUpload from "./views/electricitySupplyForm/DocumentUpload";
 import ConnectionDetailsPage from "./views/electricitySupplyForm/ConnectionDetailsPage";
 import FinalFormPage from "./views/electricitySupplyForm/FinalFormPage";
+import BuildingImageCapture from "./views/electricitySupplyForm/BuildingImageCapture";
 import LecanUploadPage from "./views/electricitySupplyForm/LecanUploadPage";
 import DTEValidation from "./views/auth/loginTypes/DTEValidation";
 import NewAccount from "./views/auth/NewAccount";
@@ -205,6 +206,11 @@ const router = createBrowserRouter([
     {
         path: "/finalForm",
         element: <ErrorBoundary><FinalFormPage /></ErrorBoundary>,
+        errorElement: <ErrorPage />
+    },
+    {
+        path: "/buildingImageCapture",
+        element: <ErrorBoundary><BuildingImageCapture /></ErrorBoundary>,
         errorElement: <ErrorPage />
     },
     {
